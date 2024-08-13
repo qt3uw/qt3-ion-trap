@@ -1,0 +1,12 @@
+/tests/testdata/
+/.pytest_cache/
+/tests/.pytest_cache/
+/.idea
+*.pyc
+*.pdf
+*.ipynb_checkpoints
+*.egg-info
+/__pycache__
+/.ipynb_checkpoints/
+*/__pycache__
+*/.ipynb_checkpoints
