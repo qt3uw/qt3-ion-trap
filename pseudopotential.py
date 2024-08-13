@@ -54,7 +54,7 @@ class PseudopotentialPlanarTrap:
 
     def phi_ac(self, x, y):
         """
-        Calculates the free-space voltage from the AC electrode.
+        Calculates the free-space potential from the AC electrode.
         :param x:
         :param y:
         :return:
@@ -76,14 +76,34 @@ class PseudopotentialPlanarTrap:
                                      ((self.a - x) ** 2 / y ** 2 + 1) * y ** 2))) / np.pi
         return grad_x, grad_y
 
-    def pseudo(self, x, y):
+    def pseudo_ac(self, x, y):
+        """
+        Returns pseudopotential from the AC electrodes, divided by the charge to mass ratio
+        :param x:
+        :param y:
+        :return:
+        """
         gradx, grady = self.grad_phi(x, y)
-        return (self.charge_to_mass / (4 * self.omega ** 2)) * np.sqrt(gradx ** 2 + grady ** 2)
+        return (1. / (4 * self.omega ** 2)) * np.sqrt(gradx ** 2 + grady ** 2)
 
     def phi_dc(self, x, y):
+        """
+        Returns potential from the DC electrodes, divided by the charge to mass ratio
+
+        :param x:
+        :param y:
+        :return:
+        """
         return (self.v_dc / np.pi) * (np.arctan((self.x2 - x) / y) - np.arctan((self.x1 - x) / y))
 
     def v_gravity(self, x, y):
+        """
+        Returns gravitational potential, divided by the charge to mass ratio
+
+        :param x:
+        :param y:
+        :return:
+        """
         return (1. / self.charge_to_mass) * g * y
 
     def charToMassCalc(x, y, vDc):
@@ -106,14 +126,15 @@ if __name__ == "__main__":
 
     v_grav = p.v_gravity(x, y)
     phi_dc = p.phi_dc(x, y)
-    psuedo = p.pseudo(x, y) / p.charge_to_mass
+    psuedo = p.pseudo_ac(x, y)
 
     fig, ax = plt.subplots(1, 1)
     ax.plot(y * 1.E3, psuedo, label='psuedo')
     ax.plot(y * 1.E3, phi_dc, label='dc')
     ax.plot(y * 1.E3, v_grav, label='gravity')
     ax.plot(y * 1.E3, v_grav + phi_dc + psuedo, label='total')
+    fig.legend()
     ax.set_xlabel('y (mm)')
     ax.grid()
-    ax.set_ylabel('potential (V)')
+    ax.set_ylabel('potential (J / (coulomb / kg)')
     plt.show()
