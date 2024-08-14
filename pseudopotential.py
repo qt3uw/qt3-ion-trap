@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
+import scipy.optimize
 from scipy.constants import g
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, minimize
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
@@ -168,6 +169,17 @@ class PseudopotentialPlanarTrap:
         res = minimize_scalar(merit_func, bounds=(1.E-4, 1.))
         return res.x
 
+    def get_height_versus_dc_voltages(self, dc_voltages):
+        dc_initial = self.v_dc
+        y0 = []
+        for v_dc in dc_voltages:
+            self.v_dc = v_dc
+            y0.append(self.find_equilibrium_height())
+
+        self.v_dc = dc_initial
+        return np.array(y0)
+
+
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 150., num=20), xrange=[-7.4E-3, 12.4E-3], xnum=100):
     fig, ax = plt.subplots(1, 1)
     xs = np.linspace(xrange[0], xrange[1], num=xnum)
@@ -189,20 +201,61 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
     axh.set_ylabel('equilibrium height (mm)')
     axh.grid()
 
+def get_data():
+    rawdata = np.array([[40, 0.78, 3.07], [45, 0.76, 3.09], [50, 0.73, 3.11], [55, 0.73, 3.13], [60, 0.68, 3.15],
+                        [65, 0.69, 3.2], [70, 0.66, 3.2], [75, 0.65, 3.22], [80, 0.61, 3.26], [85, 0.59, 3.28],
+                        [90, 0.57, 3.33], [95, 0.54, 3.35], [100, 0.52, 3.37], [105, 0.51, 3.38], [110, 0.5, 3.42],
+                        [115, 0.47, 3.45], [120, 0.45, 3.48], [125, 0.42, 3.53], [130, 0.4, 3.56], [135, 0.39, 3.58],
+                        [140, 0.34, 3.62], [145, 0.35, 3.65], [150, 0.32, 3.67], [155, 0.3, 3.72], [160, 0.26, 3.76],
+                        [165, 0.26, 3.79], [170, 0.21, 3.83], [175, 0.2, 3.87], [180, 0.19, 3.9], [185, 0.19, 3.95],
+                        [190, 0.17, 3.99], [195, 0.19, 4.02], [200, 0.23, 4.06], [205, 0.29, 4.11], [210, 0.38, 4.25]])
+    rawdata = rawdata[:-1]
+    dc_voltages = rawdata[:, 0]
+    y_spread = rawdata[:, 1]
+    y0 = rawdata[:, 2]
+    return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3
 
 
+def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
+    dc_voltages, y0, yspread = get_data()
+    fig, ax = plt.subplots(1, 1)
+    guesses = [trap.__dict__[param] for param in parameters]
 
+    def merit_func(args):
+        for i, key in enumerate(parameters):
+            trap.__dict__[key] = args[i]
+        y0_model = trap.get_height_versus_dc_voltages(dc_voltages)
+        return np.sum((y0 - y0_model) ** 2)
 
+    res = minimize(merit_func, guesses, bounds=bounds)
+
+    for i, param in enumerate(parameters):
+        print(f'{param}: {res.x[i]}')
+        trap.__dict__[param] = res.x[i]
+
+    model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
+    y0_model = trap.get_height_versus_dc_voltages(model_voltages)
+
+    ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
+    ax.plot(model_voltages, y0_model * 1.E3)
+    ax.set_xlabel('DC electrode voltage (V)')
+    ax.set_ylabel('ion height (mm)')
+    ax.grid()
+
+    return trap
 
 
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
-    trap.v_dc = 90.
-
-    # trap.plot_potential_contours()
-    # trap.plot_y_cuts()
-    plot_trap_escape_vary_dc(PseudopotentialPlanarTrap())
-    print(trap.find_equilibrium_height())
+    trap.charge_to_mass = 0.9E-3
+    fit_data(trap, ['charge_to_mass', 'central_electrode_gap'], bounds=[(1.E-4, 1.E-2)])
+    # trap.v_dc = 90.
+    #
+    trap.plot_potential_contours(y_range=(0.5E-3, 10.E-3))
+    print(trap.central_electrode_gap)
+    # # trap.plot_y_cuts()
+    plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 230., num=20))
+    # print(trap.find_equilibrium_height())
 
 
     plt.show()
