@@ -248,7 +248,7 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
     trap.charge_to_mass = 0.9E-3
-    fit_data(trap, ['charge_to_mass', 'central_electrode_gap'], bounds=[(1.E-4, 1.E-2)])
+    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)])
     # trap.v_dc = 90.
     #
     trap.plot_potential_contours(y_range=(0.5E-3, 10.E-3))
