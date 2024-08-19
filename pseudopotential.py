@@ -30,7 +30,7 @@ class PseudopotentialPlanarTrap:
 
     @property
     def b(self):
-        return self.ac_electrode_width + self.ac_electrode_inner_gap
+        return self.ac_electrode_width + 2 * self.ac_electrode_inner_gap
 
     @property
     def c(self):
@@ -68,9 +68,8 @@ class PseudopotentialPlanarTrap:
         :param y:
         :return:
         """
-        return self.v_rf / np.pi * (
-                    np.arctan((self.a + self.b - x) / y) - np.arctan((self.a - x) / y) -
-                    np.arctan(x / y) + np.arctan((self.c + x) / y))
+        return (self.v_rf / np.pi)*(np.arctan((-self.c-x)/y) - np.arctan((-self.gap_width - x)/y)
+                + np.arctan(((self.a+self.b-self.gap_width / 2)-x)/y) - np.arctan(((self.a + self.gap_width / 2) - x)/y))
 
     def phi_diel_i(self, x1, x2, x, y, delta_V):
         """
