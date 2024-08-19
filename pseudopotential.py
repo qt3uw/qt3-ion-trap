@@ -112,8 +112,12 @@ class PseudopotentialPlanarTrap:
         :param y:
         :return:
         """
-        return (self.v_dc / np.pi) * (np.arctan((self.x2 - x) / y) - np.arctan((self.x1 - x) / y))
+        return (self.v_dc / np.pi) * (np.arctan((self.a - self.gap_width/2 - x) / y) - np.arctan(((0)- x) / y))
+    def u_gap(self, x, y):
 
+        return  [phi_diel_i((-self.c - self.gap_width), -self.c, x, y, self.v_rf), phi_diel_i(-g, 0, x, y, self.v_dc - self.v_rf),
+                 phi_diel_i(self.a - self.gap_width / 2, self.a + self.gap_width / 2, x, y, self.v_rf - self.v_dc),
+                phi_diel_i(self.a + self.b - self.gap_width / 2, self.a + self.b + self.gap_width / 2, x, y, - self.v_rf)]
     def u_gravity(self, x, y):
         """
         Returns gravitational potential, divided by the charge to mass ratio
@@ -131,7 +135,8 @@ class PseudopotentialPlanarTrap:
         :param y:
         :return:
         """
-        return self.u_gravity(x, y) + self.u_dc(x, y) + self.u_ac(x, y)
+        return self.u_gravity(x, y) + self.u_dc(x, y) + self.u_ac(x, y) + \
+                (self.u_gap(x, y)[0] + self.u_gap(x, y)[1] + self.u_gap(x, y)[2] + self.u_gap(x, y)[3])
 
     def plot_potential_contours(self, x_range=[-7.5E-3, 12.5E-3], y_range=[1.E-3, 6.E-3], resolution=[512, 512],
                                 fig=None, ax=None, ncountours=40, max_countour_level=300.):
