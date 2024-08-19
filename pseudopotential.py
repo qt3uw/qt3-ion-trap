@@ -72,14 +72,15 @@ class PseudopotentialPlanarTrap:
                     np.arctan((self.a + self.b - x) / y) - np.arctan((self.a - x) / y) -
                     np.arctan(x / y) + np.arctan((self.c + x) / y))
 
-    def phi_diel(self, x, y):
+    def phi_diel_i(self, x1, x2, x, y, delta_V):
         """
         Calculates the free-space potential from the dielectric between electrodes.
         :param x:
         :param y:
         :return:
         """
-        return ""
+        return ((delta_V) / (np.pi * (x1 - x2))) * ((y/2)*np.log(((x-x1)**2 + y**2) /
+                (x-x2)**2 + y**2) + (x-x1) * (np.arctan((x-x2/y)) - np.arctan((x - x1)/y)))
 
     def grad_phi(self, x, y):
         """
