@@ -60,6 +60,7 @@ class PseudopotentialPlanarTrap:
     def y_escape(self):
         raise NotImplementedError
 
+
     def phi_ac(self, x, y):
         """
         Calculates the free-space potential from the AC electrode.
@@ -70,6 +71,15 @@ class PseudopotentialPlanarTrap:
         return self.v_rf / np.pi * (
                     np.arctan((self.a + self.b - x) / y) - np.arctan((self.a - x) / y) -
                     np.arctan(x / y) + np.arctan((self.c + x) / y))
+
+    def phi_diel(self, x, y):
+        """
+        Calculates the free-space potential from the dielectric between electrodes.
+        :param x:
+        :param y:
+        :return:
+        """
+        return ""
 
     def grad_phi(self, x, y):
         """
@@ -248,7 +258,7 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
     trap.charge_to_mass = 0.9E-3
-    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)])
+    fit_data(trap, ['charge_to_mass', 'central_electrode_gap'], bounds=[(1.E-4, 1.E-2), (.1E-3, 4E-3)])
     # trap.v_dc = 90.
     #
     trap.plot_potential_contours(y_range=(0.5E-3, 10.E-3))
