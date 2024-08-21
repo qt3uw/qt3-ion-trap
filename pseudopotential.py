@@ -115,9 +115,9 @@ class PseudopotentialPlanarTrap:
         return (self.v_dc / np.pi) * (np.arctan((self.a - self.gap_width/2 - x) / y) - np.arctan(((0)- x) / y))
     def u_gap(self, x, y):
 
-        return  [self.phi_diel_i((-self.c - self.gap_width), -self.c, x, y, self.v_rf), self.phi_diel_i(-self.gap_width, 0.00, x, y, self.v_dc - self.v_rf),
-                 self.phi_diel_i(self.a - self.gap_width / 2, self.a + self.gap_width / 2, x, y, self.v_rf - self.v_dc),
-                self.phi_diel_i(self.a + self.b - self.gap_width, self.a + self.b, x, y, - self.v_rf)]
+        return  [self.phi_diel_i(-self.c - self.gap_width / 2, -self.c + self.gap_width / 2, x, y, self.v_rf), self.phi_diel_i(-self.gap_width/2, self.gap_width / 2, x, y, self.v_dc - self.v_rf),
+                 self.phi_diel_i(self.a - (self.gap_width / 2), self.a + (self.gap_width / 2), x, y, self.v_rf - self.v_dc),
+                self.phi_diel_i(self.a + self.b - self.gap_width/2, self.a + self.b + self.gap_width/2, x, y, - self.v_rf)]
     def u_gravity(self, x, y):
         """
         Returns gravitational potential, divided by the charge to mass ratio
@@ -170,15 +170,15 @@ class PseudopotentialPlanarTrap:
         psuedo = trap.u_ac(x, y)
 
         fig, ax = plt.subplots(1, 1)
-        ax.plot(y * 1.E3, psuedo, label='psuedo')
-        ax.plot(y * 1.E3, phi_dc, label='dc')
-        ax.plot(y * 1.E3, v_grav, label='gravity')
-        ax.plot(y * 1.E3, gaps[0], label='gap 1')
-        ax.plot(y * 1.E3, gaps[1], label='gap 2')
-        ax.plot(y * 1.E3, -gaps[2], label='gap 3')
-        ax.plot(y * 1.E3, -gaps[3], label='gap 4')
-        ax.plot(y * 1.E3, gaps[0] + gaps[1] + gaps[2] + gaps[3], label='gaps')
-        ax.plot(y * 1.E3, trap.u_total(x, y), label='total')
+        # ax.plot(y * 1.E3, psuedo, label='psuedo')
+        # ax.plot(y * 1.E3, phi_dc, label='dc')
+        # ax.plot(y * 1.E3, v_grav, label='gravity')
+        ax.plot(y * 1.E3, -gaps[0], label='gap 1')
+        ax.plot(y * 1.E3, -gaps[1], label='gap 2')
+        ax.plot(y * 1.E3, gaps[2], label='gap 3')
+        ax.plot(y * 1.E3, gaps[3], label='gap 4')
+        # ax.plot(y * 1.E3, gaps[0] + gaps[1] + gaps[2] + gaps[3], label='gaps')
+        # ax.plot(y * 1.E3, trap.u_total(x, y), label='total')
         fig.legend()
         ax.set_xlabel('y (mm)')
         ax.grid()
@@ -272,13 +272,16 @@ if __name__ == "__main__":
     fit_data(trap, ['charge_to_mass', 'central_electrode_gap'], bounds=[(1.E-4, 1.E-2), (.1E-3, 4E-3)])
     # trap.v_dc = 90.
     #
-    trap.plot_potential_contours(y_range=(0.5E-3, 10.E-3))
-    print(trap.central_electrode_gap)
+    # trap.plot_potential_contours(y_range=(0.5E-3, 10.E-3))
+    # print(trap.central_electrode_gap)
     trap.plot_y_cuts()
-    plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 230., num=20))
-    # print(trap.find_equilibrium_height())
-
+    # plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 230., num=20))
+    # # print(trap.find_equilibrium_height())
+    #
 
     plt.show()
+    print("Distance to left gap: " + str((-trap.c - 5*trap.gap_width / 2) - trap.a / 2))
+    print("Distance to right gap: " + str(trap.a + trap.b + 3*trap.gap_width/2 - trap.a/2))
+
     #
     # figim, axim = plt.subplots(1, 1)
