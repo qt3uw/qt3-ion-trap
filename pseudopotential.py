@@ -115,7 +115,7 @@ class PseudopotentialPlanarTrap:
         return (self.v_dc / np.pi) * (np.arctan((self.a - self.gap_width/2 - x) / y) - np.arctan(((0)- x) / y))
     def u_gap(self, x, y):
 
-        return  [self.phi_diel_i(-self.c - self.gap_width / 2, -self.c + self.gap_width / 2, x, y, self.v_rf), self.phi_diel_i(-self.gap_width/2, self.gap_width / 2, x, y, self.v_dc - self.v_rf),
+        return  [self.phi_diel_i( -self.c + self.gap_width / 2, -self.c - self.gap_width / 2, x, y, self.v_rf), self.phi_diel_i(self.gap_width / 2,-self.gap_width/2, x, y, self.v_dc - self.v_rf),
                  self.phi_diel_i(self.a - (self.gap_width / 2), self.a + (self.gap_width / 2), x, y, self.v_rf - self.v_dc),
                 self.phi_diel_i(self.a + self.b - self.gap_width/2, self.a + self.b + self.gap_width/2, x, y, - self.v_rf)]
     def u_gravity(self, x, y):
@@ -173,8 +173,8 @@ class PseudopotentialPlanarTrap:
         # ax.plot(y * 1.E3, psuedo, label='psuedo')
         # ax.plot(y * 1.E3, phi_dc, label='dc')
         # ax.plot(y * 1.E3, v_grav, label='gravity')
-        ax.plot(y * 1.E3, -gaps[0], label='gap 1')
-        ax.plot(y * 1.E3, -gaps[1], label='gap 2')
+        ax.plot(y * 1.E3, gaps[0], label='gap 1')
+        ax.plot(y * 1.E3, gaps[1], label='gap 2')
         ax.plot(y * 1.E3, gaps[2], label='gap 3')
         ax.plot(y * 1.E3, gaps[3], label='gap 4')
         # ax.plot(y * 1.E3, gaps[0] + gaps[1] + gaps[2] + gaps[3], label='gaps')
