@@ -123,20 +123,38 @@ class PseudopotentialPlanarTrap:
                                self.a + self.ac_electrode_width + 0.5 * self.gap_width, self.v_rf) + \
             self.phi_gaps_linear(x, y)
 
-
     def grad_phi_ac_gaps(self, x, y):
         """
         Numerically computes the gradient including a linearly varying voltage across the insulating gaps
-        :param x: x-coordinates
-        :param y: y-coordinates
+        :param x: x-coordinates (can be 1D or 2D)
+        :param y: y-coordinates (can be 1D or 2D)
         :return:
         """
-        x = np.atleast_2d(x)
-        y = np.atleast_2d(y)
-        dx = x[0, 1] - x[0, 0]
-        dy = y[1, 0] - y[0, 0]
+        x = np.atleast_1d(x)
+        y = np.atleast_1d(y)
+
+        if x.ndim == 1:
+            x = np.reshape(x, (1, -1))  # Reshape to 2D with one row if 1D
+        if y.ndim == 1:
+            y = np.reshape(y, (1, -1))  # Reshape to 2D with one column if 1D
+
+        dx = np.diff(x, axis=1).mean()
+        dy = np.diff(y, axis=0).mean() if y.shape[0] > 1 else np.diff(y, axis=1).mean()  # Handle single row case
+
         phi_ac = self.phi_ac_with_gaps(x, y)
-        gradx, grady = np.gradient(phi_ac, dy, dx) # phi_ac is shaped (row, column), which is transpose of (x,y)
+
+        if x.shape[0] == 1:
+            phi_ac = np.append(phi_ac, phi_ac, axis=0)
+            if dx == 0:
+                gradx = np.zeros_like(x.flatten())
+                grady = np.gradient(phi_ac, dy)[1][0, :]
+            elif dy == 0:
+                gradx = np.gradient(phi_ac, dx)[1][0, :]
+                grady = np.zeros_like(x.flatten())
+
+        else:
+            grady, gradx = np.gradient(phi_ac, dy, dx)  # Calculate gradients
+
         return gradx, grady
 
 
@@ -164,7 +182,13 @@ class PseudopotentialPlanarTrap:
             gradx, grady = self.grad_phi_ac_gaps(x, y)
         else:
             gradx, grady = self.grad_phi_ac(x, y)
-        return (1. / (4. * self.omega ** 2)) * (gradx ** 2 + grady ** 2) * self.charge_to_mass
+
+        # These three lines deal with the possibility of a 1-D array as input when including gaps, dx or dy will be nan.
+        mx = np.isnan(gradx)
+        my = np.isnan(grady)
+        grad_squared = np.where(mx & my, np.nan, np.where(mx, 0, gradx) ** 2 + np.where(my, 0, grady) ** 2)
+
+        return (1. / (4. * self.omega ** 2)) * grad_squared * self.charge_to_mass
 
 
     def u_dc(self, x, y):
@@ -233,42 +257,42 @@ class PseudopotentialPlanarTrap:
 
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, is_numerical=True):
+    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True):
         y = np.linspace(*yrange, num=num)
         if x0 is None:
             x0 = self.a / 2
         x = np.zeros_like(y) + x0
 
 
-        v_grav = self.u_gravity(x, y)
-        phi_dc = self.u_dc(x, y)
-        if is_numerical:
-            raise(NotImplementedError)
-        else:
-            psuedo = self.u_ac(x, y)
+        u_grav = self.u_gravity(x, y)
+        u_dc = self.u_dc(x, y)
+        u_ac = self.u_ac(x, y, include_gaps=include_gaps)
 
         fig, ax = plt.subplots(1, 1)
-        ax.plot(y * 1.E3, psuedo, label='psuedo')
-        ax.plot(y * 1.E3, phi_dc, label='dc')
-        # ax.plot(y * 1.E3, v_grav, label='gravity')
-        ax.plot(y * 1.E3, trap.u_total(x, y), label='total')
+        ax.plot(y * 1.E3, u_ac, label='psuedo')
+        ax.plot(y * 1.E3, u_dc, label='dc')
+        ax.plot(y * 1.E3, u_grav, label='gravity')
+        ax.plot(y * 1.E3, u_ac + u_dc + u_grav, label='total')
         fig.legend()
         ax.set_xlabel('y (mm)')
         ax.grid()
         ax.set_ylabel('potential energy / charge (V)')
+        return fig, ax
 
-    def find_equilibrium_height(self):
+    def find_equilibrium_height(self, ystep=1.E-5, include_gaps=True):
         def merit_func(y):
-            return self.u_total(self.a / 2., y)
+            ys = np.linspace(y-ystep, y+ystep, num=3)
+            xs = np.zeros_like(ys) + self.a / 2.
+            return self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
         res = minimize_scalar(merit_func, bounds=(1.E-4, 1.))
         return res.x
 
-    def get_height_versus_dc_voltages(self, dc_voltages):
+    def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
         dc_initial = self.v_dc
         y0 = []
         for v_dc in dc_voltages:
             self.v_dc = v_dc
-            y0.append(self.find_equilibrium_height())
+            y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
 
         self.v_dc = dc_initial
         return np.array(y0)
@@ -310,7 +334,7 @@ def get_data():
     return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3
 
 
-def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
+def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None, include_gaps=False):
     dc_voltages, y0, yspread = get_data()
     fig, ax = plt.subplots(1, 1)
     guesses = [trap.__dict__[param] for param in parameters]
@@ -318,7 +342,7 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
     def merit_func(args):
         for i, key in enumerate(parameters):
             trap.__dict__[key] = args[i]
-        y0_model = trap.get_height_versus_dc_voltages(dc_voltages)
+        y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
         return np.sum((y0 - y0_model) ** 2)
 
     res = minimize(merit_func, guesses, bounds=bounds)
@@ -328,33 +352,35 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
         trap.__dict__[param] = res.x[i]
 
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
-    y0_model = trap.get_height_versus_dc_voltages(model_voltages)
+    y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
 
     ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
     ax.plot(model_voltages, y0_model * 1.E3)
     ax.set_xlabel('DC electrode voltage (V)')
     ax.set_ylabel('ion height (mm)')
     ax.grid()
+    fig.suptitle(f'include_gaps={include_gaps}')
     return trap
+
+def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
+    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=False)
+    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=True)
+
+    fig, ax = trap.plot_y_cuts(include_gaps=True)
+    fig.suptitle('including gaps')
+    fig, ax = trap.plot_y_cuts(include_gaps=False)
+    fig.suptitle('ignoring gaps')
+
+    trap.plot_potential_at_surface()
+    fig, ax = trap.plot_potential_contours(include_gaps=True, vmax=350)
+    fig.suptitle('including gaps')
+    fig, ax = trap.plot_potential_contours(include_gaps=False, resolution=(512, 512), vmax=350)
+    fig.suptitle('excluding gaps')
+
+    plt.show()
 
 
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
-    trap.v_dc = 100.
-    trap.charge_to_mass = 0.9E-3
-
-
-    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)])
-    # # # trap.v_dc = 90.
-    # # #
-    # trap.plot_potential_contours(y_range=(1.E-4, 5.E-3))
-    # # print(trap.central_electrode_gap)
-    # trap.plot_y_cuts()
-    # plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 230., num=20))
-    # print(trap.find_equilibrium_height())
-
-    trap.plot_potential_at_surface()
-    trap.plot_potential_contours(include_gaps=False, vmax=350)
-    trap.plot_potential_contours(include_gaps=True, resolution=(512, 512), vmax=350)
-
-    plt.show()
+    trap.v_dc = 0
+    compare_model_gaps_versus_no_gaps(trap)
