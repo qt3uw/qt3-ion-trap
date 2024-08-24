@@ -16,9 +16,7 @@ def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
 @dataclass
 class PseudopotentialPlanarTrap:
     central_electrode_width: float = 3.175E-3
-    central_electrode_gap: float = 1.E-3
     ac_electrode_width: float = 4.15831E-3
-    ac_electrode_inner_gap: float = 1.E-3
     v_rf: float = 0.5 * 50 * 75
     v_dc: float = 200.
     charge_to_mass: float = 6.8E-4
@@ -27,11 +25,11 @@ class PseudopotentialPlanarTrap:
 
     @property
     def a(self):
-        return self.central_electrode_width + 2 * self.central_electrode_gap
+        return self.central_electrode_width + self.gap_width
 
     @property
     def b(self):
-        return self.ac_electrode_width + 2 * self.ac_electrode_inner_gap
+        return self.ac_electrode_width + self.gap_width
 
     @property
     def c(self):
@@ -62,32 +60,44 @@ class PseudopotentialPlanarTrap:
         raise NotImplementedError
 
     @staticmethod
-    def phi_diel_i(x_1, x_2, x, y, dV):
+    def phi_diel_i(x, y, x_1, x_2, dv):
         """
-        Calculates the free-space potential from the dielectric between electrodes.
-        :param x:
-        :param y:
+        :param x: x-coordinate
+        :param y: y-coordinate
+        :param x_1: gap boundary
+        :param x_2: gap boundary
+        :param dv: voltage across gap
         :return:
         """
-        return dV / (np.pi * (x_1 - x_2)) * (
+        return dv / (np.pi * (x_1 - x_2)) * (
                     (y / 2) * np.log(((x - x_1) ** 2 + y ** 2) / ((x - x_2) ** 2 + y ** 2)) + (x - x_1) * (
                         np.arctan((x - x_2) / y) - np.arctan((x - x_1) / y)))
 
     @staticmethod
-    def phi_electrode(x, y, x1, x2, V):
-        return V / np.pi * (np.arctan((x2 - x) / y) - np.arctan((x1 - x) / y))
+    def phi_electrode(x, y, x1, x2, v):
+        """
+        Calculates the free-space potential from a rectangular electrode infinite in z, where y is normal to electrode
+        :param x: x-coordinates
+        :param y: y-coordinates
+        :param x1: electrode boundary
+        :param x2: electrode boundary
+        :param v: electrode voltage
+        :return:
+        """
+        return v / np.pi * (np.arctan((x2 - x) / y) - np.arctan((x1 - x) / y))
 
-    def phi_gap(self, x, y):
-        return self.phi_diel_i( -self.c - self.gap_width / 2, -self.c + self.gap_width / 2, x, y, self.v_rf) + \
-                self.phi_diel_i(self.gap_width / 2,-self.gap_width/2, x, y, self.v_dc - self.v_rf) + \
-            self.phi_diel_i(self.a - (self.gap_width / 2), self.a + (self.gap_width / 2), x, y, self.v_rf - self.v_dc) + \
-                self.phi_diel_i(self.a + self.b + self.gap_width/2, self.a + self.b - self.gap_width/2, x, y, -self.v_rf)
+    def phi_gaps_linear(self, x, y):
+        """
+        Gets the potential from each of the gaps, modelling as a linear interpolation between neighboring electrodes
+        :param x: x-coordinates
+        :param y: y-coordinates
+        :return:
+        """
+        return self.phi_diel_i(x, y, -self.c - self.gap_width / 2, -self.c + self.gap_width / 2, self.v_rf) + \
+                self.phi_diel_i(x, y, self.gap_width / 2,-self.gap_width/2, self.v_dc - self.v_rf) + \
+            self.phi_diel_i(x, y, self.a - (self.gap_width / 2), self.a + (self.gap_width / 2), self.v_rf - self.v_dc) + \
+                self.phi_diel_i(x, y, self.a + self.b + self.gap_width/2, self.a + self.b - self.gap_width/2, -self.v_rf)
 
-    def phi_bare_electrode(self, x, y):
-        return (self.v_rf / np.pi) * (np.arctan((self.a + self.b - x) / y) -
-                                      np.arctan((self.a - x) / y) -
-                                      np.arctan(x / y) +
-                                      np.arctan(self.c + x) / y) + self.phi_gap(x, y)
 
     def phi_ac(self, x, y):
         """
@@ -111,22 +121,26 @@ class PseudopotentialPlanarTrap:
         return self.phi_electrode(x, y, -self.c + 0.5 * self.gap_width, -0.5 * self.gap_width, self.v_rf) + \
             self.phi_electrode(x, y, self.a + 0.5 * self.gap_width,
                                self.a + self.ac_electrode_width + 0.5 * self.gap_width, self.v_rf) + \
-            self.phi_gap(x, y)
+            self.phi_gaps_linear(x, y)
 
 
-    def grad_phi_num(self, x, y, dx, dy):
+    def grad_phi_ac_gaps(self, x, y):
         """
-        Numerically computes the gradient
-        :param x: Meshgrid
-        :param y: Meshgrid
+        Numerically computes the gradient including a linearly varying voltage across the insulating gaps
+        :param x: x-coordinates
+        :param y: y-coordinates
         :return:
         """
+        x = np.atleast_2d(x)
+        y = np.atleast_2d(y)
+        dx = x[0, 1] - x[0, 0]
+        dy = y[1, 0] - y[0, 0]
         phi_ac = self.phi_ac_with_gaps(x, y)
-        gradx, grady = np.gradient(phi_ac, dx, dy)
+        gradx, grady = np.gradient(phi_ac, dy, dx) # phi_ac is shaped (row, column), which is transpose of (x,y)
         return gradx, grady
 
 
-    def grad_phi(self, x, y):
+    def grad_phi_ac(self, x, y):
         """
         :param x:
         :param y:
@@ -139,28 +153,18 @@ class PseudopotentialPlanarTrap:
                                      ((self.a - x) ** 2 / y ** 2 + 1) * y ** 2))) / np.pi
         return grad_x, grad_y
 
-    def u_ac(self, x, y):
+    def u_ac(self, x, y, include_gaps=True):
         """
         Returns pseudopotential from the AC electrodes, divided by the charge to mass ratio
         :param x:
         :param y:
         :return:
         """
-        gradx, grady = self.grad_phi(x, y)
+        if include_gaps:
+            gradx, grady = self.grad_phi_ac_gaps(x, y)
+        else:
+            gradx, grady = self.grad_phi_ac(x, y)
         return (1. / (4. * self.omega ** 2)) * (gradx ** 2 + grady ** 2) * self.charge_to_mass
-
-    def u_ac_num(self, x, y):
-        """
-        Returns pseudopotential from the AC electrodes, divided by the charge to mass ratio
-        :param x:
-        :param y:
-        :return:
-        """
-        gradient = self.grad_phi_num(x, y)
-        # print(self.grad_phi_num(x, y))
-        # return 0
-
-        return (1. / (4. * self.omega ** 2)) * np.sqrt(sum(x**2 for d in gradient))**2 * self.charge_to_mass
 
 
     def u_dc(self, x, y):
@@ -183,37 +187,44 @@ class PseudopotentialPlanarTrap:
         """
         return (1. / self.charge_to_mass) * g * y
 
-    def u_total(self, x, y):
+    def u_total(self, x, y, include_gaps=True):
         """
         Returns sum of gravitational, dc, and ac pseudopotential divided by charge
         :param x:
         :param y:
         :return:
         """
-        print(np.shape(self.u_dc(x, y)))
-        print(np.shape(self.u_gravity(x, y)))
-        print(np.shape(self.u_ac_num(x, y)))
-        print("I am down here, at u_total!")
+        return self.u_gravity(x, y) + self.u_dc(x, y) + self.u_ac(x, y, include_gaps=include_gaps)
 
-        return self.u_gravity(x, y) + self.u_dc(x, y) + self.u_ac_num(x, y)
+    def plot_potential_at_surface(self, num=256):
+        """
+        :param num: Number of samples
+        :return: (fig, ax)
+        """
+        xlin = np.linspace(-2 * trap.c, trap.c + trap.a + trap.b, num=256)
+        ys = np.zeros_like(xlin)
+        figv, axv = plt.subplots(1, 1)
+        axv.plot(xlin, trap.phi_ac(xlin, ys), label='ignore gaps')
+        axv.plot(xlin, trap.phi_ac_with_gaps(xlin, ys), label='include gaps')
+        axv.grid()
+        figv.legend()
+        return figv, axv
 
-    def plot_potential_contours(self, x_range=[-10E-3, 15E-3], y_range=[1.E-4, 4.E-3], resolution=[512, 512],
-                                fig=None, ax=None, ncountours=25, max_countour_level=250., is_numerical=True):
+
+    def plot_potential_contours(self, x_range=(-10E-3, 15E-3), y_range=(1.E-3, 6.E-3), resolution=(512, 512),
+                                fig=None, ax=None, ncountours=25, max_countour_level=250., include_gaps=True, **kwargs):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
         # u = self.u_gap(x, y)[0] + self.u_gap(x, y)[1] + self.u_gap(x, y)[2] + self.u_gap(x, y)[3]
         # u = self.u_dc(x, y) + self.u_ac(x, y)
-        if is_numerical:
-            pass
-        else:
-            u = self.u_total(x, y)
+        u = self.u_total(x, y, include_gaps=include_gaps)
 
         extent = [x_range[0], x_range[1], y_range[0], y_range[1]]
         levels = np.linspace(0., max_countour_level, num=ncountours)
         if fig is None:
             fig, ax = plt.subplots(1, 1, figsize=(6.5, 3))
-            cs = ax.imshow(np.flipud(u), extent=[ex * 1.E3 for ex in extent])
+            cs = ax.imshow(np.flipud(u), extent=[ex * 1.E3 for ex in extent], **kwargs)
             ax.contour(u, levels=levels, colors='k', extent=[ex * 1.E3 for ex in extent])
             ax.set_xlabel('x (mm)')
             ax.set_ylabel('height (mm)')
@@ -222,7 +233,7 @@ class PseudopotentialPlanarTrap:
 
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None):
+    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, is_numerical=True):
         y = np.linspace(*yrange, num=num)
         if x0 is None:
             x0 = self.a / 2
@@ -231,18 +242,15 @@ class PseudopotentialPlanarTrap:
 
         v_grav = self.u_gravity(x, y)
         phi_dc = self.u_dc(x, y)
-        gaps   = self.phi_gap(x, y)
-        psuedo = self.u_ac(x, y)
+        if is_numerical:
+            raise(NotImplementedError)
+        else:
+            psuedo = self.u_ac(x, y)
 
         fig, ax = plt.subplots(1, 1)
         ax.plot(y * 1.E3, psuedo, label='psuedo')
         ax.plot(y * 1.E3, phi_dc, label='dc')
         # ax.plot(y * 1.E3, v_grav, label='gravity')
-        ax.plot(y * 1.E3, gaps[0], label='gap 1')
-        ax.plot(y * 1.E3, gaps[1], label='gap 2')
-        ax.plot(y * 1.E3, gaps[2], label='gap 3')
-        ax.plot(y * 1.E3, gaps[3], label='gap 4')
-        ax.plot(y * 1.E3, gaps[0] + gaps[1] + gaps[2] + gaps[3], label='gaps')
         ax.plot(y * 1.E3, trap.u_total(x, y), label='total')
         fig.legend()
         ax.set_xlabel('y (mm)')
@@ -327,7 +335,6 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None):
     ax.set_xlabel('DC electrode voltage (V)')
     ax.set_ylabel('ion height (mm)')
     ax.grid()
-
     return trap
 
 
@@ -335,7 +342,9 @@ if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
     trap.v_dc = 100.
     trap.charge_to_mass = 0.9E-3
-    # fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)])
+
+
+    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)])
     # # # trap.v_dc = 90.
     # # #
     # trap.plot_potential_contours(y_range=(1.E-4, 5.E-3))
@@ -344,23 +353,8 @@ if __name__ == "__main__":
     # plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 230., num=20))
     # print(trap.find_equilibrium_height())
 
-    # Check potentials by themselves
-    xlin = np.linspace(-2 * trap.c, trap.c + trap.a + trap.b, num=256)
-    ys = np.zeros_like(xlin)
-    figv, axv = plt.subplots(1, 1)
-    axv.plot(xlin, trap.phi_ac_with_gaps(xlin, ys), label='eletrodes')
-    # axv.plot(xlin, trap.phi_gap(xlin, ys), label='gaps')
-    # axv.plot(xlin, trap.phi_gap(xlin, ys) + trap.phi_electrodes(xlin, ys), label='sum')
-    axv.grid()
-    figv.legend()
-
-    fig, ax = plt.subplots(1, 1)
-    # Check numerical derivative of AC
-    ylin = np.linspace(0., 4.E-3, num=256)
-    x, y = np.meshgrid(xlin, ylin)
-    gradx, grady = trap.grad_phi_num(x, y, xlin[1]-xlin[0], ylin[1]-ylin[0])
-    cax = ax.imshow(np.flipud(gradx ** 2 + grady ** 2), extent=[np.min(xlin), np.max(xlin), np.min(ylin), np.max(ylin)])
-    fig.colorbar(cax)
-
+    trap.plot_potential_at_surface()
+    trap.plot_potential_contours(include_gaps=False, vmax=350)
+    trap.plot_potential_contours(include_gaps=True, resolution=(512, 512), vmax=350)
 
     plt.show()
