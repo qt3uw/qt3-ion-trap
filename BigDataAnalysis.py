@@ -1,13 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import statistics as sts
 
-plt.style.use('seaborn-v0_8-bright')
+plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
+plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['axes.grid'] = True  # Turn on gridlines
+plt.rcParams['grid.color'] = 'gray'  # Set the color of the gridlines
+plt.rcParams['grid.linestyle'] = '--'  # Set the style of the gridlines (e.g., dashed)
+plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
+plt.rcParams['axes.labelsize'] = 13
+plt.rcParams['axes.titlesize'] = 15
 
 # Define file folder and parameters, 19 is great data, so is 8
 path = 'C:\\Users\\Wole1\\PycharmProjects\\pythonProject\\FinalData'   # Selects the folder to pull all the data from
 files = os.listdir(path)
 pointstaken = 12   # The lowest n points for the minimized voltage bestfit
+histbins = 22
 savemicro = True
 savehist = True
 savejoint = True
@@ -83,6 +92,7 @@ for file_name in files:
     #plt.scatter(smallest_voltage, smallest_micromotion)
     #plt.show()
 
+    # Best fit line for the smallest micromotion data points
     coefficients = np.polyfit(smallest_voltage, smallest_micromotion, 2)
     poly = np.poly1d(coefficients)
     x_fit = np.linspace(sorted_smallest_voltage[0], sorted_smallest_voltage[-1], 100)
@@ -129,11 +139,11 @@ for file_name in files:
     if file_name == '8-18_Trial19_data.txt':
         plt.figure()
         plt.scatter(voltage, micromotion)
-        plt.xlabel('Voltage $(-V)$', fontsize=13)
-        plt.ylabel('Micromotion $(mm)$', fontsize=13)
-        plt.title('Micromotion Amplitude vs. Voltage', fontsize=15)
-        plt.axvline(minvolt_raw, color='black', alpha=0.3)
-        plt.errorbar(voltage, micromotion, yerr=(0.0164935065), fmt='', capsize=2, alpha=0.3, ls='none')
+        plt.xlabel('Voltage $(-V)$')
+        plt.ylabel('Micromotion amplitude $(mm)$')
+        plt.title('Micromotion Amplitude vs. Voltage')
+        plt.axvline(minvolt_raw, color='black', alpha=0.6)
+        plt.errorbar(voltage, micromotion, yerr=(0.0164935065), color='red', fmt='', capsize=2, alpha=0.4, ls='none')
         plt.annotate('RF null = ' + str(int(minvolt_raw)), (int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw - 40, 0.25))
         if savemicro == True:
             plt.savefig('FinalMicromotion.pdf')
@@ -144,25 +154,36 @@ for file_name in files:
         plt.figure()
         plt.scatter(voltage, height, color='blue')
         plt.errorbar(voltage, height, yerr=micromotion, fmt='', capsize=0, color='blue', alpha=0.3, elinewidth=4, )
-        plt.xlabel('Voltage (-V)', fontsize = 13)
-        plt.ylabel('Height (mm)', fontsize = 13)
+        plt.xlabel('Voltage (-V)')
+        plt.ylabel('Height (mm)')
         plt.annotate('RF null = (' + str(int(minvolt_raw)) + ', ' + str(np.round(RF_height, 2)[0]) + ')',
                      (minvolt_raw, RF_height), (minvolt_raw - 75, RF_height + 0.16))
-        plt.axhline(RF_height, color='black', alpha=0.3)
+        plt.axhline(RF_height, color='black', alpha=0.6)
         plt.legend(['Height', 'RF Null', 'Micromotion'])
-        plt.title('Height with Micromotion Amplitude vs. Central DC Voltage', fontsize = 15)
-        plt.axvline(minvolt_raw, color='black', alpha=0.3)
+        plt.title('Height with Micromotion Amplitude vs. Central DC Voltage')
+        plt.axvline(minvolt_raw, color='black', alpha=0.6)
         if savejoint == True:
             plt.savefig('FinalJoint.pdf')
         plt.show()
 
 plt.figure()
-plt.hist(charge_to_mass, edgecolor = 'black', bins = 22, range=(-0.003,0))
-plt.title('Charge to Mass Histogram', fontsize = 15)
-plt.xlabel('Charge-to-Mass Ratio (C/kg)', fontsize = 13)
-plt.ylabel('Frequency', fontsize = 13)
+plt.hist(charge_to_mass, edgecolor = 'black', bins = histbins, range=(-0.003,0))
+plt.title('Charge to Mass Histogram')
+plt.xlabel('Charge-to-Mass Ratio $\gamma$ (C/kg)')
+plt.ylabel('Frequency')
 if savehist == True:
     plt.savefig('FinalHistogram.pdf')
 else:
     pass
 plt.show()
+
+rf_height_list = []
+for i in range(len(rf_height_vals)):
+    rf_height_list.append(float(rf_height_vals[i]))
+
+print('Mean = ' + str(sts.mean(charge_to_mass)))
+print('Median = ' + str(sts.median(charge_to_mass)))
+print('Standard Deviation = ' + str(sts.stdev(charge_to_mass)))
+print('Average RF Height = ' + str(sts.mean(rf_height_list)))
+print('Median RF Height = ' + str(sts.median(rf_height_list)))
+print(rf_height_list)
