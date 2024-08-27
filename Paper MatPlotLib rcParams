@@ -1,0 +1,9 @@
+import matplotlib.pyplot as plt
+
+plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
+plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['axes.grid'] = True  # Turn on gridlines
+plt.rcParams['grid.color'] = 'gray'  # Set the color of the gridlines
+plt.rcParams['grid.linestyle'] = '--'  # Set the style of the gridlines (e.g., dashed)
+plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
+
