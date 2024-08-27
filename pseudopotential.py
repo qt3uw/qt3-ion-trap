@@ -6,6 +6,7 @@ from scipy.optimize import minimize_scalar, minimize
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+from matplotlib.patches import Rectangle
 from numpy import linalg as LA
 
 def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
@@ -22,6 +23,7 @@ class PseudopotentialPlanarTrap:
     charge_to_mass: float = 6.8E-4
     freq_rf: float = 60.
     gap_width: float = 2.E-3
+    shuttle_width: float = 16.491E-3
 
     @property
     def a(self):
@@ -318,14 +320,49 @@ class PseudopotentialPlanarTrap:
         phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
         fig, ax = plt.subplots(1, 1)
         color = 'yellowgreen' if v_ac >= 0 else 'midnightblue'
-        ax.streamplot(x, y, -E_x, -E_y, density=2, color=color)
+        ax.streamplot(x, y, -E_x, -E_y, density= (3, 2), color=color, arrowstyle='fancy')
         # ax.quiver(x, y, -E_x, -E_y)
         ax.pcolormesh(x, y, phi_ac, cmap='viridis')
-        fig.tight_layout()
-        plt.xlim(x_range[0], x_range[1])
-        plt.ylim(y_range[0], y_range[1])
+        elec_a = Rectangle((0, 0), self.a, -1E-3,facecolor='lightblue', edgecolor='blue')
+        elec_b = Rectangle((self.a, 0),self.b, -1E-3,  facecolor='lightblue', edgecolor='blue')
+        elec_c = Rectangle((-self.c, 0),self.c, -1E-3,  facecolor='lightblue', edgecolor='blue')
+        elec_d = Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width,  -1E-3, facecolor='lightblue',
+                           edgecolor='blue')
+        elec_e = Rectangle((self.a + self.b, 0), self.shuttle_width, -1E-3, facecolor='lightblue', edgecolor='blue')
+        facecolor = 'yellow'
+        edgecolor = 'gold'
+        electrode_height = .5E-3
+        dielec_height = .5E-3
+        dielec_facecolor = 'slateblue'
+        dielec_edgecolor = 'rebeccapurple'
+        if include_gaps:
+            ax.add_patch(Rectangle((self.gap_width / 2, 0), self.central_electrode_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a - self.gap_width/2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+            ax.add_patch(Rectangle((- self.gap_width/2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+            ax.add_patch(Rectangle((self.a + self.gap_width/2, 0), self.ac_electrode_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a + self.b - self.gap_width / 2, 0), self.gap_width, -electrode_height,
+                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+            ax.add_patch(Rectangle((-self.ac_electrode_width - self.gap_width/2, 0), self.ac_electrode_width, -electrode_height, facecolor=facecolor,
+                                   edgecolor=edgecolor))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2, 0), self.gap_width,
+                                   -electrode_height, facecolor=dielec_facecolor,
+                                   edgecolor=dielec_edgecolor))
+            ax.add_patch(
+                Rectangle((-self.c - self.gap_width/2 - self.shuttle_width, 0), self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(
+                Rectangle((self.a + self.b + self.gap_width/2, 0), self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+        else:
+            ax.add_patch(Rectangle((0, 0), self.a, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a, 0), self.b, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((-self.c, 0), self.c, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
+                               edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a + self.b, 0),  self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+        plt.xlim(x_range[0]-2.E-3, x_range[1]+2.E-3)
+        plt.ylim(y_range[0] - 2.E-3, y_range[1])
         # plt.colorbar()
         plt.show()
+
         return
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 150., num=20), xrange=[-7.4E-3, 12.4E-3], xnum=100, include_gaps=True):
     fig, ax = plt.subplots(1, 1)
@@ -423,8 +460,8 @@ def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
     trap.v_dc = 100
-    compare_model_gaps_versus_no_gaps(trap)
+    # compare_model_gaps_versus_no_gaps(trap)
     # plot_trap_escape_vary_dc(trap, include_gaps = True)
     get_data()
-    # trap.plot_E_field(include_gaps=True, v_ac = -1000)
-    # trap.plot_E_field(include_gaps=True, v_ac= -1000)
+    trap.plot_E_field(include_gaps=False, v_ac = -1000)
+    trap.plot_E_field(include_gaps=True, v_ac= 1000)
