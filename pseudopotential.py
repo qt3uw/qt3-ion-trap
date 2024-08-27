@@ -364,18 +364,20 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None, include_g
 
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+    ax.plot(model_voltages, y0_model * 1.E3, label=r'Fitted Charge-to-mass: $\gamma_f =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
     trap.v_dc = meas_min[0]
     rf_null_meas = trap.grad_u_dc(trap.a / 2, meas_min[2]*10**-3, include_gaps=include_gaps)
     trap.charge_to_mass = -g/rf_null_meas
     print("c_t_m: " + str(trap.charge_to_mass))
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-
+    plt.rcParams["text.usetex"]=True
     ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
-    ax.plot(model_voltages, y0_model * 1.E3)
-    ax.plot(model_voltages, y0_meas * 1.E3)
+    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=5)
+    ax.plot(model_voltages, y0_meas * 1.E3, label=r'RF-null Charge-to-mass: $\gamma_n =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
     ax.set_xlabel('DC electrode voltage (V)')
-    ax.set_ylabel('ion height (mm)')
+    ax.set_ylabel('Ion height (mm)')
     ax.grid()
+    ax.legend()
     fig.suptitle(f'include_gaps={include_gaps}')
     return trap
 
