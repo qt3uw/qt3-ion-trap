@@ -315,11 +315,16 @@ class PseudopotentialPlanarTrap:
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
         E_x, E_y = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
+        phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
         fig, ax = plt.subplots(1, 1)
-        ax.streamplot(x, y, -E_x, -E_y, density=2)
+        color = 'yellowgreen' if v_ac >= 0 else 'midnightblue'
+        ax.streamplot(x, y, -E_x, -E_y, density=2, color=color)
+        # ax.quiver(x, y, -E_x, -E_y)
+        ax.pcolormesh(x, y, phi_ac, cmap='viridis')
         fig.tight_layout()
         plt.xlim(x_range[0], x_range[1])
         plt.ylim(y_range[0], y_range[1])
+        # plt.colorbar()
         plt.show()
         return
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 150., num=20), xrange=[-7.4E-3, 12.4E-3], xnum=100, include_gaps=True):
@@ -409,13 +414,17 @@ def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
     fig, ax = trap.plot_potential_contours(include_gaps=False, resolution=(512, 512), vmax=350)
     fig.suptitle('excluding gaps')
 
+    trap.plot_E_field(include_gaps=True, v_ac= 1000)
+    trap.plot_E_field(include_gaps=True, v_ac=-1000)
+
     plt.show()
 
 
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
     trap.v_dc = 100
-    # compare_model_gaps_versus_no_gaps(trap)
+    compare_model_gaps_versus_no_gaps(trap)
     # plot_trap_escape_vary_dc(trap, include_gaps = True)
     get_data()
-    trap.plot_E_field(include_gaps=False, v_ac = 1000)
+    # trap.plot_E_field(include_gaps=True, v_ac = -1000)
+    # trap.plot_E_field(include_gaps=True, v_ac= -1000)
