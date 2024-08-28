@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 
 import scipy.optimize
@@ -8,6 +9,15 @@ import matplotlib as mpl
 import numpy as np
 from matplotlib.patches import Rectangle
 from numpy import linalg as LA
+
+plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
+plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['axes.grid'] = True  # Turn on gridlines
+plt.rcParams['grid.color'] = 'gray'  # Set the color of the gridlines
+plt.rcParams['grid.linestyle'] = '--'  # Set the style of the gridlines (e.g., dashed)
+plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
+plt.rcParams['axes.labelsize'] = 13
+plt.rcParams['axes.titlesize'] = 15
 
 def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
     xs = np.linspace(cmin, cmax, num=num)
@@ -261,10 +271,8 @@ class PseudopotentialPlanarTrap:
 
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True):
+    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None):
         """
-
-
         :param yrange:
         :param num:
         :param x0:
@@ -281,23 +289,25 @@ class PseudopotentialPlanarTrap:
         u_dc = self.u_dc(x, y)
         u_ac = self.u_ac(x, y, include_gaps=include_gaps)
 
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         ax.plot(y * 1.E3, u_ac, label='psuedo')
+        ax.plot(y * 1.E3, u_ac * 50, label='psuedo x 50', color='k', linestyle='--')
         ax.plot(y * 1.E3, u_dc, label='dc')
         ax.plot(y * 1.E3, u_grav, label='gravity')
         ax.plot(y * 1.E3, u_ac + u_dc + u_grav, label='total')
+        ax.set_ylim([-10, np.max(u_ac + u_dc + u_grav)])
         fig.legend()
         ax.set_xlabel('y (mm)')
-        ax.grid()
+        ax.grid(True)
         ax.set_ylabel('potential energy / charge (V)')
         return fig, ax
 
-    def find_equilibrium_height(self, ystep=1.E-5, include_gaps=True):
+    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True):
         def merit_func(y):
             ys = np.linspace(y-ystep, y+ystep, num=3)
             xs = np.zeros_like(ys) + self.a / 2.
             return self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
-        res = minimize_scalar(merit_func, bounds=(1.E-4, 1.))
+        res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
         return res.x
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
@@ -310,19 +320,17 @@ class PseudopotentialPlanarTrap:
         self.v_dc = dc_initial
         return np.array(y0)
 
-    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, v_dc = 0, v_ac = 1500):
-        self.v_dc = v_dc
-        self.v_rf = v_ac
+    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, figsize=(3.5, 3)):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
         E_x, E_y = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
         phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
-        fig, ax = plt.subplots(1, 1)
-        color = 'yellowgreen' if v_ac >= 0 else 'midnightblue'
-        ax.streamplot(x, y, -E_x, -E_y, density= (3, 2), color=color, arrowstyle='fancy')
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        color = 'yellowgreen' if self.v_ac >= 0 else 'midnightblue'
+        ax.streamplot(x, y, -E_x, -E_y, density= (3, 2), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=0.5)
         # ax.quiver(x, y, -E_x, -E_y)
-        ax.pcolormesh(x, y, phi_ac, cmap='viridis')
+        cax = ax.pcolormesh(x, y, phi_ac, cmap='viridis')
         elec_a = Rectangle((0, 0), self.a, -1E-3,facecolor='lightblue', edgecolor='blue')
         elec_b = Rectangle((self.a, 0),self.b, -1E-3,  facecolor='lightblue', edgecolor='blue')
         elec_c = Rectangle((-self.c, 0),self.c, -1E-3,  facecolor='lightblue', edgecolor='blue')
@@ -360,19 +368,22 @@ class PseudopotentialPlanarTrap:
             ax.add_patch(Rectangle((self.a + self.b, 0),  self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
         plt.xlim(x_range[0]-2.E-3, x_range[1]+2.E-3)
         plt.ylim(y_range[0] - 2.E-3, y_range[1])
-        # plt.colorbar()
-        plt.show()
+        plt.colorbar(cax)
 
-        return
-def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 150., num=20), xrange=[-7.4E-3, 12.4E-3], xnum=100, include_gaps=True):
+        return fig, ax
+def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 200., num=20),
+                             xrange=[-7.4E-3, 12.4E-3], xnum=512, include_gaps=True, ystep=1.E-6):
     fig, ax = plt.subplots(1, 1)
     xs = np.linspace(xrange[0], xrange[1], num=xnum)
     y0s = []
     colors = get_sequential_colormap(len(dc_values))
     for i, v_dc in enumerate(dc_values):
         trap.v_dc = v_dc
-        y0s.append(trap.find_equilibrium_height(include_gaps))
-        ax.plot(xs * 1.E3, trap.u_total(xs, y0s[-1], include_gaps), label=f'{v_dc:.1f} V', color=colors[i])
+        y0s.append(trap.find_equilibrium_height(include_gaps=include_gaps))
+        y_lcl = np.linspace(y0s[-1] - ystep, y0s[-1] + ystep, num=3)
+        x_lcl, y_lcl = np.meshgrid(xs, y_lcl)
+        u = trap.u_total(x_lcl, y_lcl, include_gaps=include_gaps)
+        ax.plot(x_lcl[1, :] * 1.E3, u[1, :], label=f'{v_dc:.1f} V', color=colors[i])
     ax.grid()
     ax.set_xlabel('x (mm)')
     ax.set_ylabel('potential energy / charge at equilibrium height (V)')
@@ -437,31 +448,33 @@ def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None, include_g
     return trap
 
 def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
-    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=False)
-    fit_data(trap, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=True)
+    # trap_copy = copy.deepcopy(trap)
+    # fit_data(trap_copy, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=False)
+    # fit_data(trap_copy, ['charge_to_mass'], bounds=[(1.E-4, 1.E-2)], include_gaps=True)
 
     fig, ax = trap.plot_y_cuts(include_gaps=True)
     fig.suptitle('including gaps')
     fig, ax = trap.plot_y_cuts(include_gaps=False)
     fig.suptitle('ignoring gaps')
 
-    trap.plot_potential_at_surface()
-    fig, ax = trap.plot_potential_contours(include_gaps=True, vmax=350)
-    fig.suptitle('including gaps')
-    fig, ax = trap.plot_potential_contours(include_gaps=False, resolution=(512, 512), vmax=350)
-    fig.suptitle('excluding gaps')
-
-    trap.plot_E_field(include_gaps=True, v_ac= 1000)
-    trap.plot_E_field(include_gaps=True, v_ac=-1000)
+    # trap.plot_potential_at_surface()
+    # fig, ax = trap.plot_potential_contours(include_gaps=True, vmax=350)
+    # fig.suptitle('including gaps')
+    # fig, ax = trap.plot_potential_contours(include_gaps=False, resolution=(512, 512), vmax=350)
+    # fig.suptitle('excluding gaps')
+    # trap.plot_E_field(include_gaps=True, v_ac=1000)
+    # trap.plot_E_field(include_gaps=True, v_ac=-1000)
 
     plt.show()
 
 
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
-    trap.v_dc = 100
     # compare_model_gaps_versus_no_gaps(trap)
-    # plot_trap_escape_vary_dc(trap, include_gaps = True)
-    get_data()
-    trap.plot_E_field(include_gaps=False, v_ac = -1000)
-    trap.plot_E_field(include_gaps=True, v_ac= 1000)
+    # plot_trap_escape_vary_dc(trap, include_gaps=True)
+    # get_data()
+    trap.v_ac = 1000.
+    trap.plot_E_field(include_gaps=True)
+    trap.v_ac = -1000.
+    trap.plot_E_field(include_gaps=True)
+    plt.show()
