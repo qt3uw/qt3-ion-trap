@@ -74,9 +74,9 @@ def get_data(fname='MicromotionHeightFinalData/8-18_Trial11_data.txt'):
             data_list.append([float(value) for value in line.split(',')])
 
     # Convert the list to a NumPy array
-    rawdata = np.array(data_list)
+    rawdata0= np.array(data_list)
 
-    rawdata0 = np.array([[40, 0.78, 3.07], [45, 0.76, 3.09], [50, 0.73, 3.11], [55, 0.73, 3.13], [60, 0.68, 3.15],
+    rawdata = np.array([[40, 0.78, 3.07], [45, 0.76, 3.09], [50, 0.73, 3.11], [55, 0.73, 3.13], [60, 0.68, 3.15],
                         [65, 0.69, 3.2], [70, 0.66, 3.2], [75, 0.65, 3.22], [80, 0.61, 3.26], [85, 0.59, 3.28],
                         [90, 0.57, 3.33], [95, 0.54, 3.35], [100, 0.52, 3.37], [105, 0.51, 3.38], [110, 0.5, 3.42],
                         [115, 0.47, 3.45], [120, 0.45, 3.48], [125, 0.42, 3.53], [130, 0.4, 3.56], [135, 0.39, 3.58],
@@ -91,13 +91,13 @@ def get_data(fname='MicromotionHeightFinalData/8-18_Trial11_data.txt'):
     #Rought guess based on chart. Need more precise measurement from Cole.
     return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, meas_min
 
-def plot_height_fit(include_gaps=True):
+def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     trap = get_default_trap()
     parameters = ['charge_to_mass']
     bounds = [(1.E-4, 1.E-2)]
 
     dc_voltages, y0, yspread, meas_min = get_data()
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
     guesses = [trap.__dict__[param] for param in parameters]
 
     def merit_func(args):
@@ -114,28 +114,29 @@ def plot_height_fit(include_gaps=True):
 
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    ax.plot(model_voltages, y0_model * 1.E3, label=r'Fitted Charge-to-mass: $\gamma_f =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
+    ax.plot(model_voltages, y0_model * 1.E3, color='k', label='best fit')
     trap.v_dc = meas_min[0]
     rf_null_meas = trap.grad_u_dc(trap.a / 2, meas_min[2]*10**-3, include_gaps=include_gaps)
     trap.charge_to_mass = -g/rf_null_meas
     print("c_t_m: " + str(trap.charge_to_mass))
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    plt.rcParams["text.usetex"]=True
     ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
     plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=5)
-    ax.plot(model_voltages, y0_meas * 1.E3, label=r'RF-null Charge-to-mass: $\gamma_n =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
+    ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='rf null')
     ax.set_xlabel('DC electrode voltage (V)')
     ax.set_ylabel('Ion height (mm)')
-    ax.grid()
+    ax.grid(True)
     ax.legend()
-    fig.suptitle(f'include_gaps={include_gaps}')
+    fig.tight_layout()
+    fig.savefig('figures/fig2-height_fit.pdf')
+    # fig.suptitle(f'include_gaps={include_gaps}')
     return trap
 
 def plot_escape():
     trap = get_default_trap()
     fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 300., num=11), include_gaps=True)
     fig.tight_layout()
-    ax.set_ylabel('potential energy / charge (V)')
+    ax.set_ylabel('potential energy / charge (J/C)')
     ax.set_title(None)
     fig.savefig('figures/fig2-trap_escape.pdf')
 
@@ -145,7 +146,7 @@ def plot_escape():
 if __name__ == "__main__":
     # y_cuts_panel()
     # e_field_panel()
-    potential_energy_panel()
+    # potential_energy_panel()
     # plot_escape()
-    # plot_height_fit()
+    plot_height_fit(figsize=(2.5, 3.))
     plt.show()

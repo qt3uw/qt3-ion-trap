@@ -379,7 +379,7 @@ class PseudopotentialPlanarTrap:
         fig.legend()
         ax.set_xlabel('y (mm)')
         ax.grid(True)
-        ax.set_ylabel('potential energy / charge (V)')
+        ax.set_ylabel('potential energy / charge (J/C)')
         return fig, ax
 
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 320., num=16),
@@ -397,7 +397,7 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
         ax.plot(x_lcl[1, :] * 1.E3, u[1, :], label=f'{v_dc:.0f} V', color=colors[i])
     ax.grid(True)
     ax.set_xlabel('x (mm)')
-    ax.set_ylabel('potential energy / charge at equilibrium height (V)')
+    ax.set_ylabel('potential energy / charge (J/C)')
     fig.legend(bbox_to_anchor=(1, 1), fontsize=9)
     # figh, axh = plt.subplots(1, 1)
     # axh.plot(dc_values, y0s, marker='o', linestyle='None')
