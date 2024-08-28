@@ -248,9 +248,87 @@ class PseudopotentialPlanarTrap:
         figv.legend()
         return figv, axv
 
+    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True):
+        def merit_func(y):
+            ys = np.linspace(y-ystep, y+ystep, num=3)
+            xs = np.zeros_like(ys) + self.a / 2.
+            return self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
+        res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
+        return res.x
 
-    def plot_potential_contours(self, x_range=(-10E-3, 15E-3), y_range=(1.E-3, 6.E-3), resolution=(512, 512),
-                                fig=None, ax=None, ncountours=25, max_countour_level=250., include_gaps=True, **kwargs):
+    def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
+        dc_initial = self.v_dc
+        y0 = []
+        for v_dc in dc_voltages:
+            self.v_dc = v_dc
+            y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
+
+        self.v_dc = dc_initial
+        return np.array(y0)
+
+    def draw_electrodes(self, ax, include_gaps=True):
+        facecolor = 'yellow'
+        edgecolor = 'gold'
+        electrode_height = .5E-3
+        dielec_height = .5E-3
+        dielec_facecolor = 'slateblue'
+        dielec_edgecolor = 'rebeccapurple'
+        if include_gaps:
+            ax.add_patch(
+                Rectangle((self.gap_width / 2, 0), self.central_electrode_width, -electrode_height, facecolor=facecolor,
+                          edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a - self.gap_width / 2, 0), self.gap_width, -electrode_height,
+                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+            ax.add_patch(
+                Rectangle((- self.gap_width / 2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor,
+                          edgecolor=dielec_edgecolor))
+            ax.add_patch(Rectangle((self.a + self.gap_width / 2, 0), self.ac_electrode_width, -electrode_height,
+                                   facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a + self.b - self.gap_width / 2, 0), self.gap_width, -electrode_height,
+                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+            ax.add_patch(Rectangle((-self.ac_electrode_width - self.gap_width / 2, 0), self.ac_electrode_width,
+                                   -electrode_height, facecolor=facecolor,
+                                   edgecolor=edgecolor))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2, 0), self.gap_width,
+                                   -electrode_height, facecolor=dielec_facecolor,
+                                   edgecolor=dielec_edgecolor))
+            ax.add_patch(
+                Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, 0), self.shuttle_width, -electrode_height,
+                          facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(
+                Rectangle((self.a + self.b + self.gap_width / 2, 0), self.shuttle_width, -electrode_height,
+                          facecolor=facecolor, edgecolor=edgecolor))
+        else:
+            ax.add_patch(Rectangle((0, 0), self.a, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a, 0), self.b, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(Rectangle((-self.c, 0), self.c, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(
+                Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
+                          edgecolor=edgecolor))
+            ax.add_patch(Rectangle((self.a + self.b, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
+                                   edgecolor=edgecolor))
+        return ax
+
+    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, figsize=(3.5, 3)):
+        x = np.linspace(x_range[0], x_range[1], num=resolution[0])
+        y = np.linspace(y_range[0], y_range[1], num=resolution[1])
+        x, y = np.meshgrid(x, y)
+        E_x, E_y = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
+        phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        color = 'yellowgreen' if self.v_rf >= 0 else 'midnightblue'
+        ax.streamplot(x, y, -E_x, -E_y, density= (2, 1), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=0.5)
+        # ax.quiver(x, y, -E_x, -E_y)
+        cax = ax.pcolormesh(x, y, phi_ac, cmap='viridis')
+        self.draw_electrodes(ax, include_gaps=include_gaps)
+        ax.set_xlim(x_range[0], x_range[1])
+        ax.set_ylim(y_range[0] - 0.5E-3, y_range[1])
+        plt.colorbar(cax)
+        return fig, ax
+
+    def plot_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
+                                fig=None, ax=None, ncountours=25, max_countour_level=250., figsize=(3.5, 3),
+                                **kwargs):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
@@ -261,14 +339,16 @@ class PseudopotentialPlanarTrap:
         extent = [x_range[0], x_range[1], y_range[0], y_range[1]]
         levels = np.linspace(0., max_countour_level, num=ncountours)
         if fig is None:
-            fig, ax = plt.subplots(1, 1, figsize=(6.5, 3))
-            cs = ax.imshow(np.flipud(u), extent=[ex * 1.E3 for ex in extent], **kwargs)
-            ax.contour(u, levels=levels, colors='k', extent=[ex * 1.E3 for ex in extent])
-            ax.set_xlabel('x (mm)')
-            ax.set_ylabel('height (mm)')
-            ax.set_title(f'potential energy / charge (V)\n center electrode at {self.v_dc:.1f} V')
-            fig.colorbar(cs)
-
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
+        ax.set_xlabel('x (mm)')
+        ax.set_ylabel('height (mm)')
+        ax.set_title(f'potential energy / charge (V)\n center electrode at {self.v_dc:.1f} V')
+        cax = ax.pcolormesh(x, y, u, cmap='viridis', vmax=max_countour_level)
+        self.draw_electrodes(ax, include_gaps=include_gaps)
+        ax.contour(u, levels=levels, colors='k', extent=extent, linewidth=0.5)
+        ax.set_xlim(x_range[0], x_range[1])
+        ax.set_ylim(y_range[0] - 0.5E-3, y_range[1])
+        plt.colorbar(cax)
         return fig, ax
 
     def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None):
@@ -302,78 +382,9 @@ class PseudopotentialPlanarTrap:
         ax.set_ylabel('potential energy / charge (V)')
         return fig, ax
 
-    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True):
-        def merit_func(y):
-            ys = np.linspace(y-ystep, y+ystep, num=3)
-            xs = np.zeros_like(ys) + self.a / 2.
-            return self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
-        res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
-        return res.x
-
-    def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
-        dc_initial = self.v_dc
-        y0 = []
-        for v_dc in dc_voltages:
-            self.v_dc = v_dc
-            y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
-
-        self.v_dc = dc_initial
-        return np.array(y0)
-
-    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, figsize=(3.5, 3)):
-        x = np.linspace(x_range[0], x_range[1], num=resolution[0])
-        y = np.linspace(y_range[0], y_range[1], num=resolution[1])
-        x, y = np.meshgrid(x, y)
-        E_x, E_y = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
-        phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
-        color = 'yellowgreen' if self.v_ac >= 0 else 'midnightblue'
-        ax.streamplot(x, y, -E_x, -E_y, density= (3, 2), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=0.5)
-        # ax.quiver(x, y, -E_x, -E_y)
-        cax = ax.pcolormesh(x, y, phi_ac, cmap='viridis')
-        elec_a = Rectangle((0, 0), self.a, -1E-3,facecolor='lightblue', edgecolor='blue')
-        elec_b = Rectangle((self.a, 0),self.b, -1E-3,  facecolor='lightblue', edgecolor='blue')
-        elec_c = Rectangle((-self.c, 0),self.c, -1E-3,  facecolor='lightblue', edgecolor='blue')
-        elec_d = Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width,  -1E-3, facecolor='lightblue',
-                           edgecolor='blue')
-        elec_e = Rectangle((self.a + self.b, 0), self.shuttle_width, -1E-3, facecolor='lightblue', edgecolor='blue')
-        facecolor = 'yellow'
-        edgecolor = 'gold'
-        electrode_height = .5E-3
-        dielec_height = .5E-3
-        dielec_facecolor = 'slateblue'
-        dielec_edgecolor = 'rebeccapurple'
-        if include_gaps:
-            ax.add_patch(Rectangle((self.gap_width / 2, 0), self.central_electrode_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((self.a - self.gap_width/2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
-            ax.add_patch(Rectangle((- self.gap_width/2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
-            ax.add_patch(Rectangle((self.a + self.gap_width/2, 0), self.ac_electrode_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((self.a + self.b - self.gap_width / 2, 0), self.gap_width, -electrode_height,
-                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
-            ax.add_patch(Rectangle((-self.ac_electrode_width - self.gap_width/2, 0), self.ac_electrode_width, -electrode_height, facecolor=facecolor,
-                                   edgecolor=edgecolor))
-            ax.add_patch(Rectangle((-self.c - self.gap_width / 2, 0), self.gap_width,
-                                   -electrode_height, facecolor=dielec_facecolor,
-                                   edgecolor=dielec_edgecolor))
-            ax.add_patch(
-                Rectangle((-self.c - self.gap_width/2 - self.shuttle_width, 0), self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(
-                Rectangle((self.a + self.b + self.gap_width/2, 0), self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-        else:
-            ax.add_patch(Rectangle((0, 0), self.a, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((self.a, 0), self.b, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((-self.c, 0), self.c, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
-                               edgecolor=edgecolor))
-            ax.add_patch(Rectangle((self.a + self.b, 0),  self.shuttle_width, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-        plt.xlim(x_range[0]-2.E-3, x_range[1]+2.E-3)
-        plt.ylim(y_range[0] - 2.E-3, y_range[1])
-        plt.colorbar(cax)
-
-        return fig, ax
-def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 200., num=20),
-                             xrange=[-7.4E-3, 12.4E-3], xnum=512, include_gaps=True, ystep=1.E-6):
-    fig, ax = plt.subplots(1, 1)
+def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 320., num=16),
+                             xrange=[-7.4E-3, 12.4E-3], xnum=512, include_gaps=True, ystep=1.E-6, figsize=(3.5, 3)):
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
     xs = np.linspace(xrange[0], xrange[1], num=xnum)
     y0s = []
     colors = get_sequential_colormap(len(dc_values))
@@ -383,16 +394,17 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
         y_lcl = np.linspace(y0s[-1] - ystep, y0s[-1] + ystep, num=3)
         x_lcl, y_lcl = np.meshgrid(xs, y_lcl)
         u = trap.u_total(x_lcl, y_lcl, include_gaps=include_gaps)
-        ax.plot(x_lcl[1, :] * 1.E3, u[1, :], label=f'{v_dc:.1f} V', color=colors[i])
-    ax.grid()
+        ax.plot(x_lcl[1, :] * 1.E3, u[1, :], label=f'{v_dc:.0f} V', color=colors[i])
+    ax.grid(True)
     ax.set_xlabel('x (mm)')
     ax.set_ylabel('potential energy / charge at equilibrium height (V)')
-    fig.legend()
-    figh, axh = plt.subplots(1, 1)
-    axh.plot(dc_values, y0s, marker='o', linestyle='None')
-    axh.set_xlabel('DC electrode voltage (V)')
-    axh.set_ylabel('equilibrium height (mm)')
-    plt.show()
+    fig.legend(bbox_to_anchor=(1, 1), fontsize=9)
+    # figh, axh = plt.subplots(1, 1)
+    # axh.plot(dc_values, y0s, marker='o', linestyle='None')
+    # axh.set_xlabel('DC electrode voltage (V)')
+    # axh.set_ylabel('equilibrium height (mm)')
+    # plt.show()
+    return fig, ax
 
 def get_data():
     rawdata = np.array([[40, 0.78, 3.07], [45, 0.76, 3.09], [50, 0.73, 3.11], [55, 0.73, 3.13], [60, 0.68, 3.15],
@@ -410,42 +422,6 @@ def get_data():
     #Rought guess based on chart. Need more precise measurement from Cole.
     return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, meas_min
 
-
-def fit_data(trap: PseudopotentialPlanarTrap, parameters, bounds=None, include_gaps=False):
-    dc_voltages, y0, yspread, meas_min = get_data()
-    fig, ax = plt.subplots(1, 1)
-    guesses = [trap.__dict__[param] for param in parameters]
-
-    def merit_func(args):
-        for i, key in enumerate(parameters):
-            trap.__dict__[key] = args[i]
-        y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
-        return np.sum((y0 - y0_model) ** 2)
-
-    res = minimize(merit_func, guesses, bounds=bounds)
-
-    for i, param in enumerate(parameters):
-        print(f'{param}: {res.x[i]}')
-        trap.__dict__[param] = res.x[i]
-
-    model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
-    y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    ax.plot(model_voltages, y0_model * 1.E3, label=r'Fitted Charge-to-mass: $\gamma_f =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
-    trap.v_dc = meas_min[0]
-    rf_null_meas = trap.grad_u_dc(trap.a / 2, meas_min[2]*10**-3, include_gaps=include_gaps)
-    trap.charge_to_mass = -g/rf_null_meas
-    print("c_t_m: " + str(trap.charge_to_mass))
-    y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    plt.rcParams["text.usetex"]=True
-    ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
-    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=5)
-    ax.plot(model_voltages, y0_meas * 1.E3, label=r'RF-null Charge-to-mass: $\gamma_n =\ $' + str(np.round(trap.charge_to_mass * 10**4, decimals=3)) + r'$\times\ 10^{-4}\ C/kg$')
-    ax.set_xlabel('DC electrode voltage (V)')
-    ax.set_ylabel('Ion height (mm)')
-    ax.grid()
-    ax.legend()
-    fig.suptitle(f'include_gaps={include_gaps}')
-    return trap
 
 def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
     # trap_copy = copy.deepcopy(trap)
@@ -473,8 +449,9 @@ if __name__ == "__main__":
     # compare_model_gaps_versus_no_gaps(trap)
     # plot_trap_escape_vary_dc(trap, include_gaps=True)
     # get_data()
-    trap.v_ac = 1000.
-    trap.plot_E_field(include_gaps=True)
-    trap.v_ac = -1000.
-    trap.plot_E_field(include_gaps=True)
+    # trap.v_rf = 1000.
+    # trap.plot_E_field(include_gaps=True)
+    # trap.v_rf = -1000.
+    # trap.plot_E_field(include_gaps=True)
+    # trap.plot_potential_contours()
     plt.show()
