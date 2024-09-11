@@ -13,7 +13,7 @@ plt.rcParams['axes.labelsize'] = 13
 plt.rcParams['axes.titlesize'] = 15
 
 # Define file folder and parameters, 19 is great data, so is 8
-path = 'C:\\Users\\Wole1\\PycharmProjects\\pythonProject\\FinalData'   # Selects the folder to pull all the data from
+path = 'Height Adjusted Final Data'   # Selects the folder to pull all the data from
 files = os.listdir(path)
 pointstaken = 12   # The lowest n points for the minimized voltage bestfit
 histbins = 22
