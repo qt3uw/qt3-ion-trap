@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 from matplotlib.patches import Rectangle
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyArrowPatch
 from numpy import linalg as LA
 
 plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
@@ -16,8 +19,10 @@ plt.rcParams['axes.grid'] = True  # Turn on gridlines
 plt.rcParams['grid.color'] = 'gray'  # Set the color of the gridlines
 plt.rcParams['grid.linestyle'] = '--'  # Set the style of the gridlines (e.g., dashed)
 plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
-plt.rcParams['axes.labelsize'] = 13
-plt.rcParams['axes.titlesize'] = 15
+plt.rcParams['axes.labelsize'] = 10
+plt.rcParams['xtick.labelsize'] = 10
+plt.rcParams['ytick.labelsize'] = 10
+plt.rcParams['axes.titlesize'] = 10
 
 def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
     xs = np.linspace(cmin, cmax, num=num)
@@ -309,21 +314,80 @@ class PseudopotentialPlanarTrap:
                                    edgecolor=edgecolor))
         return ax
 
-    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, figsize=(3.5, 3)):
+    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, normalized = True, figsize=(10, 6)):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
-        E_x, E_y = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
-        phi_ac = self.phi_ac(x, y) if include_gaps else self.phi_ac_with_gaps(x, y)
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
-        color = 'yellowgreen' if self.v_rf >= 0 else 'midnightblue'
-        ax.streamplot(x, y, -E_x, -E_y, density= (2, 1), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=0.5)
-        # ax.quiver(x, y, -E_x, -E_y)
-        cax = ax.pcolormesh(x, y, phi_ac, cmap='viridis')
-        self.draw_electrodes(ax, include_gaps=include_gaps)
-        ax.set_xlim(x_range[0], x_range[1])
-        ax.set_ylim(y_range[0] - 0.5E-3, y_range[1])
-        plt.colorbar(cax)
+        E_x0, E_y0 = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
+        if normalized:
+            E_x0 = E_x0 / np.sqrt(E_x0**2 + E_y0**2)
+            E_y0 = E_y0 / np.sqrt(E_x0**2 + E_y0**2)
+        self.v_rf = -self.v_rf
+        E_x1, E_y1 = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
+        if normalized:
+            E_x1 = E_x1 / np.sqrt(E_x1 ** 2 + E_y1 ** 2)
+            E_y1 = E_y1 / np.sqrt(E_x1 ** 2 + E_y1 ** 2)
+        self.v_rf = -self.v_rf
+        phi_ac0 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
+        self.v_rf = -self.v_rf
+        phi_ac1 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
+        self.v_rf = -self.v_rf
+        fig, ax = plt.subplots(1, 2, figsize=figsize, layout="compressed")
+        ticksx = np.array([-0.006, -0.004, -0.002, 0.00, 0.002, 0.004, 0.006, 0.008, 0.010])
+        ax[0].set_xticks(ticks=ticksx, labels=10 ** 3 * ticksx)
+        ax[1].set_xticks(ticks=ticksx, labels=10 ** 3 * ticksx)
+        ticksy = np.array([0.000, 0.002, 0.004, 0.006, 0.008, 0.010])
+        ax[0].set_yticks(ticks=ticksy, labels=10 ** 3 * ticksy)
+        fig.supxlabel('x (mm)')
+        fig.supylabel('y (mm)')
+        color = 'yellowgreen'
+        ax[0].streamplot(x, y, -E_x0, -E_y0, density= (.75, .75), color=color, arrowstyle='fancy', linewidth=1.25, arrowsize=1)
+        ax[1].streamplot(x, y, -E_x1, -E_y1, density=(.75, .75), color=color, arrowstyle='fancy', linewidth=1.25,
+                         arrowsize=1)
+        cax = ax[0].pcolormesh(x, y, phi_ac0, cmap='twilight_r',vmin=np.minimum(-self.v_rf,self.v_rf) ,vmax=np.maximum(-self.v_rf,self.v_rf), rasterized=True)
+        cax2 = ax[1].pcolormesh(x, y, phi_ac1, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
+                         vmax=np.maximum(-self.v_rf, self.v_rf), rasterized=True)
+        self.draw_electrodes(ax[0], include_gaps=include_gaps)
+        self.draw_electrodes(ax[1], include_gaps=include_gaps)
+        ax[0].set_xlim(x_range[0], x_range[1])
+        plt.setp(ax[1].get_yticklabels(), visible=False)
+        ax[1].set_xlim(x_range[0], x_range[1])
+        ax[0].set_ylim(y_range[0] - 0.5E-3, y_range[1])
+        ax[1].set_ylim(y_range[0] - 0.5E-3, y_range[1])
+        inset_x = [self.a / 2 - .0015, self.a / 2 + .0015]
+        inset_y = [0.00375-.001, 0.00575 + .0015]
+        ax_inset_0 = ax[0].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0],inset_x[1]], ylim=[inset_y[0],inset_y[1]], xticklabels=[], yticklabels=[])
+        ax_inset_1 = ax[1].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0],inset_x[1]], ylim=[inset_y[0],inset_y[1]], xticklabels=[], yticklabels=[])
+        ax[0].indicate_inset_zoom(ax_inset_0, edgecolor="yellow")
+        ax[1].indicate_inset_zoom(ax_inset_1, edgecolor="yellow")
+        ax_inset_0.tick_params(color='yellow', labelcolor='yellow')
+        ax_inset_1.tick_params(color='yellow', labelcolor='yellow')
+        x_inset = np.linspace(inset_x[0],inset_x[1], num= 15)
+        y_inset = np.linspace(inset_y[0],inset_y[1], num= 8)
+        x_inset, y_inset = np.meshgrid(x_inset, y_inset)
+        E_x_inset0, E_y_inset0 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset, y_inset)
+        if normalized:
+            E_x_inset0 = E_x_inset0 / np.sqrt(E_x_inset0 ** 2 + E_y_inset0 ** 2)
+            E_y_inset0 = E_y_inset0 / np.sqrt(E_x_inset0 ** 2 + E_y_inset0 ** 2)
+        self.v_rf = -self.v_rf
+        E_x_inset1, E_y_inset1 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset, y_inset)
+        if normalized:
+            E_x_inset1 = E_x_inset1 / np.sqrt(E_x_inset1 ** 2 + E_y_inset1 ** 2)
+            E_y_inset1 = E_y_inset1 / np.sqrt(E_x_inset1 ** 2 + E_y_inset1 ** 2)
+        # ax_inset_0.streamplot(x_inset, y_inset, -E_x_inset0, -E_y_inset0, density= (.4, .4), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=.75)
+        # ax_inset_1.streamplot(x_inset, y_inset, -E_x_inset1, -E_y_inset1, density=(.4, .4), color=color, arrowstyle='fancy',
+        #               linewidth=0.5, arrowsize=0.75)
+        self.v_rf = -self.v_rf
+        cax_2 = ax_inset_0.pcolormesh(x, y, phi_ac0, cmap='twilight_r',vmin=np.minimum(-self.v_rf,self.v_rf) ,vmax=np.maximum(-self.v_rf,self.v_rf))
+        self.v_rf = -self.v_rf
+        cax_2 = ax_inset_1.pcolormesh(x, y, phi_ac1, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
+                              vmax=np.maximum(-self.v_rf, self.v_rf))
+        self.v_rf = -self.v_rf
+        ax_inset_0.quiver(x_inset, y_inset, -E_x_inset0, -E_y_inset0, color=color, scale = 90000000, scale_units = 'x', width=0.011)
+        ax_inset_1.quiver(x_inset, y_inset, -E_x_inset1, -E_y_inset1, color=color, pivot='tip', scale = 90000000, scale_units = 'x', width=0.011)
+        clb = fig.colorbar(mappable = cax, location='top', ax = ax)
+        # fig.savefig('figures/Robert Figures/e_fields.pdf')
+        # ax.quiver(x, y, -E_x, -E_y, color=color)
         return fig, ax
 
     def plot_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
@@ -343,7 +407,7 @@ class PseudopotentialPlanarTrap:
         ax.set_xlabel('x (mm)')
         ax.set_ylabel('height (mm)')
         ax.set_title(f'potential energy / charge (V)\n center electrode at {self.v_dc:.1f} V')
-        cax = ax.pcolormesh(x, y, u, cmap='viridis', vmax=max_countour_level)
+        cax = ax.pcolormesh(x, y, u, cmap='viridis', vmax=max_countour_level, rasterized=True)
         self.draw_electrodes(ax, include_gaps=include_gaps)
         ax.contour(u, levels=levels, colors='k', extent=extent, linewidth=0.5)
         ax.set_xlim(x_range[0], x_range[1])

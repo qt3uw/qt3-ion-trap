@@ -55,24 +55,24 @@ def y_cuts_panel():
 
 def e_field_panel():
     trap = get_default_trap()
-    figp, axp = trap.plot_E_field(include_gaps=True, figsize=(3.5, 3), resolution=(256, 256))
-    figp.tight_layout()
-    trap.v_rf = -trap.v_rf
-    fign, axn = trap.plot_E_field(include_gaps=True, figsize=(3.5, 3), resolution=(256, 256))
-    fign.tight_layout()
-    for a in [axp, axn]:
-        xticks = a.get_xticks()
-        yticks = a.get_yticks()
-        a.set_xticklabels([f'{tick * 1000:.0f}' for tick in xticks])
-        a.set_yticklabels([f'{tick * 1000:.0f}' for tick in yticks])
-        a.set_xlabel('x (mm)')
-        a.set_ylabel('y (mm)')
-    figp.savefig('figures/fig2-efield_positive.pdf')
-    fign.savefig('figures/fig2-efield_negative.pdf')
+    figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
+                                  resolution=(250, 250))
+    # figp.tight_layout()
+    # trap.v_rf = -trap.v_rf
+    # fign, axn = trap.plot_E_field(include_gaps=True, figsize=(3.5, 3), resolution=(256, 256))
+    # fign.tight_layout()
+    # for a in axp:
+    #     xticks = a.get_xticks()
+    #     yticks = a.get_yticks()
+    #     a.set_xticklabels([f'{tick * 1000:.0f}' for tick in xticks])
+    #     a.set_yticklabels([f'{tick * 1000:.0f}' for tick in yticks])
+    #     a.set_xlabel('x (mm)')
+    #     a.set_ylabel('y (mm)')
+    figp.savefig('figures/fig2-efield.pdf')
 
 def potential_energy_panel():
     trap = get_default_trap()
-    fig, ax = trap.plot_potential_contours(include_gaps=True, figsize=(3.5, 3), max_countour_level=100, ncountours=40,
+    fig, ax = trap.plot_potential_contours(include_gaps=True, figsize=(3.5, 3), max_countour_level=150, ncountours=40,
                                            resolution=(256, 256))
     for a in [ax]:
         xticks = a.get_xticks()
@@ -124,6 +124,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
 
     # Calculate charge to mass from rf_null position and plot data versus model given that value
     trap.v_dc = v_min
+    print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
     gradient_at_null = (trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) / delta_y_gradient_calc#compute_expression(y_min)
     trap.charge_to_mass = -g / gradient_at_null
@@ -177,9 +178,9 @@ def plot_escape():
 
 
 if __name__ == "__main__":
-    y_cuts_panel()
-    e_field_panel()
-    potential_energy_panel()
+    # y_cuts_panel()
+    # e_field_panel()
+    # potential_energy_panel()
     plot_escape()
     plot_height_fit(figsize=(2.5, 3.), include_gaps=True)
     plt.show()
