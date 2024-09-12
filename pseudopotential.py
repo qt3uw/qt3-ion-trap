@@ -219,7 +219,7 @@ class PseudopotentialPlanarTrap:
         else:
             return (self.v_dc / np.pi) * (np.arctan((self.a - x) / y) - np.arctan(((- x) / y)))
     def grad_u_dc(self, x, y, include_gaps = True):
-        return ((self.v_dc * (-((self.x2(include_gaps=include_gaps) - x) * 1) / ((((self.x2(include_gaps=include_gaps) - x) * 1) ** 2 / (y * 1) ** 2 + 1) * (y * 1) ** 2) - (x * 1) / ((((x * 1) / (y * 1) - (self.x1(include_gaps) * 1)) ** 2 +1) * (y * 1) ** 2))) /np.pi)
+        return -self.v_dc * ((0.001 - x) / ((1 + (0.001 - x) ** 2 / y ** 2) * y ** 2) - (0.004175 - x) / ((1 + (0.004175 - x) ** 2 / y ** 2) * y ** 2)) / np.pi
     def u_gravity(self, x, y):
         """
         Returns gravitational potential, divided by the charge to mass ratio
