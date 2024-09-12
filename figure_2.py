@@ -19,6 +19,11 @@ plt.rcParams['axes.titlesize'] = 10
 
 
 def compute_expression(y):
+    """
+    The expression that Cole used to compute charge to mass
+    :param y:
+    :return:
+    """
     # Define constants
     A = 0.000180573
     B = 0.00487685
@@ -38,7 +43,7 @@ def get_default_trap():
     trap = PseudopotentialPlanarTrap()
     trap.v_rf = 75 * 50 * 0.5
     trap.v_dc = 209.
-    trap.charge_to_mass = 2.1E-3
+    trap.charge_to_mass = 1.08E-3
     return trap
 
 def y_cuts_panel():
@@ -119,9 +124,10 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
 
     # Calculate charge to mass from rf_null position and plot data versus model given that value
     trap.v_dc = v_min
-    gradient_at_null = compute_expression(y_min)
+    delta_y_gradient_calc = 1.E-6
+    gradient_at_null = (trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) / delta_y_gradient_calc#compute_expression(y_min)
     trap.charge_to_mass = -g / gradient_at_null
-    print("c_t_m: " + str(trap.charge_to_mass))
+    print("q/m from rf null: " + str(trap.charge_to_mass))
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
     ax.plot(model_voltages, y0_model * 1.E3, color='k', label='rf null')
@@ -135,7 +141,6 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
             trap.__dict__[key] = args[i]
         y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
         l2 = np.sum((y0 - y0_model) ** 2)
-        print(l2)
         return l2
 
     res = minimize(merit_func, guesses, bounds=bounds)
@@ -171,12 +176,10 @@ def plot_escape():
     fig.savefig('figures/fig2-trap_escape.pdf')
 
 
-
-
 if __name__ == "__main__":
-    # y_cuts_panel()
-    # e_field_panel()
-    # potential_energy_panel()
-    # plot_escape()
+    y_cuts_panel()
+    e_field_panel()
+    potential_energy_panel()
+    plot_escape()
     plot_height_fit(figsize=(2.5, 3.), include_gaps=True)
     plt.show()
