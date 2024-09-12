@@ -145,7 +145,7 @@ for file_name in files:
 
 
     y_value_meters = RF_height * 0.001  # Replace with the desired value of y (m-->mm)
-    c2mval = (-9.80665 / compute_expression(minvolt_raw, y_value))
+    c2mval = (-9.80665 / compute_expression(minvolt_raw, y_value_meters))
     c2mval_float = float(np.asarray(c2mval))
     charge_to_mass.append(c2mval_float)
 
