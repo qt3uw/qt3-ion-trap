@@ -333,11 +333,6 @@ class PseudopotentialPlanarTrap:
         phi_ac1 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
         self.v_rf = -self.v_rf
         fig, ax = plt.subplots(1, 2, figsize=figsize, layout="compressed")
-        ticksx = np.array([-0.006, -0.004, -0.002, 0.00, 0.002, 0.004, 0.006, 0.008, 0.010])
-        ax[0].set_xticks(ticks=ticksx, labels=10 ** 3 * ticksx)
-        ax[1].set_xticks(ticks=ticksx, labels=10 ** 3 * ticksx)
-        ticksy = np.array([0.000, 0.002, 0.004, 0.006, 0.008, 0.010])
-        ax[0].set_yticks(ticks=ticksy, labels=10 ** 3 * ticksy)
         fig.supxlabel('x (mm)')
         fig.supylabel('y (mm)')
         color = 'yellowgreen'
@@ -360,6 +355,13 @@ class PseudopotentialPlanarTrap:
         ax_inset_1 = ax[1].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0],inset_x[1]], ylim=[inset_y[0],inset_y[1]], xticklabels=[], yticklabels=[])
         ax[0].indicate_inset_zoom(ax_inset_0, edgecolor="yellow")
         ax[1].indicate_inset_zoom(ax_inset_1, edgecolor="yellow")
+
+        for a in ax:
+            xticks = a.get_xticks()
+            yticks = a.get_yticks()
+            a.set_xticklabels([f'{tick * 1000:.0f}' for tick in xticks])
+            a.set_yticklabels([f'{tick * 1000:.0f}' for tick in yticks])
+
         ax_inset_0.tick_params(color='yellow', labelcolor='yellow')
         ax_inset_1.tick_params(color='yellow', labelcolor='yellow')
         x_inset = np.linspace(inset_x[0],inset_x[1], num= 15)
@@ -390,7 +392,7 @@ class PseudopotentialPlanarTrap:
         # ax.quiver(x, y, -E_x, -E_y, color=color)
         return fig, ax
 
-    def plot_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
+    def plot_rf_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
                                 fig=None, ax=None, ncountours=25, max_countour_level=250., figsize=(3.5, 3),
                                 **kwargs):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
@@ -398,8 +400,8 @@ class PseudopotentialPlanarTrap:
         x, y = np.meshgrid(x, y)
         # u = self.u_gap(x, y)[0] + self.u_gap(x, y)[1] + self.u_gap(x, y)[2] + self.u_gap(x, y)[3]
         # u = self.u_dc(x, y) + self.u_ac(x, y)
-        u = self.u_total(x, y, include_gaps=include_gaps)
-
+        # u = self.u_total(x, y, include_gaps=include_gaps)
+        u = self.u_ac(x, y, include_gaps=include_gaps)
         extent = [x_range[0], x_range[1], y_range[0], y_range[1]]
         levels = np.linspace(0., max_countour_level, num=ncountours)
         if fig is None:

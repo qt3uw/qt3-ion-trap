@@ -15,40 +15,38 @@ plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
 plt.rcParams['axes.labelsize'] = 10
 plt.rcParams['xtick.labelsize'] = 10
 plt.rcParams['ytick.labelsize'] = 10
-plt.rcParams['axes.titlesize'] = 10
+plt.rcParams['axes.titlesize'] = 12
 
 
-def compute_expression(y):
-    """
-    The expression that Cole used to compute charge to mass
-    :param y:
-    :return:
-    """
-    # Define constants
-    A = 0.000180573
-    B = 0.00487685
-    C = 3.26065e-8
-
-    # Calculate the components of the expression
-    numerator = -(
-            A / (B + y ** 2) ** (3 / 2) + A / (y ** 2 * np.sqrt(B + y ** 2))
-    )
-    denominator = np.pi * (1 + C / (y ** 2 * (B + y ** 2)))
-
-    # Final result
-    result = 150 * numerator / denominator
-    return result
+# def compute_expression(y):
+#     """
+#     The expression that Cole used to compute charge to mass
+#     :param y:
+#     :return:
+#     """
+#     # Define constants
+#     A = 0.000180573
+#     B = 0.00487685
+#     C = 3.26065e-8
+#
+#     # Calculate the components of the expression
+#     numerator = -(
+#             A / (B + y ** 2) ** (3 / 2) + A / (y ** 2 * np.sqrt(B + y ** 2))
+#     )
+#     denominator = np.pi * (1 + C / (y ** 2 * (B + y ** 2)))
+#
+#     # Final result
+#     result = 150 * numerator / denominator
+#     return result
 
 def get_default_trap():
     trap = PseudopotentialPlanarTrap()
     trap.v_rf = 75 * 50 * 0.5
-    trap.v_dc = 209.
-    trap.charge_to_mass = 1.08E-3
+    trap.charge_to_mass = 1.077E-3
     return trap
 
 def y_cuts_panel():
-    trap = PseudopotentialPlanarTrap()
-    trap.charge_to_mass = 2.1E-3
+    trap = get_default_trap()
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
     fig.savefig('figures/fig2-y-cuts.pdf')
@@ -56,24 +54,13 @@ def y_cuts_panel():
 def e_field_panel():
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
-                                  resolution=(250, 250))
-    # figp.tight_layout()
-    # trap.v_rf = -trap.v_rf
-    # fign, axn = trap.plot_E_field(include_gaps=True, figsize=(3.5, 3), resolution=(256, 256))
-    # fign.tight_layout()
-    # for a in axp:
-    #     xticks = a.get_xticks()
-    #     yticks = a.get_yticks()
-    #     a.set_xticklabels([f'{tick * 1000:.0f}' for tick in xticks])
-    #     a.set_yticklabels([f'{tick * 1000:.0f}' for tick in yticks])
-    #     a.set_xlabel('x (mm)')
-    #     a.set_ylabel('y (mm)')
+                                  resolution=(256, 256), figsize=(6, 3.5))
     figp.savefig('figures/fig2-efield.pdf')
 
 def potential_energy_panel():
     trap = get_default_trap()
-    fig, ax = trap.plot_potential_contours(include_gaps=True, figsize=(3.5, 3), max_countour_level=150, ncountours=40,
-                                           resolution=(256, 256))
+    fig, ax = trap.plot_rf_potential_contours(include_gaps=True, figsize=(4.1, 3), x_range=(-trap.c, trap.a + trap.b),
+                                              max_countour_level=20, ncountours=41, resolution=(256, 256))
     for a in [ax]:
         xticks = a.get_xticks()
         yticks = a.get_yticks()
@@ -82,7 +69,6 @@ def potential_energy_panel():
         a.set_xlabel('x (mm)')
         a.set_ylabel('y (mm)')
     ax.set_title(None)
-    fig.tight_layout()
     fig.savefig('figures/fig2-potential_energy.pdf')
 
 def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
@@ -126,7 +112,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     trap.v_dc = v_min
     print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
-    gradient_at_null = (trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) / delta_y_gradient_calc#compute_expression(y_min)
+    gradient_at_null = ((trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
+                        delta_y_gradient_calc)
     trap.charge_to_mass = -g / gradient_at_null
     print("q/m from rf null: " + str(trap.charge_to_mass))
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
@@ -178,7 +165,7 @@ def plot_escape():
 
 
 if __name__ == "__main__":
-    # y_cuts_panel()
+    y_cuts_panel()
     # e_field_panel()
     # potential_energy_panel()
     plot_escape()
