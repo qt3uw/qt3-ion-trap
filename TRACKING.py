@@ -1,32 +1,40 @@
+import os
 import cv2
 import numpy as np
 import math
 
-videofile = cv2.VideoCapture('8-18Trial10(Left)Trial9(Right).avi')   # Selects and opens the video file
-viewtype = "image"   # "binary" for binary image, "image" for original video, "frame" for nothing, "cleanthresh" for undialated
-output = "tuple"   # "micro" for micromotion collection, "height" for height, "x_position", "tuple" for tuple output
+
+# --------------------------- Parameter Definition ---------------------------------------------- #
+
+
+videofile = cv2.VideoCapture('8-8_Trial2.avi')   # Specifies the video file
+viewtype = "image"   # "binary" for binary image, "image" for annotated video, "frame" for original video, "cleanthresh" for undialated
+output = "tuple"   # "tuple" for tuple output, "none" for none
 showquant = "both"   # height, micromotion, or both can be displayed on the image
 auto = "True"   # Automatically Runs Code (will not display video)
-poortracking = True   # Will ignore index of the particle if varying. ONLY USE IF NO OTHER TRACKED PARTICLES
-fps = 20   # Exposure time of the camera via SpinView
+poortracking = False   # Will ignore index of the particle if varying. ONLY USE IF NO OTHER PARTICLES IN FRAME
+fps = 20   # Frame rate of the camera
 changeinterval = 5   # How many seconds between data point collection
-points_to_image = []    # Saves an image of the frame at the specified data point (3, 20, 31, 33, 35)
+points_to_image = []    # Saves an image of the frame at the specified data point (3, 20, 31, 33, 35 for paper figure 3(a))
 sample_frames = 15   # How many frames the data is averaged over
 binthresh = 26   # Binary threshold distinguishing white from black (higher for brighter pixels, lower for darker)
-xrange = (860, 1400)   # define the visible x range (images are usually 1616 x 1240)
-yrange = (513, 1000)   # define the visible y range
-bottom_bar = 160   # sets the height of bottom blocker
+xrange = (600, 1000)   # define the visible x range (images are usually 1616 x 1240)
+yrange = (513, 933)   # define the visible y range
+bottom_bar = 100   # sets the height of bottom blocker. Used to block unwanted noise within the visible frame
 top_bar = 0   # sets the height of top blocker
 left_bar = 0   # sets the height of left blocker
 right_bar = 0   # # sets the height of right blocker
 
-indexlist = [0,2,3,4,6,10,12,15,16]
+indexlist = []   # Specifies the multiple indices of desired tracking particle in case of sparse tracking/regular index shifts
 
-# Initializing parameter variations
+
+#-------------------------------Initializing parameter variations-------------------------------------- #
+
 
 ticker = 0
 val = 0
 
+# Sets which frames the data collection starts and ends at. The offset is set to 40% of the spacing between points to ensure equilibrium
 offset = (fps * changeinterval) * 0.4
 collection_frames = []
 for i in range(100):
@@ -35,32 +43,34 @@ end_collection_frames = []
 for i in range(100):
     end_collection_frames.append(int((collection_frames[i] + sample_frames)))
 
+# Adjusts for inverse y-axis indexing
 imageheight = 1240
 x_start, x_end = xrange
 y_start, y_end = (imageheight-yrange[1]), (imageheight-yrange[0])
 
+# Sets the binary rectangles (blockers)
 ylength = y_end - y_start
 xlength = x_end - x_start
-
 top_rect_pt1, top_rect_pt2 = (0, 0), (1616, top_bar)
 left_rect_pt1, left_rect_pt2 = (0, 0), (left_bar, 1240)
 right_rect_pt1, right_rect_pt2 = (xlength-right_bar, 0), (xlength, 1240)
 bottom_rect_pt1, bottom_rect_pt2 = (0, ylength-bottom_bar), (1616, ylength)
-
 frameheight = yrange[1]-yrange[0]
-
 if viewtype == "binary":
     rectangle_color = (255, 255, 255)
 else: rectangle_color = (0, 0, 0)
 
+# Establishes useful per-datapoint sets for averaging data
 microvec = []
 heightvec = []
 bothvec = []
+datapointnum = 0
 
 print("Running program...")
 
-# Setting up the detector
-# ------------------------------------------------------------------------------------------------------------------------
+
+# --------------------------------------- Setting up the detector ------------------------------------------- #
+
 
 params = cv2.SimpleBlobDetector.Params()
 
@@ -91,11 +101,9 @@ if int(ver[0]) < 3:
 else:
     detector = cv2.SimpleBlobDetector_create(params)
 
-# ------------------------------------------------------------------------------------------------------------------------
 
+# ---------------------------------- Setting program parameters --------------------------------------------- #
 
-# Setting program parameters
-# ------------------------------------------------------------------------------------------------------------------------
 
 # Choosing the video to track in
 vid_cap = videofile
@@ -115,19 +123,9 @@ filling_kernel = np.ones((2, 2), np.uint8)
 # Define a starting frame number
 start_frame_num = 1
 
-# Toggle data collection
-if output == "tuple" or output == "height":
-    store_height_data = True
-else: store_height_data = False
-if output == "tuple" or output == "micro":
-    store_micromotion_data = True
-else: store_micromotion_data = False
 
-# ------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------ Priming the main loop --------------------------------------------------#
 
-
-# Priming the main loop
-# ------------------------------------------------------------------------------------------------------------------------
 
 # Setting up memory between frames for objects
 keypoints_prev_frame = []
@@ -147,10 +145,6 @@ first_point = False
 start_x = 0
 first_detect = False
 
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-
 # Function to read a specific frame
 def get_frame(cap, got_frame_num):
     cap.set(cv2.CAP_PROP_POS_FRAMES, got_frame_num)
@@ -158,8 +152,9 @@ def get_frame(cap, got_frame_num):
     return _, got_frame
 
 
-# Main Loop
-# ------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------- Main Loop ------------------------------------------- #
+
+
 ret, start_frame = get_frame(vid_cap, frame_num)
 
 start_frame_dim = start_frame.shape
@@ -245,7 +240,7 @@ while run:
         cv2.rectangle(clean_thresh, bottom_rect_pt1, bottom_rect_pt2, rectangle_color, -1)  # Bottom erasure
         closing = cv2.morphologyEx(clean_thresh, cv2.MORPH_CLOSE, filling_kernel, iterations=2)
 
-        # Finding the locations of the particles
+        # Finding the locations of the particles (Will return the top left point of the detected object)
         keypoints = detector.detect(closing)
 
         keypoints_cur_frame = []
@@ -253,8 +248,7 @@ while run:
             point = keypoint.pt
             keypoints_cur_frame.append(keypoint.pt)
 
-        # If the outimage parameter receives an argument of None or an empty array,
-        # it will be a copy of the source image
+        # If the outimage parameter receives an argument of None or an empty array, it will be a copy of the source image
         image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
 
         # Finding the contours
@@ -298,49 +292,58 @@ while run:
             track_id += 1
             # Iterate over each contour to find the bounding rectangle and get the height
         for i in contours:
-            # Get the bounding rectangle for each contour
+            # Get the bounding rectangle for each contour (x, y indicate the top left point of the object)
             x, y, w, h = cv2.boundingRect(i)
+            centroid_x, centroid_y = int(x+w/2), int(y+h/2)
+            adj_centroid_y = (y_end - y_start) - centroid_y
 
-            # CONTINUE HERE
             # Check which tracking object is in the bounding box
             for key in tracking_objects.keys():
                 if x <= tracking_objects[key][0][0] <= x + w and y <= tracking_objects[key][0][1] <= y + h:
                     tracking_objects[key].append(h)
 
             # Optionally, draw the bounding rectangle on the original image
+            if viewtype == "image" and auto == "True":
+                showvid = True
+            else:
+                pass
             if showvid == True:
+                # Displays specified quantities on the image
                 cv2.rectangle(image_with_keypoints, (x, y), (x + w, y + h), (0, 255, 0), 1)
-                center_x = x + w // 2
-                center_y = (y_end - y_start) - (y + h // 2)
                 if showquant == "height":
-                    cv2.putText(image_with_keypoints, 'y: ' + str(center_y), (x, y + h + 15), 0, 0.5, (0, 255, 0), 1)
+                    cv2.putText(image_with_keypoints, 'y: ' + str(adj_centroid_y), (centroid_x, centroid_y + h + 15), 0, 0.5, (0, 255, 0), 1)
                 if showquant == "micro":
-                    cv2.putText(image_with_keypoints, 'a: ' + str(h), (x, y + h + 15), 0, 0.5, (0, 255, 0), 1)
+                    cv2.putText(image_with_keypoints, 'a: ' + str(h), (centroid_x, centroid_y + h + 15), 0, 0.5, (0, 255, 0), 1)
                 if showquant == "both":
-                    cv2.putText(image_with_keypoints, 'y: ' + str(center_y) + ', a: ' + str(h), (x-30, y + h + 20), 0, 0.5, (0, 255, 0), 1)
+                    cv2.putText(image_with_keypoints, 'y:' + str(adj_centroid_y), (centroid_x + 12, centroid_y - 8), 0, 0.34, (0, 255, 0), 1)
+                    cv2.putText(image_with_keypoints, 'a:' + str(h), (centroid_x + 12, centroid_y + 8), 0,0.34, (0, 255, 0), 1)
+            else:
+                pass
+            if viewtype == "image" and auto == "True":
+                showvid = False
             else:
                 pass
 
         # Storing heights detected in "Space bar" frames
         try:
             x, y = point
-            y = (y_end - y_start) - y
+            adj_y = (y_end - y_start) - y
         except:
             NameError
         if datacollect == True:
             try:
                 x, y = point
-                y = (y_end - y_start) - y
+                adj_y = (y_end - y_start) - y
             except NameError:
                 pass
         if poortracking == True:
             for i in range(1000):
                 try:
-                    height_of_interest = tracking_objects[i][1]  #height_of_interest = tracking_objects[index_of_interest][1]
+                    height_of_interest = tracking_objects[i][1]
                     if len(tracking_objects.keys()) > 0 and height_of_interest > 0:
                         if i in indexlist:
                             try:
-                                heightvec.append(y)
+                                heightvec.append(adj_centroid_y)
                                 microvec.append(height_of_interest)
                             except KeyError:
                                 pass
@@ -354,15 +357,14 @@ while run:
                 height_of_interest = tracking_objects[index_of_interest][1]  # height_of_interest = tracking_objects[index_of_interest][1]
                 if len(tracking_objects.keys()) > 0:
                     try:
-                        heightvec.append(y)
+                        heightvec.append(adj_centroid_y)
                         microvec.append(height_of_interest)
                     except KeyError:
                         pass
             except KeyError or IndexError:
                 pass
 
-        # Drawing index values
-# CHANGE
+        # Puts frame labels and displays requested viewtype frame
         if showvid == True:
             for object_id, item in tracking_objects.items():
                 cv2.putText(image_with_keypoints, str(object_id), (int(item[0][0] - 5), int(item[0][1] - 17)), 0, 0.5,
@@ -381,64 +383,83 @@ while run:
 
             cv2.waitKey(50)
 
+        # Begins data collection if the frame number is at one of interest
         else:
-            #print(frame_num)
             if frame_num in collection_frames:
                 datacollect = True
             if frame_num in end_collection_frames:
                 ticker = ticker + 1
                 print(ticker)
+
+                # Identifies if frame is one to save an image from and takes a zoomed in image of the particle
                 if ticker in points_to_image:
                     val = val + 1
                     if viewtype == "binary":
                         x, y = point
                         x, y = int(x), int(y)
-                        print(x,y)
-                        cropped_image = closing[y - 50:y + 50, x - 30:x + 30]
+                        cropped_image = closing[y - 40:y + 40, x - 50:x + 50]
                         x, y = point
                         x, y = int(x), int(y)
-                        print(x,y)
                         if val == 1:
                             cv2.imshow("Image", cropped_image)
                             cv2.waitKey(0)
                             cv2.destroyAllWindows()
                             cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_GRAY2BGR)
-                            cv2.rectangle(cropped_image, (x-2, y + h + 5), (x+2, y + h + 6), (0, 0, 255), -1)
-                            cv2.imshow('cropped_image', cropped_image)
+                            cv2.imshow('enlarged_image', cropped_image)
+                            cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                                        cropped_image)
                             cv2.waitKey(0)
                             cv2.destroyAllWindows()
                         else:
-                            cropped_image = closing[y - 50:y + 50, x - 30:x + 30]
-                        # closing[0:1240, 0:1616]
+                            cropped_image = closing[y - 40:y + 40, x - 50:x + 50]
+                            cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                                        cropped_image)
                     if viewtype == "image":
-                        cropped_image = image_with_keypoints[0:1240, 0:1616]
+                        x, y = point
+                        x, y = int(x), int(y)
+                        cropped_image = image_with_keypoints[y - 50:y + 40, x - 50:x + 50]
+                        if val == 1:
+                            cv2.imshow("Image", cropped_image)
+                            cv2.waitKey(0)
+                            cv2.destroyAllWindows()
+                        else:
+                            pass
+                        cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                                    cropped_image)
                     if viewtype == "frame":
-                        cropped_image = frame[y_start:y_end, x_start:x_end]
-                    # y_start:y_end, x_start:x_end
-                    cv2.imwrite("Frame" + str(points_to_image[val-1]) + str(viewtype) + ".jpg", cropped_image)
+                        framed_image = frame[y_start:y_end, x_start:x_end]
+                        x,y = point
+                        x, y = int(x), int(y)
+                        print(x,y)
+                        cropped_image = framed_image[y-50:y+50, x-50:x+70]
+                        cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Final.tif", cropped_image)
                     print('Click!')
-                if store_micromotion_data and store_height_data:
+
+                datapointnum = datapointnum + 1
+
+                # Stores the data in the "Tuple.txt" file and breaks if Tuple.txt already contains data upon beginning collection
+                if output == "tuple":
                     avgheight = round(np.mean(heightvec), 2)
                     avgmicro = round(np.mean(microvec), 2)
                     percentage = (frame_num / total_frames) * 100
-                    print(str(round(percentage, 0)) + '% , Average Height = ' + str(avgheight) + ' , Average Micromotion = ' + str(avgmicro))
-                    both_file = open('Tuple.txt', 'a')
-                    both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
+                    print(str(round(percentage, 0)) + '% , Average Height = ' + str(avgheight) + ' , Average Micromotion = ' + str(avgmicro) + '\n')
+                    if os.stat('Tuple.txt').st_size != 0:
+                        if datapointnum == 1:
+                            print('Tuple.txt already contains data. Press any button to continue to add to it\n')
+                            cv2.waitKey()
+                            print('continuing...\n')
+                        else:
+                            both_file = open('Tuple.txt', 'a')
+                            both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
+                    else:
+                        if datapointnum == 1:
+                            both_file = open('Tuple.txt', 'a')
+                            both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
+                        else:
+                            both_file = open('Tuple.txt', 'a')
+                            both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
                     heightvec = []
                     microvec = []
-                if store_micromotion_data and not store_height_data:
-                    avgmicro = round(np.mean(microvec), 2)
-                    print(str(frame_num) + '/' + str(total_frames) + ', Average Micromotion = ' + str(avgmicro))
-                    avg_file = open('MicromotionData.txt', 'a')
-                    avg_file.write(str(avgmicro) + ', ')
-                    microvec = []
-                if store_height_data and not store_micromotion_data:
-                    avgheight = round(np.mean(heightvec), 2)
-                    print(str(frame_num) + '/' + str(total_frames) + ', Average Height = ' + str(avgheight))
-                    avg_file = open('HeightData.txt', 'a')
-                    avg_file.write(str(avgheight) + ', ')
-                    heightvec = []
-
                 datacollect = False
             else:
                 pass
@@ -447,27 +468,21 @@ while run:
                 break
         frame_num += 1
 
-
+    # Initiates data collection if auto is off and we are using the spacebar to manually collect the data points
     if frames_to_play == sample_frames:
-        if store_micromotion_data and store_height_data:
+        if output == "tuple":
             avgheight = round(np.mean(heightvec), 2)
             avgmicro = round(np.mean(microvec), 2)
             print('Average Height = ' + str(avgheight) + ' , Average Micromotion = ' + str(avgmicro))
-            height_file = open('Tuple.txt', 'a')
-            height_file.write('(' + str(avgheight) + ', ' + str(avgmicro) + ')\n')
-        if store_micromotion_data and not store_height_data:
-            avgmicro = round(np.mean(microvec), 2)
-            print('Average Micromotion = ' + str(avgmicro))
-            avg_file = open('MicromotionData.txt', 'a')
-            avg_file.write(str(avgmicro) + ', ')
-        if store_height_data and not store_micromotion_data:
-            avgheight = round(np.mean(heightvec), 2)
-            print('Average Height = ' + str(avgheight))
-            avg_file = open('HeightData.txt', 'a')
-            avg_file.write(str(avgheight) + ', ')
+            if os.stat('Tuple.txt').st_size == 0:
+                if datapointnum == 1:
+                    input('Tuple.txt already contains data. Press any button to continue to add to it')
+                else:
+                    both_file = open('Tuple.txt', 'a')
+                    both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
 
 
-# ------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------- Final Cleanup ---------------------------------------------- #
 
 
 # Releasing the VideoCapture object we created
