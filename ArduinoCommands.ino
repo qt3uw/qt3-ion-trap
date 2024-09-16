@@ -1,3 +1,4 @@
+// Prepping the file and setting the digital pin modes
 void setup() {
   Serial.begin(9600); // Sets up serial communication for user input
 
@@ -37,11 +38,11 @@ void setElectrode(String electrode_set, String setting) {
     G2 = 30;
   }
 
-  // Setting electrode set to high
+  // Setting the electrode set to high
   if(setting.equals("high")) {
-    digitalWrite(G2, LOW); // Sets the digital pin -- to off
+    digitalWrite(G2, LOW); // Sets the digital pin to off
     delay(2);
-    digitalWrite(G1, HIGH); // Sets the digital pin -- to on
+    digitalWrite(G1, HIGH); // Sets the digital pin to on
     Serial.println("Voltage set to high on electrode set " + electrode_set + ".");
   }
 
@@ -64,67 +65,63 @@ void setElectrode(String electrode_set, String setting) {
   }
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------
-// Drafting functions for future implementation
-// a b c d e
-
 // Centers the trap on electrode set a
 void a_center() {
   setElectrode("a", "off");
-  setElectrode("b", "high");
-  setElectrode("c", "low");
-  setElectrode("d", "low");
+  setElectrode("b", "low");
+  setElectrode("c", "high");
+  setElectrode("d", "high");
   setElectrode("e", "high");
   Serial.println("The trap has been centered on electrode set a.");
 }
 
 // Centers the trap on electrode set b
 void b_center() {
-  setElectrode("a", "high");
+  setElectrode("a", "low");
   setElectrode("b", "off");
-  setElectrode("c", "high");
-  setElectrode("d", "low");
-  setElectrode("e", "low");
+  setElectrode("c", "low");
+  setElectrode("d", "high");
+  setElectrode("e", "high");
   Serial.println("The trap has been centered on electrode set b.");
 }
 
 // Centers the trap on electrode set c
 void c_center() {
-  setElectrode("a", "low");
-  setElectrode("b", "high");
+  setElectrode("a", "high");
+  setElectrode("b", "low");
   setElectrode("c", "off");
-  setElectrode("d", "high");
-  setElectrode("e", "low");
+  setElectrode("d", "low");
+  setElectrode("e", "high");
   Serial.println("The trap has been centered on electrode set c.");
 }
 
 // Centers the trap on electrode set d
 void d_center() {
-  setElectrode("a", "low");
-  setElectrode("b", "low");
-  setElectrode("c", "high");
+  setElectrode("a", "high");
+  setElectrode("b", "high");
+  setElectrode("c", "low");
   setElectrode("d", "off");
-  setElectrode("e", "high");
+  setElectrode("e", "low");
   Serial.println("The trap has been centered on electrode set d.");
 }
 
 // Centers the trap on electrode set e
 void e_center() {
   setElectrode("a", "high");
-  setElectrode("b", "low");
-  setElectrode("c", "low");
-  setElectrode("d", "high");
+  setElectrode("b", "high");
+  setElectrode("c", "high");
+  setElectrode("d", "low");
   setElectrode("e", "off");
   Serial.println("The trap has been centered on electrode set d.");
 }
 
 // Splits the particles around electrode set b
 void b_split() {
-  setElectrode("a", "off");
-  setElectrode("b", "high");
-  setElectrode("c", "off");
   setElectrode("d", "low");
   setElectrode("e", "low");
+  setElectrode("a", "off");
+  setElectrode("c", "off");
+  setElectrode("b", "high");
   Serial.println("The trap has been split around electrode set c.");
 }
 
@@ -132,9 +129,9 @@ void b_split() {
 void c_split() {
   setElectrode("a", "low");
   setElectrode("b", "off");
-  setElectrode("c", "high");
   setElectrode("d", "off");
   setElectrode("e", "low");
+  setElectrode("c", "high");
   Serial.println("The trap has been split around electrode set c.");
 }
 
@@ -143,59 +140,9 @@ void d_split() {
   setElectrode("a", "low");
   setElectrode("b", "low");
   setElectrode("c", "off");
-  setElectrode("d", "high");
   setElectrode("e", "off");
+  setElectrode("d", "high");
   Serial.println("The trap has been split around electrode set c.");
-}
-
-int delay_param = 3000;
-
-// Shuttles the particles from c to d to c to a to c
-void shuttle() {
-  c_center();
-  delay(delay_param);
-  d_center();
-  delay(delay_param);
-  e_center();
-  delay(delay_param);
-  d_center();
-  delay(delay_param);
-  c_center();
-  delay(delay_param);
-  b_center();
-  delay(delay_param);
-  a_center();
-  delay(delay_param);
-  b_center();
-  delay(delay_param);
-  c_center();
-  delay(delay_param);
-}
-
-// Shuttles the particles from c to d to c to a to c, splits at c, centers at c
-void shuttle_split() {
-  c_center();
-  delay(delay_param);
-  d_center();
-  delay(delay_param);
-  e_center();
-  delay(delay_param);
-  d_center();
-  delay(delay_param);
-  c_center();
-  delay(delay_param);
-  b_center();
-  delay(delay_param);
-  a_center();
-  delay(delay_param);
-  b_center();
-  delay(delay_param);
-  c_center();
-  delay(delay_param);
-  c_split();
-  delay(delay_param);
-  c_center();
-  delay(delay_param);
 }
 
 
@@ -207,24 +154,15 @@ String individualCommandSet[15] = {"a high", "a low", "a off", "b high", "b low"
 String electrode_set = "";
 String setting = "";
 
-
+// Serial monitor loop
 void loop() {
-  // put your main code here, to run repeatedly:
   Serial.println("\nRunning...");
-
-  // What is digitalWrite(n, HIGH/LOW) ?
-  // Probably the gate control for the electrode voltages
-  //https://www.arduino.cc/reference/en/language/functions/digital-io/digitalwrite/
 
   String input = Serial.readString(); // Setting up user input for the serial
   input.trim();
 
-  // What is input.indexOf()?
-  //https://docs.arduino.cc/built-in-examples/strings/StringIndexOf/
-
-
   // Controlling all arduino-controlled electrodes at once
-  // ----------------------------------------------------------------------------------------------------------------------------
+  
   // Turns on voltage for all segmented electrodes at once
   if(input.equalsIgnoreCase("all digital high")) {
     digitalWrite(22, HIGH);
@@ -240,26 +178,6 @@ void loop() {
 
     Serial.println("Voltage set to high on all digital pins");
   }
-
-  /*
-  // Connects all segmented electrodes to ground at once
-  // (Conflicts with our requirement of having a maximum of 3 low electrodes, change this later)
-  if(input.equals("all low")) {
-    // Evens?
-    digitalWrite(--, LOW);
-    digitalWrite(--, LOW);
-    digitalWrite(--, LOW);
-    digitalWrite(--, LOW);
-    digitalWrite(--, LOW);
-
-    // Odds?
-    digitalWrite(--, HIGH);
-    digitalWrite(--, HIGH);
-    digitalWrite(--, HIGH);
-    digitalWrite(--, HIGH);
-    digitalWrite(--, HIGH);
-  }
-  */
 
   //Drains voltage and removes voltage paths for all segmented electrodes at once
   if(input.equalsIgnoreCase("all off")) {
@@ -291,42 +209,7 @@ void loop() {
     Serial.println("All arduino controlled electrodes are powered off.");
   }
 
-  if(input.equalsIgnoreCase("shuttle")) {
-    Serial.println("Shuttling particles...");
-    int count = 0;
-    while(count < 1) {
-      shuttle();
-      count = count + 1;
-      if(input.equalsIgnoreCase("stop")) {
-        count = 6;
-      }
-    }
-  }
-
-  if(input.equalsIgnoreCase("shuttle split")) {
-    Serial.println("Shuttling and splitting particles...");
-    int count = 0;
-    while(count < 1) {
-      shuttle_split();
-      count = count + 1;
-      if(input.equalsIgnoreCase("stop")) {
-        count = 6;
-      }
-    }
-  }
-
   // Controlling individual arduino-controlled electrodes
-  // ---------------------------------------------------------------------------------------------
-  
-  // Note make a function that does the individual controls to clean the code up
-  // Note: my current understanding is that setting to 'high' means setting to V,
-  //       setting to 'low' means setting to V/2 (just lower than V), and setting to 'off' means
-  //       setting to 0V.
-  //       It also looks like G1 for a-e is connected to the even digital pins
-  //       and G2 for a-e is connected to the odd digital pins (Old code)
-
-  // Continue for low combination and off combination
-  // Turn this code into a function
 
   // Checking if the user input matches any of the individual electrode set control commands
   for(int i = 0; i < 15; i++) {
@@ -336,9 +219,7 @@ void loop() {
 
       // Modifying the gates to create the desired potential in the specified electrode set
       setElectrode(electrode_set, setting);
-    } /*else {
-      Serial.println("Please type a recognized command");
-    }*/
+    }
   }
 
   if (input.equalsIgnoreCase("c center")) {
