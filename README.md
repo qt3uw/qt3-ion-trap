@@ -1,5 +1,12 @@
 # qt3-ion-trap
-Code for the pollen trap instructional labs developed by QT3.
+## Pollen trap instructional lab developed by QT3
+
+This repository contains tracking programs, graphing scripts, and raw data for our QT3 Planar Trap demonstration lab. 
+This project can perform three experiments:
+* Experiment 1: Measure the micromotion amplitude, height, charge-to-mass ratio, and escape voltage of a single particle
+* Experiment 2: Observe shuttling motion of a single particle and identify its maximum velocity
+* Experiment 3: Observe the separation (splitting) motion of two particles and identify their maximum velocities
+
 
 
 ## Python Code Installation
