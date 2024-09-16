@@ -7,19 +7,19 @@ import math
 # --------------------------- Parameter Definition ---------------------------------------------- #
 
 
-videofile = cv2.VideoCapture('8-8_Trial2.avi')   # Specifies the video file
+videofile = cv2.VideoCapture('Trial19.avi')   # Specifies the video file
 viewtype = "image"   # "binary" for binary image, "image" for annotated video, "frame" for original video, "cleanthresh" for undialated
-output = "tuple"   # "tuple" for tuple output, "none" for none
-showquant = "both"   # height, micromotion, or both can be displayed on the image
-auto = "True"   # Automatically Runs Code (will not display video)
+output = "none"   # "tuple" for tuple output, "none" for none
+showquant = "none"   # height, micromotion, or both can be displayed on the image
+auto = "False"   # Automatically Runs Code (will not display video)
 poortracking = False   # Will ignore index of the particle if varying. ONLY USE IF NO OTHER PARTICLES IN FRAME
 fps = 20   # Frame rate of the camera
 changeinterval = 5   # How many seconds between data point collection
 points_to_image = []    # Saves an image of the frame at the specified data point (3, 20, 31, 33, 35 for paper figure 3(a))
 sample_frames = 15   # How many frames the data is averaged over
 binthresh = 26   # Binary threshold distinguishing white from black (higher for brighter pixels, lower for darker)
-xrange = (600, 1000)   # define the visible x range (images are usually 1616 x 1240)
-yrange = (513, 933)   # define the visible y range
+xrange = (800, 1200)   # define the visible x range (images are usually 1616 x 1240)
+yrange = (547, 933)   # define the visible y range
 bottom_bar = 100   # sets the height of bottom blocker. Used to block unwanted noise within the visible frame
 top_bar = 0   # sets the height of top blocker
 left_bar = 0   # sets the height of left blocker
@@ -437,7 +437,7 @@ while run:
 
                 datapointnum = datapointnum + 1
 
-                # Stores the data in the "Tuple.txt" file and breaks if Tuple.txt already contains data upon beginning collection
+                # Stores the data in the "Tuple.txt" file and prompts if Tuple.txt already contains data upon beginning collection
                 if output == "tuple":
                     avgheight = round(np.mean(heightvec), 2)
                     avgmicro = round(np.mean(microvec), 2)
@@ -445,9 +445,10 @@ while run:
                     print(str(round(percentage, 0)) + '% , Average Height = ' + str(avgheight) + ' , Average Micromotion = ' + str(avgmicro) + '\n')
                     if os.stat('Tuple.txt').st_size != 0:
                         if datapointnum == 1:
-                            print('Tuple.txt already contains data. Press any button to continue to add to it\n')
-                            cv2.waitKey()
-                            print('continuing...\n')
+                            acknowledgement = ""
+                            while acknowledgement != "continue":
+                                acknowledgement = input('Tuple.txt already contains data. Type "continue" to add to the existing file, otherwise stop. ')
+                            print("\ncontinuing...")
                         else:
                             both_file = open('Tuple.txt', 'a')
                             both_file.write('[' + str(avgheight) + ', ' + str(avgmicro) + ']\n')
