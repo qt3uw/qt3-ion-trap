@@ -41,12 +41,13 @@ plt.rcParams['axes.titlesize'] = 12
 
 def get_default_trap():
     trap = PseudopotentialPlanarTrap()
-    trap.v_rf = 75 * 50 * 0.5
-    trap.charge_to_mass = 1.077E-3
+    trap.v_rf = -75 * 50 * 0.5
+    trap.charge_to_mass = -1.077E-3
     return trap
 
 def y_cuts_panel():
     trap = get_default_trap()
+    trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
     fig.savefig('figures/fig2-y-cuts.pdf')
@@ -60,7 +61,7 @@ def e_field_panel():
 def potential_energy_panel():
     trap = get_default_trap()
     fig, ax = trap.plot_rf_potential_contours(include_gaps=True, figsize=(4.1, 3), x_range=(-trap.c, trap.a + trap.b),
-                                              max_countour_level=20, ncountours=41, resolution=(256, 256))
+                                              min_contour_level=-20, ncountours=41, resolution=(256, 256))
     for a in [ax]:
         xticks = a.get_xticks()
         yticks = a.get_yticks()
@@ -69,6 +70,7 @@ def potential_energy_panel():
         a.set_xlabel('x (mm)')
         a.set_ylabel('y (mm)')
     ax.set_title(None)
+    fig.tight_layout()
     fig.savefig('figures/fig2-potential_energy.pdf')
 
 def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
@@ -98,12 +100,12 @@ def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
     y0 = rawdata[:, 1]
     v_min, y_min, micro_min = rawdata[np.argmin(rawdata[:, 2])]
     #Rought guess based on chart. Need more precise measurement from Cole.
-    return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3
+    return -dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3
 
 def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     trap = get_default_trap()
     parameters = ['charge_to_mass']
-    bounds = [(1.E-4, 1.E-2)]
+    bounds = [(-1.E-2, -1.E-4)]
 
     dc_voltages, y0, yspread, v_min, y_min, micro_min = get_data()
     fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -114,11 +116,11 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     delta_y_gradient_calc = 1.E-6
     gradient_at_null = ((trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
                         delta_y_gradient_calc)
-    trap.charge_to_mass = -g / gradient_at_null
+    trap.charge_to_mass = g / gradient_at_null
     print("q/m from rf null: " + str(trap.charge_to_mass))
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    ax.plot(model_voltages, y0_model * 1.E3, color='k', label='rf null')
+    ax.plot(model_voltages, y0_model * 1.E3, color='k', label='RF null')
 
     # Now find the charge to mass from best fit of height vs voltage to model
 
@@ -138,10 +140,9 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         trap.__dict__[param] = res.x[i]
 
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    ax.plot(dc_voltages, y0 * 1.E3, marker='o', linestyle='None')
-    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=5)
+    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='darkseagreen')
+    ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
     ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='best fit')
-
 
     # gradient_at_null = trap.grad_u_dc(trap.a / 2, meas_min[1]*10**-3, include_gaps=include_gaps)
 
@@ -157,17 +158,17 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
 
 def plot_escape():
     trap = get_default_trap()
-    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., 300., num=11), include_gaps=True)
-    fig.tight_layout()
-    ax.set_ylabel('potential energy / charge (J/C)')
+    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True)
+    ax.set_ylabel('-potential energy / charge (J/C)')
     ax.set_title(None)
+    fig.tight_layout()
     fig.savefig('figures/fig2-trap_escape.pdf')
 
 
 if __name__ == "__main__":
-    y_cuts_panel()
+    # y_cuts_panel()
     # e_field_panel()
     # potential_energy_panel()
-    plot_escape()
+    # plot_escape()
     plot_height_fit(figsize=(2.5, 3.), include_gaps=True)
     plt.show()

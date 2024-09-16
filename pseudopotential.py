@@ -34,11 +34,12 @@ class PseudopotentialPlanarTrap:
     central_electrode_width: float = 3.175E-3
     ac_electrode_width: float = 4.15831E-3
     v_rf: float = 0.5 * 50 * 75
-    v_dc: float = 200.
+    v_dc: float = -200.
     charge_to_mass: float = 6.8E-4
     freq_rf: float = 60.
     gap_width: float = 2.E-3
     shuttle_width: float = 16.491E-3
+    electrode_height: float = .5E-3
 
     @property
     def a(self):
@@ -257,7 +258,7 @@ class PseudopotentialPlanarTrap:
         def merit_func(y):
             ys = np.linspace(y-ystep, y+ystep, num=3)
             xs = np.zeros_like(ys) + self.a / 2.
-            return self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
+            return -self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
         res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
         return res.x
 
@@ -272,89 +273,106 @@ class PseudopotentialPlanarTrap:
         return np.array(y0)
 
     def draw_electrodes(self, ax, include_gaps=True):
-        facecolor = 'yellow'
-        edgecolor = 'gold'
-        electrode_height = .5E-3
+        hatch = '..'
+        hatch2 = '//'
+        facecolor = 'wheat'
+        edgecolor = 'tan'
+        electrode_height = self.electrode_height
         dielec_height = .5E-3
-        dielec_facecolor = 'slateblue'
-        dielec_edgecolor = 'rebeccapurple'
+        dielec_facecolor = 'rebeccapurple'
+        dielec_edgecolor = 'indigo'
         if include_gaps:
             ax.add_patch(
                 Rectangle((self.gap_width / 2, 0), self.central_electrode_width, -electrode_height, facecolor=facecolor,
-                          edgecolor=edgecolor))
+                          edgecolor=edgecolor, hatch=hatch2))
             ax.add_patch(Rectangle((self.a - self.gap_width / 2, 0), self.gap_width, -electrode_height,
-                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor, hatch=hatch))
             ax.add_patch(
                 Rectangle((- self.gap_width / 2, 0), self.gap_width, -electrode_height, facecolor=dielec_facecolor,
-                          edgecolor=dielec_edgecolor))
+                          edgecolor=dielec_edgecolor, hatch=hatch))
             ax.add_patch(Rectangle((self.a + self.gap_width / 2, 0), self.ac_electrode_width, -electrode_height,
-                                   facecolor=facecolor, edgecolor=edgecolor))
+                                   facecolor=facecolor, edgecolor=edgecolor, hatch=hatch2))
             ax.add_patch(Rectangle((self.a + self.b - self.gap_width / 2, 0), self.gap_width, -electrode_height,
-                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor))
+                                   facecolor=dielec_facecolor, edgecolor=dielec_edgecolor, hatch=hatch))
             ax.add_patch(Rectangle((-self.ac_electrode_width - self.gap_width / 2, 0), self.ac_electrode_width,
                                    -electrode_height, facecolor=facecolor,
-                                   edgecolor=edgecolor))
+                                   edgecolor=edgecolor, hatch=hatch2))
             ax.add_patch(Rectangle((-self.c - self.gap_width / 2, 0), self.gap_width,
                                    -electrode_height, facecolor=dielec_facecolor,
-                                   edgecolor=dielec_edgecolor))
+                                   edgecolor=dielec_edgecolor, hatch=hatch))
             ax.add_patch(
                 Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, 0), self.shuttle_width, -electrode_height,
-                          facecolor=facecolor, edgecolor=edgecolor))
+                          facecolor=facecolor, edgecolor=edgecolor, hatch=hatch2))
             ax.add_patch(
                 Rectangle((self.a + self.b + self.gap_width / 2, 0), self.shuttle_width, -electrode_height,
-                          facecolor=facecolor, edgecolor=edgecolor))
+                          facecolor=facecolor, edgecolor=edgecolor, hatch=hatch2))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, -electrode_height / 2), -(
+                        -self.c - self.gap_width / 2 - self.shuttle_width) + self.a + self.b + self.gap_width / 2 + self.shuttle_width,
+                                   -electrode_height / 2, facecolor=dielec_facecolor,
+                                   edgecolor=dielec_edgecolor, hatch=hatch))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, -electrode_height / 2), -(
+                    -self.c - self.gap_width / 2 - self.shuttle_width) + self.a + self.b + self.gap_width / 2 + self.shuttle_width,
+                                   -electrode_height / 2, facecolor='none',
+                                   edgecolor=dielec_facecolor))
         else:
-            ax.add_patch(Rectangle((0, 0), self.a, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((self.a, 0), self.b, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
-            ax.add_patch(Rectangle((-self.c, 0), self.c, -electrode_height, facecolor=facecolor, edgecolor=edgecolor))
+            ax.add_patch(
+                Rectangle((0, 0), self.a, -electrode_height, facecolor=facecolor, edgecolor=edgecolor, hatch=hatch2))
+            ax.add_patch(Rectangle((self.a, 0), self.b, -electrode_height, facecolor=facecolor, edgecolor=edgecolor,
+                                   hatch=hatch2))
+            ax.add_patch(Rectangle((-self.c, 0), self.c, -electrode_height, facecolor=facecolor, edgecolor=edgecolor,
+                                   hatch=hatch2))
             ax.add_patch(
                 Rectangle((-self.shuttle_width - self.c, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
-                          edgecolor=edgecolor))
+                          edgecolor=edgecolor, hatch=hatch2))
             ax.add_patch(Rectangle((self.a + self.b, 0), self.shuttle_width, -electrode_height, facecolor=facecolor,
-                                   edgecolor=edgecolor))
+                                   edgecolor=edgecolor, hatch=hatch2))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, -electrode_height / 2), -(
+                    -self.c - self.gap_width / 2 - self.shuttle_width) + self.a + self.b + self.gap_width / 2 + self.shuttle_width,
+                                   -electrode_height / 2, facecolor=dielec_facecolor,
+                                   edgecolor=dielec_edgecolor, hatch=hatch))
+            ax.add_patch(Rectangle((-self.c - self.gap_width / 2 - self.shuttle_width, -electrode_height / 2), -(
+                    -self.c - self.gap_width / 2 - self.shuttle_width) + self.a + self.b + self.gap_width / 2 + self.shuttle_width,
+                                   -electrode_height / 2, facecolor='none',
+                                   edgecolor=dielec_facecolor))
         return ax
 
-    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True, normalized = True, figsize=(10, 6)):
+    def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
+                     normalized=True, figsize=(10, 6)):
+
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
+
         E_x0, E_y0 = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
         if normalized:
-            E_x0 = E_x0 / np.sqrt(E_x0**2 + E_y0**2)
-            E_y0 = E_y0 / np.sqrt(E_x0**2 + E_y0**2)
+            E_x0 = E_x0 / np.sqrt(E_x0 ** 2 + E_y0 ** 2)
+            E_y0 = E_y0 / np.sqrt(E_x0 ** 2 + E_y0 ** 2)
+        phi_ac0 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
+
         self.v_rf = -self.v_rf
         E_x1, E_y1 = self.grad_phi_ac_gaps(x, y) if include_gaps else self.grad_phi_ac(x, y)
         if normalized:
             E_x1 = E_x1 / np.sqrt(E_x1 ** 2 + E_y1 ** 2)
             E_y1 = E_y1 / np.sqrt(E_x1 ** 2 + E_y1 ** 2)
-        self.v_rf = -self.v_rf
-        phi_ac0 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
-        self.v_rf = -self.v_rf
         phi_ac1 = self.phi_ac(x, y) if include_gaps == False else self.phi_ac_with_gaps(x, y)
-        self.v_rf = -self.v_rf
+
         fig, ax = plt.subplots(1, 2, figsize=figsize, layout="compressed")
-        fig.supxlabel('x (mm)')
-        fig.supylabel('y (mm)')
+
         color = 'yellowgreen'
-        ax[0].streamplot(x, y, -E_x0, -E_y0, density= (.75, .75), color=color, arrowstyle='fancy', linewidth=1.25, arrowsize=1)
+        ax[0].streamplot(x, y, -E_x0, -E_y0, density=(.75, .75), color=color, arrowstyle='fancy', linewidth=1.25,
+                         arrowsize=1)
         ax[1].streamplot(x, y, -E_x1, -E_y1, density=(.75, .75), color=color, arrowstyle='fancy', linewidth=1.25,
                          arrowsize=1)
-        cax = ax[0].pcolormesh(x, y, phi_ac0, cmap='twilight_r',vmin=np.minimum(-self.v_rf,self.v_rf) ,vmax=np.maximum(-self.v_rf,self.v_rf), rasterized=True)
-        cax2 = ax[1].pcolormesh(x, y, phi_ac1, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
-                         vmax=np.maximum(-self.v_rf, self.v_rf), rasterized=True)
+        cax = ax[0].pcolormesh(x, y, phi_ac0, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
+                               vmax=np.maximum(-self.v_rf, self.v_rf))
+        ax[1].pcolormesh(x, y, phi_ac1, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
+                                vmax=np.maximum(-self.v_rf, self.v_rf))
         self.draw_electrodes(ax[0], include_gaps=include_gaps)
         self.draw_electrodes(ax[1], include_gaps=include_gaps)
         ax[0].set_xlim(x_range[0], x_range[1])
-        plt.setp(ax[1].get_yticklabels(), visible=False)
         ax[1].set_xlim(x_range[0], x_range[1])
         ax[0].set_ylim(y_range[0] - 0.5E-3, y_range[1])
         ax[1].set_ylim(y_range[0] - 0.5E-3, y_range[1])
-        inset_x = [self.a / 2 - .0015, self.a / 2 + .0015]
-        inset_y = [0.00375-.001, 0.00575 + .0015]
-        ax_inset_0 = ax[0].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0],inset_x[1]], ylim=[inset_y[0],inset_y[1]], xticklabels=[], yticklabels=[])
-        ax_inset_1 = ax[1].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0],inset_x[1]], ylim=[inset_y[0],inset_y[1]], xticklabels=[], yticklabels=[])
-        ax[0].indicate_inset_zoom(ax_inset_0, edgecolor="yellow")
-        ax[1].indicate_inset_zoom(ax_inset_1, edgecolor="yellow")
 
         for a in ax:
             xticks = a.get_xticks()
@@ -362,56 +380,64 @@ class PseudopotentialPlanarTrap:
             a.set_xticklabels([f'{tick * 1000:.0f}' for tick in xticks])
             a.set_yticklabels([f'{tick * 1000:.0f}' for tick in yticks])
 
+        plt.setp(ax[1].get_yticklabels(), visible=False)
+
+        inset_x = [self.a / 2 - .0015, self.a / 2 + .0015]
+        inset_y = [0.00375 - .001, 0.00575 + .0015]
+        ax_inset_0 = ax[0].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0], inset_x[1]],
+                                      ylim=[inset_y[0], inset_y[1]], xticklabels=[], yticklabels=[])
+        ax_inset_1 = ax[1].inset_axes([.015, .45, .35, .5], xlim=[inset_x[0], inset_x[1]],
+                                      ylim=[inset_y[0], inset_y[1]], xticklabels=[],
+                                      yticklabels=[])
+        ax[0].indicate_inset_zoom(ax_inset_0, edgecolor="yellow")
+        ax[1].indicate_inset_zoom(ax_inset_1, edgecolor="yellow")
         ax_inset_0.tick_params(color='yellow', labelcolor='yellow')
         ax_inset_1.tick_params(color='yellow', labelcolor='yellow')
-        x_inset = np.linspace(inset_x[0],inset_x[1], num= 15)
-        y_inset = np.linspace(inset_y[0],inset_y[1], num= 8)
+        x_inset = np.linspace(inset_x[0], inset_x[1], num=15)
+        y_inset = np.linspace(inset_y[0], inset_y[1], num=8)
         x_inset, y_inset = np.meshgrid(x_inset, y_inset)
-        E_x_inset0, E_y_inset0 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset, y_inset)
+        E_x_inset0, E_y_inset0 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset,
+                                                                                                               y_inset)
         if normalized:
             E_x_inset0 = E_x_inset0 / np.sqrt(E_x_inset0 ** 2 + E_y_inset0 ** 2)
             E_y_inset0 = E_y_inset0 / np.sqrt(E_x_inset0 ** 2 + E_y_inset0 ** 2)
         self.v_rf = -self.v_rf
-        E_x_inset1, E_y_inset1 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset, y_inset)
+        E_x_inset1, E_y_inset1 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset,
+                                                                                                               y_inset)
         if normalized:
             E_x_inset1 = E_x_inset1 / np.sqrt(E_x_inset1 ** 2 + E_y_inset1 ** 2)
             E_y_inset1 = E_y_inset1 / np.sqrt(E_x_inset1 ** 2 + E_y_inset1 ** 2)
-        # ax_inset_0.streamplot(x_inset, y_inset, -E_x_inset0, -E_y_inset0, density= (.4, .4), color=color, arrowstyle='fancy', linewidth=0.5, arrowsize=.75)
-        # ax_inset_1.streamplot(x_inset, y_inset, -E_x_inset1, -E_y_inset1, density=(.4, .4), color=color, arrowstyle='fancy',
-        #               linewidth=0.5, arrowsize=0.75)
+
         self.v_rf = -self.v_rf
-        cax_2 = ax_inset_0.pcolormesh(x, y, phi_ac0, cmap='twilight_r',vmin=np.minimum(-self.v_rf,self.v_rf) ,vmax=np.maximum(-self.v_rf,self.v_rf))
+        ax_inset_0.pcolormesh(x, y, phi_ac0, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
+                                      vmax=np.maximum(-self.v_rf, self.v_rf))
+        ax_inset_0.quiver(x_inset, y_inset, -E_x_inset0, -E_y_inset0, color=color, scale=90000000, scale_units='x',
+                          width=0.011)
+
         self.v_rf = -self.v_rf
         cax_2 = ax_inset_1.pcolormesh(x, y, phi_ac1, cmap='twilight_r', vmin=np.minimum(-self.v_rf, self.v_rf),
-                              vmax=np.maximum(-self.v_rf, self.v_rf))
-        self.v_rf = -self.v_rf
-        ax_inset_0.quiver(x_inset, y_inset, -E_x_inset0, -E_y_inset0, color=color, scale = 90000000, scale_units = 'x', width=0.011)
-        ax_inset_1.quiver(x_inset, y_inset, -E_x_inset1, -E_y_inset1, color=color, pivot='tip', scale = 90000000, scale_units = 'x', width=0.011)
-        clb = fig.colorbar(mappable = cax, location='top', ax = ax)
-        # fig.savefig('figures/Robert Figures/e_fields.pdf')
-        # ax.quiver(x, y, -E_x, -E_y, color=color)
+                                      vmax=np.maximum(-self.v_rf, self.v_rf))
+        ax_inset_1.quiver(x_inset, y_inset, -E_x_inset1, -E_y_inset1, color=color, pivot='tip', scale=90000000,
+                          scale_units='x', width=0.011)
+        fig.colorbar(mappable=cax, location='top', ax=ax)
         return fig, ax
 
     def plot_rf_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
-                                fig=None, ax=None, ncountours=25, max_countour_level=250., figsize=(3.5, 3),
-                                **kwargs):
+                                fig=None, ax=None, ncountours=25, min_contour_level=-20., figsize=(3.5, 3)):
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
         x, y = np.meshgrid(x, y)
-        # u = self.u_gap(x, y)[0] + self.u_gap(x, y)[1] + self.u_gap(x, y)[2] + self.u_gap(x, y)[3]
-        # u = self.u_dc(x, y) + self.u_ac(x, y)
-        # u = self.u_total(x, y, include_gaps=include_gaps)
         u = self.u_ac(x, y, include_gaps=include_gaps)
         extent = [x_range[0], x_range[1], y_range[0], y_range[1]]
-        levels = np.linspace(0., max_countour_level, num=ncountours)
+        levels = np.linspace(min_contour_level, 0., num=ncountours)
         if fig is None:
             fig, ax = plt.subplots(1, 1, figsize=figsize)
         ax.set_xlabel('x (mm)')
         ax.set_ylabel('height (mm)')
         ax.set_title(f'potential energy / charge (V)\n center electrode at {self.v_dc:.1f} V')
-        cax = ax.pcolormesh(x, y, u, cmap='viridis', vmax=max_countour_level, rasterized=True)
+        cax = ax.pcolormesh(x, y, u, cmap='viridis', rasterized=True, vmin=min_contour_level)
         self.draw_electrodes(ax, include_gaps=include_gaps)
-        ax.contour(u, levels=levels, colors='k', extent=extent, linewidth=0.5)
+        ax.contour(u, levels=levels, colors='k', extent=extent, linewidths=0.75, linestyles='solid')
         ax.set_xlim(x_range[0], x_range[1])
         ax.set_ylim(y_range[0] - 0.5E-3, y_range[1])
         plt.colorbar(cax)
@@ -434,18 +460,20 @@ class PseudopotentialPlanarTrap:
         u_grav = self.u_gravity(x, y)
         u_dc = self.u_dc(x, y)
         u_ac = self.u_ac(x, y, include_gaps=include_gaps)
-
+        linewidth = 1.5
         fig, ax = plt.subplots(1, 1, figsize=figsize)
-        ax.plot(y * 1.E3, u_ac, label='psuedo')
-        ax.plot(y * 1.E3, u_ac * 50, label='psuedo x 50', color='k', linestyle='--')
-        ax.plot(y * 1.E3, u_dc, label='dc')
-        ax.plot(y * 1.E3, u_grav, label='gravity')
-        ax.plot(y * 1.E3, u_ac + u_dc + u_grav, label='total')
-        ax.set_ylim([-10, np.max(u_ac + u_dc + u_grav)])
+        # plt.yscale('log')
+        ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
+        ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
+        ax.plot(y * 1.E3, -u_dc, label='DC',  color='indianred',linewidth=linewidth)
+        ax.plot(y * 1.E3, -u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
+        ax.plot(y * 1.E3, -(u_ac + u_dc + u_grav), label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
+        ax.set_ylim([-10, -np.min(u_ac + u_dc + u_grav)])
         fig.legend()
         ax.set_xlabel('y (mm)')
         ax.grid(True)
-        ax.set_ylabel('potential energy / charge (J/C)')
+        ax.set_ylabel('-potential energy / charge (J/C)')
+        # fig.savefig('figures/Robert Figures/y_cuts.pdf')
         return fig, ax
 
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 320., num=16),
@@ -460,10 +488,10 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
         y_lcl = np.linspace(y0s[-1] - ystep, y0s[-1] + ystep, num=3)
         x_lcl, y_lcl = np.meshgrid(xs, y_lcl)
         u = trap.u_total(x_lcl, y_lcl, include_gaps=include_gaps)
-        ax.plot(x_lcl[1, :] * 1.E3, u[1, :], label=f'{v_dc:.0f} V', color=colors[i])
+        ax.plot(x_lcl[1, :] * 1.E3, -u[1, :], label=f'{v_dc:.0f} V', color=colors[i])
     ax.grid(True)
     ax.set_xlabel('x (mm)')
-    ax.set_ylabel('potential energy / charge (J/C)')
+    ax.set_ylabel('-potential energy / charge (J/C)')
     fig.legend(bbox_to_anchor=(1, 1), fontsize=9)
     # figh, axh = plt.subplots(1, 1)
     # axh.plot(dc_values, y0s, marker='o', linestyle='None')
@@ -471,22 +499,6 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
     # axh.set_ylabel('equilibrium height (mm)')
     # plt.show()
     return fig, ax
-
-def get_data():
-    rawdata = np.array([[40, 0.78, 3.07], [45, 0.76, 3.09], [50, 0.73, 3.11], [55, 0.73, 3.13], [60, 0.68, 3.15],
-                        [65, 0.69, 3.2], [70, 0.66, 3.2], [75, 0.65, 3.22], [80, 0.61, 3.26], [85, 0.59, 3.28],
-                        [90, 0.57, 3.33], [95, 0.54, 3.35], [100, 0.52, 3.37], [105, 0.51, 3.38], [110, 0.5, 3.42],
-                        [115, 0.47, 3.45], [120, 0.45, 3.48], [125, 0.42, 3.53], [130, 0.4, 3.56], [135, 0.39, 3.58],
-                        [140, 0.34, 3.62], [145, 0.35, 3.65], [150, 0.32, 3.67], [155, 0.3, 3.72], [160, 0.26, 3.76],
-                        [165, 0.26, 3.79], [170, 0.21, 3.83], [175, 0.2, 3.87], [180, 0.19, 3.9], [185, 0.19, 3.95],
-                        [190, 0.17, 3.99], [195, 0.19, 4.02], [200, 0.23, 4.06], [205, 0.29, 4.11], [210, 0.38, 4.25]])
-    rawdata = rawdata[:-1]
-    dc_voltages = rawdata[:, 0]
-    y_spread = rawdata[:, 1]
-    y0 = rawdata[:, 2]
-    meas_min = rawdata[np.argmin(rawdata[:, 1])]
-    #Rought guess based on chart. Need more precise measurement from Cole.
-    return dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, meas_min
 
 
 def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
