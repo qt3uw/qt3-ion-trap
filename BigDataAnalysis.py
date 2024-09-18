@@ -54,6 +54,11 @@ def configure_plot_style():
 
 
 def load_data(file_path):
+    '''
+    This function loads the data from the given file path.
+    :param file_path: 
+    :return: 
+    '''
     tuples_list = []
     with open(file_path, 'r') as file:
         for line in file:
@@ -67,6 +72,12 @@ def load_data(file_path):
 
 
 def extract_data(tuples_list):
+    '''
+    This function extracts the data from the given tuples. If it is raw data from Tracking.py, the amplification
+    factor is applied to the data.
+    :param tuples_list: 
+    :return: 
+    '''
     height = []
     micromotion = []
     for i in range(len(tuples_list)):
@@ -80,6 +91,15 @@ def extract_data(tuples_list):
 
 
 def analyze_data(micromotion, voltage, height, file_name, testfile):
+    '''
+    Executes the data analysis and returns values for the RF null height, the RF null voltage, and the charge-to-mass
+    :param micromotion: 
+    :param voltage: 
+    :param height: 
+    :param file_name: 
+    :param testfile: 
+    :return: 
+    '''
     micromotion_sorted = sorted(micromotion)
     full_indices = sorted(range(len(micromotion)), key=micromotion.__getitem__)
     indices = full_indices[0:POINTS_TAKEN]
