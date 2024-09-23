@@ -7,25 +7,24 @@ import math
 # --------------------------- Parameter Definition ---------------------------------------------- #
 
 
-videofile = cv2.VideoCapture('Trial19.avi')   # Specifies the video file
-viewtype = "image"   # "binary" for binary image, "image" for annotated video, "frame" for original video, "cleanthresh" for undialated
-output = "none"   # "tuple" for tuple output, "none" for none
-showquant = "none"   # height, micromotion, or both can be displayed on the image
-auto = "False"   # Automatically Runs Code (will not display video)
-poortracking = False   # Will ignore index of the particle if varying. ONLY USE IF NO OTHER PARTICLES IN FRAME
-fps = 20   # Frame rate of the camera
-changeinterval = 5   # How many seconds between data point collection
-points_to_image = []    # Saves an image of the frame at the specified data point (3, 20, 31, 33, 35 for paper figure 3(a))
-sample_frames = 15   # How many frames the data is averaged over
-binthresh = 26   # Binary threshold distinguishing white from black (higher for brighter pixels, lower for darker)
-xrange = (800, 1200)   # define the visible x range (images are usually 1616 x 1240)
-yrange = (547, 933)   # define the visible y range
-bottom_bar = 100   # sets the height of bottom blocker. Used to block unwanted noise within the visible frame
-top_bar = 0   # sets the height of top blocker
-left_bar = 0   # sets the height of left blocker
-right_bar = 0   # # sets the height of right blocker
-
-indexlist = []   # Specifies the multiple indices of desired tracking particle in case of sparse tracking/regular index shifts
+VIDEO_FILE = cv2.VideoCapture('Trial19.avi')   # Specifies the video file
+VIEW_TYPE = "image"   # "binary" for binary image, "image" for annotated video, "frame" for original video, "cleanthresh" for undialated
+OUTPUT = "none"   # "tuple" for tuple output, "none" for none
+SHOW_QUANT = "none"   # height, micromotion, or both can be displayed on the image
+AUTO = "False"   # Automatically Runs Code (will not display video)
+POOR_TRACKING = False   # Will ignore index of the particle if varying. ONLY USE IF NO OTHER PARTICLES IN FRAME
+FPS = 20   # Frame rate of the camera
+CHANGE_INTERVAL = 5   # How many seconds between data point collection
+POINTS_TO_IMAGE = []    # Saves an image of the frame at the specified data point (3, 20, 31, 33, 35 for paper figure 3(a))
+SAMPLE_FRAMES = 15   # How many frames the data is averaged over
+BIN_THRESH = 26   # Binary threshold distinguishing white from black (higher for brighter pixels, lower for darker)
+X_RANGE = (800, 1200)   # define the visible x range (images are usually 1616 x 1240)
+Y_RANGE = (547, 933)   # define the visible y range
+BOTTOM_BAR = 100   # sets the height of bottom blocker. Used to block unwanted noise within the visible frame
+TOP_BAR = 0   # sets the height of top blocker
+LEFT_BAR = 0   # sets the height of left blocker
+RIGHT_BAR = 0   # # sets the height of right blocker
+INDEX_LIST = []   # Specifies the multiple indices of desired tracking particle in case of sparse tracking/regular index shifts
 
 
 #-------------------------------Initializing parameter variations-------------------------------------- #
@@ -35,28 +34,28 @@ ticker = 0
 val = 0
 
 # Sets which frames the data collection starts and ends at. The offset is set to 40% of the spacing between points to ensure equilibrium
-offset = (fps * changeinterval) * 0.4
+offset = (FPS * CHANGE_INTERVAL) * 0.4
 collection_frames = []
 for i in range(100):
-    collection_frames.append(int((fps * changeinterval * i) + offset))
+    collection_frames.append(int((FPS * CHANGE_INTERVAL * i) + offset))
 end_collection_frames = []
 for i in range(100):
-    end_collection_frames.append(int((collection_frames[i] + sample_frames)))
+    end_collection_frames.append(int((collection_frames[i] + SAMPLE_FRAMES)))
 
 # Adjusts for inverse y-axis indexing
 imageheight = 1240
-x_start, x_end = xrange
-y_start, y_end = (imageheight-yrange[1]), (imageheight-yrange[0])
+x_start, x_end = X_RANGE
+y_start, y_end = (imageheight-Y_RANGE[1]), (imageheight-Y_RANGE[0])
 
 # Sets the binary rectangles (blockers)
 ylength = y_end - y_start
 xlength = x_end - x_start
-top_rect_pt1, top_rect_pt2 = (0, 0), (1616, top_bar)
-left_rect_pt1, left_rect_pt2 = (0, 0), (left_bar, 1240)
-right_rect_pt1, right_rect_pt2 = (xlength-right_bar, 0), (xlength, 1240)
-bottom_rect_pt1, bottom_rect_pt2 = (0, ylength-bottom_bar), (1616, ylength)
-frameheight = yrange[1]-yrange[0]
-if viewtype == "binary":
+top_rect_pt1, top_rect_pt2 = (0, 0), (1616, TOP_BAR)
+left_rect_pt1, left_rect_pt2 = (0, 0), (LEFT_BAR, 1240)
+right_rect_pt1, right_rect_pt2 = (xlength-RIGHT_BAR, 0), (xlength, 1240)
+bottom_rect_pt1, bottom_rect_pt2 = (0, ylength-BOTTOM_BAR), (1616, ylength)
+frameheight = Y_RANGE[1]-Y_RANGE[0]
+if VIEW_TYPE == "binary":
     rectangle_color = (255, 255, 255)
 else: rectangle_color = (0, 0, 0)
 
@@ -106,7 +105,7 @@ else:
 
 
 # Choosing the video to track in
-vid_cap = videofile
+vid_cap = VIDEO_FILE
 if not vid_cap.isOpened():
     print("Error: Could not open video file.")
     exit()
@@ -116,7 +115,7 @@ print(ret)
 # Object index of interest (Selecting a particle to collect data on)
 index_of_interest = 0
 
-# Defining up morphological transformations kernels (Can be different for some optimizations)
+# Defining the morphological transformation kernels (Can be different for some optimizations)
 cleaning_kernel = np.ones((2, 2), np.uint8)
 filling_kernel = np.ones((2, 2), np.uint8)
 
@@ -180,15 +179,15 @@ while run:
         run = False
     elif key == 32:
         index_of_interest = int(input('Enter the index of interest: '))
-        frames_to_play = sample_frames
+        frames_to_play = SAMPLE_FRAMES
 
         first_point = True
     else:
-        if auto == "False":
+        if AUTO == "False":
             frames_to_play = 1
             showvid = True
             datacollect = True
-        if auto == "True":
+        if AUTO == "True":
             print('Beginning Autoscan...')
             frames_to_play = 999999
             showvid = False
@@ -230,7 +229,7 @@ while run:
         gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
 
         # Apply binary thresholding (Converting to intensity values of 0 and 255)
-        ret, thresh = cv2.threshold(gray_frame, binthresh, 255, cv2.THRESH_BINARY)
+        ret, thresh = cv2.threshold(gray_frame, BIN_THRESH, 255, cv2.THRESH_BINARY)
 
         # Post-processing
         clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
@@ -303,23 +302,23 @@ while run:
                     tracking_objects[key].append(h)
 
             # Optionally, draw the bounding rectangle on the original image
-            if viewtype == "image" and auto == "True":
+            if VIEW_TYPE == "image" and AUTO == "True":
                 showvid = True
             else:
                 pass
             if showvid == True:
                 # Displays specified quantities on the image
                 cv2.rectangle(image_with_keypoints, (x, y), (x + w, y + h), (0, 255, 0), 1)
-                if showquant == "height":
+                if SHOW_QUANT == "height":
                     cv2.putText(image_with_keypoints, 'y: ' + str(adj_centroid_y), (centroid_x, centroid_y + h + 15), 0, 0.5, (0, 255, 0), 1)
-                if showquant == "micro":
+                if SHOW_QUANT == "micro":
                     cv2.putText(image_with_keypoints, 'a: ' + str(h), (centroid_x, centroid_y + h + 15), 0, 0.5, (0, 255, 0), 1)
-                if showquant == "both":
+                if SHOW_QUANT == "both":
                     cv2.putText(image_with_keypoints, 'y:' + str(adj_centroid_y), (centroid_x + 12, centroid_y - 8), 0, 0.34, (0, 255, 0), 1)
                     cv2.putText(image_with_keypoints, 'a:' + str(h), (centroid_x + 12, centroid_y + 8), 0,0.34, (0, 255, 0), 1)
             else:
                 pass
-            if viewtype == "image" and auto == "True":
+            if VIEW_TYPE == "image" and AUTO == "True":
                 showvid = False
             else:
                 pass
@@ -336,12 +335,12 @@ while run:
                 adj_y = (y_end - y_start) - y
             except NameError:
                 pass
-        if poortracking == True:
+        if POOR_TRACKING == True:
             for i in range(1000):
                 try:
                     height_of_interest = tracking_objects[i][1]
                     if len(tracking_objects.keys()) > 0 and height_of_interest > 0:
-                        if i in indexlist:
+                        if i in INDEX_LIST:
                             try:
                                 heightvec.append(adj_centroid_y)
                                 microvec.append(height_of_interest)
@@ -352,7 +351,7 @@ while run:
                             pass
                 except KeyError or IndexError:
                     pass
-        if poortracking == False:
+        if POOR_TRACKING == False:
             try:
                 height_of_interest = tracking_objects[index_of_interest][1]  # height_of_interest = tracking_objects[index_of_interest][1]
                 if len(tracking_objects.keys()) > 0:
@@ -374,11 +373,11 @@ while run:
                 cv2.putText(image_with_keypoints, "Frame: end", (5, 20), 0, 0.5, (0, 255, 0), 1)
             else:
                 cv2.putText(image_with_keypoints, "Frame: " + str(frame_num), (5, 20), 0, 0.5, (0, 255, 0), 1)
-            if viewtype == "binary":
+            if VIEW_TYPE == "binary":
                 cv2.imshow("Frame", closing) #image_with_keypoints, closing
-            if viewtype == "image":
+            if VIEW_TYPE == "image":
                 cv2.imshow("Frame", image_with_keypoints)
-            if viewtype == "frame":
+            if VIEW_TYPE == "frame":
                 cv2.imshow("Frame", frame)
 
             cv2.waitKey(50)
@@ -392,9 +391,9 @@ while run:
                 print(ticker)
 
                 # Identifies if frame is one to save an image from and takes a zoomed in image of the particle
-                if ticker in points_to_image:
+                if ticker in POINTS_TO_IMAGE:
                     val = val + 1
-                    if viewtype == "binary":
+                    if VIEW_TYPE == "binary":
                         x, y = point
                         x, y = int(x), int(y)
                         cropped_image = closing[y - 40:y + 40, x - 50:x + 50]
@@ -406,15 +405,15 @@ while run:
                             cv2.destroyAllWindows()
                             cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_GRAY2BGR)
                             cv2.imshow('enlarged_image', cropped_image)
-                            cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                            cv2.imwrite("Frame" + str(POINTS_TO_IMAGE[val - 1]) + str(VIEW_TYPE) + "Stacked.tif",
                                         cropped_image)
                             cv2.waitKey(0)
                             cv2.destroyAllWindows()
                         else:
                             cropped_image = closing[y - 40:y + 40, x - 50:x + 50]
-                            cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                            cv2.imwrite("Frame" + str(POINTS_TO_IMAGE[val - 1]) + str(VIEW_TYPE) + "Stacked.tif",
                                         cropped_image)
-                    if viewtype == "image":
+                    if VIEW_TYPE == "image":
                         x, y = point
                         x, y = int(x), int(y)
                         cropped_image = image_with_keypoints[y - 50:y + 40, x - 50:x + 50]
@@ -424,21 +423,21 @@ while run:
                             cv2.destroyAllWindows()
                         else:
                             pass
-                        cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Stacked.tif",
+                        cv2.imwrite("Frame" + str(POINTS_TO_IMAGE[val - 1]) + str(VIEW_TYPE) + "Stacked.tif",
                                     cropped_image)
-                    if viewtype == "frame":
+                    if VIEW_TYPE == "frame":
                         framed_image = frame[y_start:y_end, x_start:x_end]
                         x,y = point
                         x, y = int(x), int(y)
                         print(x,y)
                         cropped_image = framed_image[y-50:y+50, x-50:x+70]
-                        cv2.imwrite("Frame" + str(points_to_image[val - 1]) + str(viewtype) + "Final.tif", cropped_image)
+                        cv2.imwrite("Frame" + str(POINTS_TO_IMAGE[val - 1]) + str(VIEW_TYPE) + "Final.tif", cropped_image)
                     print('Click!')
 
                 datapointnum = datapointnum + 1
 
                 # Stores the data in the "Tuple.txt" file and prompts if Tuple.txt already contains data upon beginning collection
-                if output == "tuple":
+                if OUTPUT == "tuple":
                     avgheight = round(np.mean(heightvec), 2)
                     avgmicro = round(np.mean(microvec), 2)
                     percentage = (frame_num / total_frames) * 100
@@ -470,8 +469,8 @@ while run:
         frame_num += 1
 
     # Initiates data collection if auto is off and we are using the spacebar to manually collect the data points
-    if frames_to_play == sample_frames:
-        if output == "tuple":
+    if frames_to_play == SAMPLE_FRAMES:
+        if OUTPUT == "tuple":
             avgheight = round(np.mean(heightvec), 2)
             avgmicro = round(np.mean(microvec), 2)
             print('Average Height = ' + str(avgheight) + ' , Average Micromotion = ' + str(avgmicro))
