@@ -396,6 +396,7 @@ class PseudopotentialPlanarTrap:
         x_inset = np.linspace(inset_x[0], inset_x[1], num=15)
         y_inset = np.linspace(inset_y[0], inset_y[1], num=8)
         x_inset, y_inset = np.meshgrid(x_inset, y_inset)
+        self.v_rf = -self.v_rf
         E_x_inset0, E_y_inset0 = self.grad_phi_ac_gaps(x_inset, y_inset) if include_gaps else self.grad_phi_ac(x_inset,
                                                                                                                y_inset)
         if normalized:
