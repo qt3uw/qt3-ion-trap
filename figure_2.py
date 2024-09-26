@@ -16,6 +16,7 @@ plt.rcParams['axes.labelsize'] = 10
 plt.rcParams['xtick.labelsize'] = 10
 plt.rcParams['ytick.labelsize'] = 10
 plt.rcParams['axes.titlesize'] = 12
+plt.rcParams['text.usetex'] = True
 
 
 # def compute_expression(y):
@@ -120,7 +121,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     print("q/m from rf null: " + str(trap.charge_to_mass))
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    ax.plot(model_voltages, y0_model * 1.E3, color='k', label='RF null')
+    ax.plot(model_voltages, y0_model * 1.E3, color='k', label=r'$\gamma_{\mathrm{null}} =\ $' + str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k')))
 
     # Now find the charge to mass from best fit of height vs voltage to model
 
@@ -142,7 +143,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
     plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='darkseagreen')
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
-    ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='best fit')
+    ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label=r'$\gamma_{\mathrm{fit}} =\ $' + str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k')))
 
     # gradient_at_null = trap.grad_u_dc(trap.a / 2, meas_min[1]*10**-3, include_gaps=include_gaps)
 
@@ -159,16 +160,17 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
 def plot_escape():
     trap = get_default_trap()
     fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True)
-    ax.set_ylabel('-potential energy / charge (J/C)')
+    ax.set_ylabel('Potential energy / charge (J/C)')
     ax.set_title(None)
+    plt.gca().invert_yaxis()
     fig.tight_layout()
     fig.savefig('figures/fig2-trap_escape.pdf')
 
 
 if __name__ == "__main__":
-    # y_cuts_panel()
-    # e_field_panel()
-    # potential_energy_panel()
-    # plot_escape()
+    y_cuts_panel()
+    e_field_panel()
+    potential_energy_panel()
+    plot_escape()
     plot_height_fit(figsize=(2.5, 3.), include_gaps=True)
     plt.show()
