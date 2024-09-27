@@ -1,7 +1,9 @@
 import cv2
 
-# This is where we define all of our functions for tracking particle height
-# in TRACKING.py and particle position in ShuttleTracking.py
+"""
+This is where we define all of our functions for tracking particle height
+in TRACKING.py and particle position in ShuttleTracking.py
+"""
 
 # -----------------------------------Shuttling Tracking-----------------------------------
 
@@ -16,7 +18,6 @@ def get_frame(cap, got_frame_num):
     _, got_frame = cap.read()
     return _, got_frame
 
-# Collect position data
 """
 Puts position data from a main loop dictionary into a file
 :param start_x: First data point's pixel x-coordinate
@@ -80,26 +81,14 @@ def set_up_detector():
 
     return detector
 
-# Post-processing
-# Creates a reduced-noise frame by eroding small, unwanted pixel regions, covering the edges with black rectangles, and then
-# fills in holes in the particle's vertical motion to improve tracking
 """
 Runs a post-processing sequence that cleans noise out of a frame
-:param thresh: 
-:param cleaning_kernel:
-:param filling_kernel:
-:param rectangle_color:
-:param top_rect_pt1:
-:param top_rect_pt2:
-:param left_rect_pt1:
-:param left_rect_pt2:
-:param right_rect_pt1:
-:param right_rect_pt2:
-:param bottom_rect_pt1:
-:param bottom_rect_pt2:
-:param clean_iter:
-:param dilate_iter:
-:param close_iter:
+:param thresh: Binary threshold image
+:param cleaning_kernel: Numpy matrix
+:param filling_kernel: Numpy matrix
+:param clean_iter: Number of erosion iterations for cleaning
+:param dilate_iter: Number of dilation iterations for filling holes
+:param close_iter: Number of erosion iterations for returning to original particle size
 """
 def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
                     right_rect_pt1, right_rect_pt2, bottom_rect_pt1, bottom_rect_pt2, clean_iter, dilate_iter, close_iter):
@@ -112,6 +101,11 @@ def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, to
     closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, filling_kernel, iterations=close_iter)
     return clean_thresh, closing
 
+"""
+Saves images at specified times
+:param name: File name
+:param image_save_times: List of times(s) to save an image at
+"""
 def save_image(name, time, image_save_times, frame):
     if time in image_save_times:
         # Save the frame as an image file
