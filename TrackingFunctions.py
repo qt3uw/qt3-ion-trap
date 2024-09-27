@@ -5,13 +5,28 @@ import cv2
 
 # -----------------------------------Shuttling Tracking-----------------------------------
 
-# Read a specific frame
+"""
+Reads a specific frame, converting from a cv2 video capture to an individual frame
+:param cap: cv2 video capture
+:param got_frame_num: frame number
+:return: (frame validity boolean, frame)
+"""
 def get_frame(cap, got_frame_num):
     cap.set(cv2.CAP_PROP_POS_FRAMES, got_frame_num)
     _, got_frame = cap.read()
     return _, got_frame
 
 # Collect position data
+"""
+Puts position data from a main loop dictionary into a file
+:param start_x: First data point's pixel x-coordinate
+:param storage_file:
+:param tracking_objects_dict: Main loop position data structure
+:param index_of_interest: identify an object to store data for
+:param all_indices_of_interest:
+:param frame_num:
+:return: None
+"""
 def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_interest, all_indices_of_interest, frame_num):
 
     # Putting position points in a file
@@ -28,9 +43,11 @@ def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_inte
 
 # ------------------------------------------Both------------------------------------------
 
-# Setting up the detector
-# Accesses OpenCV's blob detector tool and enables a couple parameters
-# for our particle tracking scenario and establishes a detector object
+"""
+Sets up the opencv blob detector
+:param: None
+:return: detector object
+"""
 def set_up_detector():
     params = cv2.SimpleBlobDetector.Params()
 
@@ -66,6 +83,24 @@ def set_up_detector():
 # Post-processing
 # Creates a reduced-noise frame by eroding small, unwanted pixel regions, covering the edges with black rectangles, and then
 # fills in holes in the particle's vertical motion to improve tracking
+"""
+Runs a post-processing sequence that cleans noise out of a frame
+:param thresh: 
+:param cleaning_kernel:
+:param filling_kernel:
+:param rectangle_color:
+:param top_rect_pt1:
+:param top_rect_pt2:
+:param left_rect_pt1:
+:param left_rect_pt2:
+:param right_rect_pt1:
+:param right_rect_pt2:
+:param bottom_rect_pt1:
+:param bottom_rect_pt2:
+:param clean_iter:
+:param dilate_iter:
+:param close_iter:
+"""
 def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
                     right_rect_pt1, right_rect_pt2, bottom_rect_pt1, bottom_rect_pt2, clean_iter, dilate_iter, close_iter):
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=clean_iter)
