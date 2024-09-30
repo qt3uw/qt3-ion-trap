@@ -1,17 +1,33 @@
 import cv2
 
-# This is where we define all of our functions for tracking particle height
-# in TRACKING.py and particle position in ShuttleTracking.py
+"""
+This is where we define all of our functions for tracking particle height
+in TRACKING.py and particle position in ShuttleTracking.py
+"""
 
 # -----------------------------------Shuttling Tracking-----------------------------------
 
-# Read a specific frame
+"""
+Reads a specific frame, converting from a cv2 video capture to an individual frame
+:param cap: cv2 video capture
+:param got_frame_num: frame number
+:return: (frame validity boolean, frame)
+"""
 def get_frame(cap, got_frame_num):
     cap.set(cv2.CAP_PROP_POS_FRAMES, got_frame_num)
     _, got_frame = cap.read()
     return _, got_frame
 
-# Collect position data
+"""
+Puts position data from a main loop dictionary into a file
+:param start_x: First data point's pixel x-coordinate
+:param storage_file:
+:param tracking_objects_dict: Main loop position data structure
+:param index_of_interest: identify an object to store data for
+:param all_indices_of_interest:
+:param frame_num:
+:return: None
+"""
 def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_interest, all_indices_of_interest, frame_num):
 
     # Putting position points in a file
@@ -28,9 +44,11 @@ def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_inte
 
 # ------------------------------------------Both------------------------------------------
 
-# Setting up the detector
-# Accesses OpenCV's blob detector tool and enables a couple parameters
-# for our particle tracking scenario and establishes a detector object
+"""
+Sets up the opencv blob detector
+:param: None
+:return: detector object
+"""
 def set_up_detector():
     params = cv2.SimpleBlobDetector.Params()
 
@@ -63,9 +81,15 @@ def set_up_detector():
 
     return detector
 
-# Post-processing
-# Creates a reduced-noise frame by eroding small, unwanted pixel regions, covering the edges with black rectangles, and then
-# fills in holes in the particle's vertical motion to improve tracking
+"""
+Runs a post-processing sequence that cleans noise out of a frame
+:param thresh: Binary threshold image
+:param cleaning_kernel: Numpy matrix
+:param filling_kernel: Numpy matrix
+:param clean_iter: Number of erosion iterations for cleaning
+:param dilate_iter: Number of dilation iterations for filling holes
+:param close_iter: Number of erosion iterations for returning to original particle size
+"""
 def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
                     right_rect_pt1, right_rect_pt2, bottom_rect_pt1, bottom_rect_pt2, clean_iter, dilate_iter, close_iter):
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=clean_iter)
@@ -77,6 +101,11 @@ def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, to
     closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, filling_kernel, iterations=close_iter)
     return clean_thresh, closing
 
+"""
+Saves images at specified times
+:param name: File name
+:param image_save_times: List of times(s) to save an image at
+"""
 def save_image(name, time, image_save_times, frame):
     if time in image_save_times:
         # Save the frame as an image file
