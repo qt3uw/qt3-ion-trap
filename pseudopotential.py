@@ -40,6 +40,7 @@ class PseudopotentialPlanarTrap:
     gap_width: float = 2.E-3
     shuttle_width: float = 16.491E-3
     electrode_height: float = .5E-3
+    v_error: float = 0.0164E-3
 
     @property
     def a(self):

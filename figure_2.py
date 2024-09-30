@@ -117,14 +117,28 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     delta_y_gradient_calc = 1.E-6
     gradient_at_null = ((trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
                         delta_y_gradient_calc)
+    gradient_at_null_low = ((trap.u_dc(trap.a / 2., y_min - trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc - trap.v_error)) /
+                        delta_y_gradient_calc)
+    gradient_at_null_high = ((trap.u_dc(trap.a / 2., y_min + trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc + trap.v_error)) / delta_y_gradient_calc)
     trap.charge_to_mass = g / gradient_at_null
+    # No error plot
     print("q/m from rf null: " + str(trap.charge_to_mass))
     model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
     y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    method_2, = ax.plot(model_voltages, y0_model * 1.E3, color='k', label='Method 2 ' r'($\gamma_{\mathrm{2}} =\ $'+ str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k')) + ')')
-
+    method_2, = ax.plot(model_voltages, y0_model * 1.E3, color='k', label='Method 2')
+    # method_2, = ax.plot(model_voltages, y0_model * 1.E3, color='k', label='Method 2 ' r'($\gamma_{\mathrm{2}} =\ $'+ str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k')) + ')')
+    # Lower error plot
+    trap.charge_to_mass = g / gradient_at_null_low
+    print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
+    y0_model_low = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+    # method_2_low, = ax.plot(model_voltages, y0_model_low * 1.E3, color='k')
+    # Higher error plot
+    trap.charge_to_mass = g / gradient_at_null_high
+    print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
+    y0_model_high = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+    # method_2_high, = ax.plot(model_voltages, y0_model_high * 1.E3, color='k')
     # Now find the charge to mass from best fit of height vs voltage to model
-
+    ax.fill_between(model_voltages, y0_model_low * 1.E3,y0_model_high * 1.E3, alpha=.5, color='grey')
     guesses = [trap.__dict__[param] for param in parameters]
 
     def merit_func(args):
@@ -140,10 +154,10 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         print(f'{param}: {res.x[i]}')
         trap.__dict__[param] = res.x[i]
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='darkseagreen')
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
-    method_1, =  ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1 ' r'($\gamma_{\mathrm{1}} =\ $' + str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k'))+ ')')
-
+    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='darkseagreen')
+    # method_1, =  ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1 ' r'($\gamma_{\mathrm{1}} =\ $' + str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k'))+ ')')
+    method_1, = ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1')
     # gradient_at_null = trap.grad_u_dc(trap.a / 2, meas_min[1]*10**-3, include_gaps=include_gaps)
 
 
