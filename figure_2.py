@@ -130,15 +130,21 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     # Lower error plot
     trap.charge_to_mass = g / gradient_at_null_low
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
-    y0_model_low = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+
+    # y0_model_low = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+    #
     # method_2_low, = ax.plot(model_voltages, y0_model_low * 1.E3, color='k')
     # Higher error plot
     trap.charge_to_mass = g / gradient_at_null_high
     print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
-    y0_model_high = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+
+    # y0_model_high = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+
     # method_2_high, = ax.plot(model_voltages, y0_model_high * 1.E3, color='k')
     # Now find the charge to mass from best fit of height vs voltage to model
-    ax.fill_between(model_voltages, y0_model_low * 1.E3,y0_model_high * 1.E3, alpha=.5, color='grey')
+
+    # ax.fill_between(model_voltages, y0_model_low * 1.E3,y0_model_high * 1.E3, alpha=.5, color='grey')
+
     guesses = [trap.__dict__[param] for param in parameters]
 
     def merit_func(args):
@@ -155,14 +161,14 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         trap.__dict__[param] = res.x[i]
     y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
-    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='darkseagreen')
+    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
     # method_1, =  ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1 ' r'($\gamma_{\mathrm{1}} =\ $' + str(np.format_float_positional(trap.charge_to_mass, precision=5, trim='k'))+ ')')
     method_1, = ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1')
     # gradient_at_null = trap.grad_u_dc(trap.a / 2, meas_min[1]*10**-3, include_gaps=include_gaps)
 
 
-    ax.set_xlabel('DC electrode voltage (V)')
-    ax.set_ylabel('Ion height (mm)')
+    ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
+    ax.set_ylabel('Ion height (mm)', fontsize=12)
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
@@ -170,10 +176,10 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     # fig.suptitle(f'include_gaps={include_gaps}')
     return trap
 
-def plot_escape():
+def plot_escape(figsize=(3.5, 3)):
     trap = get_default_trap()
-    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True)
-    ax.set_ylabel('Potential energy / charge (J/C)')
+    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
+    ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
     ax.set_title(None)
     plt.gca().invert_yaxis()
     fig.tight_layout()
@@ -184,6 +190,6 @@ if __name__ == "__main__":
     y_cuts_panel()
     e_field_panel()
     potential_energy_panel()
-    plot_escape()
-    plot_height_fit(figsize=(2.5, 3.), include_gaps=True)
+    plot_escape(figsize=(3.5, 3))
+    plot_height_fit(figsize=(2.5, 3), include_gaps=True)
     plt.show()
