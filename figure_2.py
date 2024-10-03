@@ -53,7 +53,6 @@ def potential_energy_panel():
 
 def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
     data_list = []
-
     # Read the file and process each line
     with open(fname, 'r') as file:
         for line in file:
