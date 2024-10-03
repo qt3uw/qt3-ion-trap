@@ -35,7 +35,7 @@ def y_cuts_panel():
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
-    fig.savefig('figures/fig2-y-cuts.pdf')
+    fig.savefig('figures/Figure 2/fig2-y-cuts.pdf')
 
 def e_field_panel():
     """
@@ -44,7 +44,7 @@ def e_field_panel():
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
                                   resolution=(256, 256), figsize=(6, 3.5))
-    figp.savefig('figures/fig2-efield.pdf')
+    figp.savefig('figures/Figure 2/fig2-efield.pdf')
 
 def potential_energy_panel():
     """
@@ -62,7 +62,7 @@ def potential_energy_panel():
         a.set_ylabel('y (mm)')
     ax.set_title(None)
     fig.tight_layout()
-    fig.savefig('figures/fig2-potential_energy.pdf')
+    fig.savefig('figures/Figure 2/fig2-potential_energy.pdf')
 
 def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
     """
@@ -149,7 +149,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
-    fig.savefig('figures/fig2-height_fit.pdf')
+    fig.savefig('figures/Figure 4/fig4-height_fit.pdf')
     return trap
 
 def plot_escape(figsize=(3.5, 3)):
@@ -164,7 +164,7 @@ def plot_escape(figsize=(3.5, 3)):
     ax.set_title(None)
     plt.gca().invert_yaxis()
     fig.tight_layout()
-    fig.savefig('figures/fig2-trap_escape.pdf')
+    fig.savefig('figures/Figure 4/fig4-trap_escape.pdf')
 
 
 if __name__ == "__main__":
