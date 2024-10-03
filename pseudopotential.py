@@ -297,10 +297,10 @@ class PseudopotentialPlanarTrap:
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
         """
-
-        :param dc_voltages:
-        :param include_gaps:
-        :return:
+        Obtains the expected ion height based on the applied DC voltage on the central DC electrode
+        :param dc_voltages: Applied DC voltage, in units of volts, on the central segmented electrode
+        :param include_gaps: Indicates whether the linear voltage interpolation is utilized on not
+        :return: Ion height (in meters) above trap surface
         """
         dc_initial = self.v_dc
         y0 = []
@@ -313,10 +313,11 @@ class PseudopotentialPlanarTrap:
 
     def draw_electrodes(self, ax, include_gaps=True):
         """
-
-        :param ax:
-        :param include_gaps:
-        :return:
+        Draws an image of the electrodes and dielectric in matplotlib with origin adjusted with the choice of include_gaps
+        :param ax: Axis object which will have the electrodes drawn onto
+        :param include_gaps: Indicates whether gaps are included or excluded. It will shift the origin in addition to
+                             visiually changing the dimensions of the electrodes depending on it's value.
+        :return: Returns the axis object with the electrodes imposed on top of them.
         """
         hatch = '..'
         hatch2 = '//'
@@ -383,14 +384,15 @@ class PseudopotentialPlanarTrap:
     def plot_E_field(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
                      normalized=True, figsize=(10, 6)):
         """
-
-        :param x_range:
-        :param y_range:
-        :param resolution:
-        :param include_gaps:
-        :param normalized:
-        :param figsize:
-        :return:
+        Plots visually the 2D electric field in addition to the potential energy scalar field of the electrodes.
+        :param x_range: The coordinate span along the x-axis of the displayed 2D electric field
+        :param y_range: The coordinate span along the y-axis of the displayed 2D electric field
+        :param resolution: The density of spatial points for numerical calculation of the fields
+        :param include_gaps: Includes or excludes the gaps between electrodes, this adjusting the electric field accordingly
+        :param normalized: Parameter that indicates whether one would like the electric field lines to be normalized to the
+                            same length or visually display the relative magnitudes of the field lines.
+        :param figsize: Indicates, in inches, the dimensions of the final figure panel
+        :return: Returns the figure and axis objects of the figure panel.
         """
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
@@ -479,17 +481,17 @@ class PseudopotentialPlanarTrap:
     def plot_rf_potential_contours(self, x_range=(-15E-3, 20E-3), y_range=(0.E-3, 10.E-3), resolution=(512, 512), include_gaps=True,
                                 fig=None, ax=None, ncountours=25, min_contour_level=-20., figsize=(3.5, 3)):
         """
-
-        :param x_range:
-        :param y_range:
-        :param resolution:
-        :param include_gaps:
-        :param fig:
-        :param ax:
-        :param ncountours:
-        :param min_contour_level:
-        :param figsize:
-        :return:
+        Plots the pseudopotential and equipotential contours of the AC electrodes above the surface of the trap.
+        :param x_range: The coordinate span along the x-axis of the displayed 2D potential
+        :param y_range: The coordinate span along the y-axis of the displayed 2D potential
+        :param resolution: The density of spatial points for numerical calculation of the pseudopotential and contours
+        :param include_gaps: Includes or excludes the gaps between electrodes, this adjusting the pseudopotential scalar field
+        :param fig: Figure object to have plot on
+        :param ax: Axis object for pseudopotential plot
+        :param ncountours: Indicates the density of contour lines in the plot
+        :param min_contour_level: Indicates the lowest voltage value to plot a contour for.
+        :param figsize: The figure dimensions in inches.
+        :return: Returns the figure and axis objects of the figure.
         """
         x = np.linspace(x_range[0], x_range[1], num=resolution[0])
         y = np.linspace(y_range[0], y_range[1], num=resolution[1])
@@ -512,11 +514,13 @@ class PseudopotentialPlanarTrap:
 
     def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None):
         """
-        :param yrange:
-        :param num:
-        :param x0:
-        :param include_gaps:
-        :return:
+        A graph of the potential energy (divided by charge) of the AC electrodes in terms of the pseudopotential,
+            DC potential energy,  gravitational potential energy and the total sum of these potential energies.
+        :param yrange: The coordinate span along the y-axis of the potential energies at x = a/2
+        :param num: The number of numerical points for plotting the potential energies
+        :param x0: Location of the origin relative to the x-axis along the surface of the trap.
+        :param include_gaps: Either includes or excludes the gaps between electrodes.
+        :return: Returns the figure and axis objects of the plot.
         """
         y = np.linspace(*yrange, num=num)
         if x0 is None:
@@ -544,15 +548,16 @@ class PseudopotentialPlanarTrap:
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 320., num=16),
                              xrange=[-7.4E-3, 12.4E-3], xnum=512, include_gaps=True, ystep=1.E-6, figsize=(3.5, 3)):
     """
-
-    :param trap:
-    :param dc_values:
-    :param xrange:
-    :param xnum:
-    :param include_gaps:
-    :param ystep:
-    :param figsize:
-    :return:
+    Plots the potential along the x-axis at given total potential energy minimums as the central DC electrode voltage
+    is sweeped.
+    :param trap: The trap object in the pseudopotential class with parameters that will determine the plot.
+    :param dc_values: The range of central DC electrode voltages which will be sweeped through.
+    :param xrange: The coordinate span along the x-axis that will be plotted.
+    :param xnum: The density of points for computing the numerical potential energy scalar field.
+    :param include_gaps: Includes or excludes the gaps between electrodes.
+    :param ystep: The numerical dy.
+    :param figsize: The figure size in inches.
+    :return: Returns the figure and axis objects of the plot.
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     xs = np.linspace(xrange[0], xrange[1], num=xnum)
@@ -574,7 +579,9 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
 
 def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
     """
-    :param trap:
+    Plots graphs where one can visually compare the difference between
+    including the electrode gaps vs excluding the gaps.
+    :param trap: The trap object which will have the gaps change so as o compare its affect on the plots.
     """
     fig, ax = trap.plot_y_cuts(include_gaps=True)
     fig.suptitle('including gaps')
