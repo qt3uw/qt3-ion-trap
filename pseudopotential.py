@@ -540,7 +540,7 @@ def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linsp
     """
     Plots the potential along the x-axis at given total potential energy minimums as the central DC electrode voltage
     is sweeped.
-    :param trap: The trap object in the pseudopotential class with parameters that will determine the plot.
+    :param trap: The trap object in the PseudopotentialPlanarTrap class with parameters that will determine the plot.
     :param dc_values: The range of central DC electrode voltages which will be sweeped through.
     :param xrange: The coordinate span along the x-axis that will be plotted.
     :param xnum: The density of points for computing the numerical potential energy scalar field.

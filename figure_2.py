@@ -18,12 +18,19 @@ plt.rcParams['ytick.labelsize'] = 10
 plt.rcParams['axes.titlesize'] = 12
 
 def get_default_trap():
+    """
+    Creates a and returns a trap object
+    :return: A trap object from the PseudopotentialPlanarTrap class
+    """
     trap = PseudopotentialPlanarTrap()
     trap.v_rf = -75 * 50 * 0.5
     trap.charge_to_mass = -1.077E-3
     return trap
 
 def y_cuts_panel():
+    """
+    Plots and saves the potential energy divided by charge of the various relevant scalar fields
+    """
     trap = get_default_trap()
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
@@ -31,12 +38,18 @@ def y_cuts_panel():
     fig.savefig('figures/fig2-y-cuts.pdf')
 
 def e_field_panel():
+    """
+    Plots and saves the electric field of the planar trap.
+    """
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
                                   resolution=(256, 256), figsize=(6, 3.5))
     figp.savefig('figures/fig2-efield.pdf')
 
 def potential_energy_panel():
+    """
+    Plots and saves the pseudopotential scalar field and equipotential contour lines.
+    """
     trap = get_default_trap()
     fig, ax = trap.plot_rf_potential_contours(include_gaps=True, figsize=(4.1, 3), x_range=(-trap.c, trap.a + trap.b),
                                               min_contour_level=-20, ncountours=41, resolution=(256, 256))
@@ -52,6 +65,15 @@ def potential_energy_panel():
     fig.savefig('figures/fig2-potential_energy.pdf')
 
 def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
+    """
+    Reads and sorts experimental data from a text file.
+    :param fname: The filename of the text file that will be read from
+    :return: Returns the data points, where each point has the following form-
+             (DC voltage, centroid, micromotion amplitude,
+             voltage when micromotion is minimized,
+             centroid when micromotion is minimized,
+             minimum micromotion amolitude)
+    """
     data_list = []
     # Read the file and process each line
     with open(fname, 'r') as file:
@@ -71,6 +93,13 @@ def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
     return -dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3
 
 def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
+    """
+    Plots and saves experimental ion height as a function of applied voltage in addition to the predicted ion height
+        as a function of applied voltage using the analytic model in addition to methods 1 and 2 in the paper.
+    :param include_gaps: Includes or excludes spatial gap between electrodes when calculating relevant fields.
+    :param figsize: Figure dimensions in inches
+    :return: The trap object from the PseudopotentialPlanarTrap class.
+    """
     trap = get_default_trap()
     parameters = ['charge_to_mass']
     bounds = [(-1.E-2, -1.E-4)]
@@ -124,6 +153,11 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     return trap
 
 def plot_escape(figsize=(3.5, 3)):
+    """
+    Plots and saves the potential energy divided by charge along the x-axis at different ion heights as a function of
+    applied DC central electrode voltage.
+    :param figsize: Figure dimensions in inches
+    """
     trap = get_default_trap()
     fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
     ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
