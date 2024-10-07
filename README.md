@@ -4,7 +4,7 @@
 This repository contains tracking programs, graphing scripts, and raw data for our QT3 Planar Trap demonstration lab. 
 This project can perform three experiments:
 * Experiment 1: Measure the micromotion amplitude, height, charge-to-mass ratio, and escape voltage of a single particle
-*   Code use: Use "Tracking.py" to generate the Tuple.txt file containing the data points. The "push" function in "BigDataAnalysis.py" will then convert the data points into units of mm and store the new data file in a separate folder. Running the "pull" function of "BigDataAnalysis.py" over this new data folder will print group statistics.
+  * Code use: Use "Tracking.py" to generate the Tuple.txt file containing the data points. The "push" function in "BigDataAnalysis.py" will then convert the data points into units of mm and store the new data file in a separate folder. Running the "pull" function of "BigDataAnalysis.py" over this new data folder will print group statistics.
 * Experiment 2: Observe shuttling motion of a single particle and identify its maximum velocity
 * Experiment 3: Observe the separation (splitting) motion of two particles and identify their maximum velocities
 
