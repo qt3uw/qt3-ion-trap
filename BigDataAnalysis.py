@@ -6,58 +6,27 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 # --------------------------------------- Constants -------------------------------------------- #
 
-FUNCTION_PUSH = "Push"           # Set the inactive variable to "" and the active variable to it's function (Push or Pull)
-FUNCTION_PULL = "False"
+FUNCTION_PUSH = "False"       # Set the inactive variable to "" and the active variable to it's function (Push or Pull)
+FUNCTION_PULL = "Pull"
 
 READ_FILE = "Tuple.txt"
 SAVE_FILE = "TESTSAVEFILE.txt"
 AMPLIFICATION_FACTOR = 0.0164935  # mm/pixel
 
-DATA_PATH = "Height Adjusted FInal Data"
+DATA_PATH = "Data/Micromotion_Experiment_Data"
 TEST_FILE = "8-18_Trial18_data.txt"
 PRINT_STATS = True
 
 POINTS_TAKEN = 12  # Minimum points for voltage best fit
-HIST_BINS = 20
-SHOW_PLOTS = False
-USE_MAT_LABELS = False
-SAVE_MICRO = False
-SAVE_HIST = False
-SAVE_JOINT = False
-
-# Plot parameters
-PLOT_STYLE = 'seaborn-v0_8-bright'
-GRID_COLOR = 'gray'
-GRID_LINESTYLE = '--'
-GRID_LINEWIDTH = 0.5
-LABEL_SIZE = 18
-
-COLORS = {
-    'main': (0.280267, 0.073417, 0.397163),  # Purple Color
-    'error': (0.170948, 0.694384, 0.493803)  # Green Color
-}
 
 
 # -------------------------------------- Functions ----------------------------------------- #
 
-def configure_plot_style():
-    plt.style.use(PLOT_STYLE)
-    plt.rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.sans-serif'] = ['Arial']
-    plt.rcParams['axes.grid'] = True
-    plt.rcParams['grid.color'] = GRID_COLOR
-    plt.rcParams['grid.linestyle'] = GRID_LINESTYLE
-    plt.rcParams['grid.linewidth'] = GRID_LINEWIDTH
-    plt.rcParams['axes.labelsize'] = LABEL_SIZE
-    plt.rcParams['xtick.labelsize'] = LABEL_SIZE
-    plt.rcParams['ytick.labelsize'] = LABEL_SIZE
-
-
 def load_data(file_path):
     '''
     This function loads the data from the given file path.
-    :param file_path: 
-    :return: 
+    :param file_path:
+    :return:
     '''
     tuples_list = []
     with open(file_path, 'r') as file:
@@ -75,8 +44,8 @@ def extract_data(tuples_list):
     '''
     This function extracts the data from the given tuples. If it is raw data from Tracking.py, the amplification
     factor is applied to the data.
-    :param tuples_list: 
-    :return: 
+    :param tuples_list:
+    :return:
     '''
     height = []
     micromotion = []
@@ -93,12 +62,12 @@ def extract_data(tuples_list):
 def analyze_data(micromotion, voltage, height, file_name, testfile):
     '''
     Executes the data analysis and returns values for the RF null height, the RF null voltage, and the charge-to-mass
-    :param micromotion: 
-    :param voltage: 
-    :param height: 
-    :param file_name: 
-    :param testfile: 
-    :return: 
+    :param micromotion:
+    :param voltage:
+    :param height:
+    :param file_name:
+    :param testfile:
+    :return:
     '''
     micromotion_sorted = sorted(micromotion)
     full_indices = sorted(range(len(micromotion)), key=micromotion.__getitem__)
@@ -127,39 +96,15 @@ def analyze_data(micromotion, voltage, height, file_name, testfile):
     if file_name == testfile:
         print(f'Specified Trial Q/m = {c2mval[0]}')
         print(f'Specified Trial RF Height = {RF_height[0]}')
-        plot_results(voltage, micromotion, height, minvolt_raw, RF_height)
 
     return RF_height, minvolt_raw, c2mval
 
 
-def plot_results(voltage, micromotion, height, minvolt_raw, RF_height):
-    fig, (ax2, ax1) = plt.subplots(2, 1, sharex=True, figsize=(8, 7), height_ratios=[2, 1])
+def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
+    cut_file_name = file_name.replace('.txt', '')
+    with open("Data/Analyzed_Micromotion_Data/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
+        f.write("[" + str(c2mval) + ", " + str(minvolt_raw) + ", " + str(RF_height[0]) + "]\n")
 
-    ax1.errorbar(voltage, micromotion, yerr=(0.0164935065), color=COLORS['error'], fmt='', capsize=3, alpha=1,
-                 ls='none', elinewidth=3)
-    ax1.scatter(voltage, micromotion, color=COLORS['main'], zorder=3)
-    if USE_MAT_LABELS:
-        ax1.set_xlabel('Voltage (-V)')
-        ax1.set_ylabel('Amplitude (mm)')
-    ax1.axvline(minvolt_raw, color='black', alpha=0.6)
-    ax1.annotate(f'RF null = {int(minvolt_raw)}',
-                 (int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw - 40, 0.25),
-                 fontsize=18)
-
-    ax2.scatter(voltage, height, color=COLORS['main'])
-    ax2.errorbar(voltage, height, yerr=micromotion, fmt='', capsize=0, color=COLORS['main'], alpha=0.4, elinewidth=4)
-    if USE_MAT_LABELS:
-        ax2.set_ylabel('Height (mm)')
-    ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)[0]})',
-                 (minvolt_raw, RF_height), (minvolt_raw - 40, RF_height - 0.6), fontsize=18)
-    ax2.axhline(RF_height, color='black', alpha=0.6)
-    ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
-    ax2.axvline(minvolt_raw, color='black', alpha=0.6)
-
-    if SHOW_PLOTS:
-        plt.show()
-    if SAVE_JOINT:
-        plt.savefig('FinalCombo.pdf')
 
 
 def print_statistics(charge_to_mass, rf_height_list):
@@ -175,8 +120,6 @@ def print_statistics(charge_to_mass, rf_height_list):
 # -------------------------------------- Main Logic ----------------------------------------- #
 
 def main():
-    configure_plot_style()
-
     rf_height_vals = []
     min_volt_vals = []
     ej_volt_vals = []
@@ -199,6 +142,7 @@ def main():
             rf_height_vals.append(RF_height)
             c2mval_float = float(np.asarray(c2mval[0]))
             charge_to_mass.append(c2mval_float)
+            output_analyzed(c2mval_float, minvolt_raw, RF_height, file_name)
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list)
@@ -209,15 +153,16 @@ def main():
             voltage = [tuples_list[i][0] for i in range(len(height))] if len(tuples_list[0]) == 3 else list(
                 range(40, 40 + len(height) * 5, 5))
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, READ_FILE, TEST_FILE)
+            c2mval_float = float(np.asarray(c2mval[0]))
             print(f'Trial Q/m = {c2mval[0]}')
             print(f'Trial RF Height = {RF_height[0]}')
-            plot_results(voltage, micromotion, height, minvolt_raw, RF_height)
+            output_analyzed(c2mval_float, minvolt_raw, RF_height, SAVE_FILE)
         if os.stat(SAVE_FILE).st_size != 0:
             acknowledgement = ""
             while acknowledgement != "continue":
                 acknowledgement = input(
                     '\nThe save file already contains data. Type "continue" to overwrite, otherwise cancel. ')
-        with open(SAVE_FILE, 'w') as file:
+        with open("Data/Micromotion_Experiment_Data/" + SAVE_FILE, 'w') as file:
             for i in range(len(voltage)):
                 file.write('[' + str(voltage[i]) + ', ' + str(round(height[i], 2)) + ', ' + str(
                     round(micromotion[i], 2)) + ']\n')
