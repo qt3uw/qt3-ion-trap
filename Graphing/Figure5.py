@@ -71,8 +71,8 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 # Getting data from our COMSOL text files
-arc_length1, potential1, v_min1 = build_data_comsol('Graphing/COMSOLShuttle1.txt')
-arc_length2, potential2, v_min2 = build_data_comsol('Graphing/COMSOLShuttle2.txt')
+arc_length1, potential1, v_min1 = build_data_comsol('Data/Shuttle_Experiment_Data/COMSOLShuttle1.txt')
+arc_length2, potential2, v_min2 = build_data_comsol('Data/Shuttle_Experiment_Data/COMSOLShuttle2.txt')
 
 # Establishing the bottom of the graph
 v_min_final = min(v_min1, v_min2)
@@ -122,8 +122,8 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 # Getting data from our COMSOL text files
-arc_length1, potential1, v_min1 = build_data_comsol('Graphing/COMSOLSplit1.txt')
-arc_length2, potential2, v_min2 = build_data_comsol('Graphing/COMSOLSplit2.txt')
+arc_length1, potential1, v_min1 = build_data_comsol('Data/Shuttle_Experiment_Data/COMSOLSplit1.txt')
+arc_length2, potential2, v_min2 = build_data_comsol('Data/Shuttle_Experiment_Data/COMSOLSplit2.txt')
 
 # Establishing the bottom of the graph
 v_min_final = min(v_min1, v_min2)
@@ -177,7 +177,7 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data('Graphing/TruncatedShuttleData.txt', frameOffset, 'zero')
+position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data('Data/Shuttle_Experiment_Data/TruncatedShuttleData.txt', frameOffset, 'zero')
 print(maxVel)
 
 # Building the graph
@@ -218,8 +218,8 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('Graphing/NewSplitData1.txt', frameOffset, 'average')
-position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('Graphing/NewSplitData2.txt', frameOffset, 'average')
+position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('Data/Shuttle_Experiment_Data/NewSplitData1.txt', frameOffset, 'average')
+position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('Data/Shuttle_Experiment_Data/NewSplitData2.txt', frameOffset, 'average')
 print(maxVel1)
 print(maxVel2)
 
@@ -232,7 +232,7 @@ ax1.scatter(position1, time1, s=3, marker='o', label='Ion 1 position data', c=[(
 ax1.set_yticks([0, 1, 2, 3, 4, 5, 6])
 ax1.set_aspect(1.9)
 
-# Bounding the grapph
+# Bounding the graph
 plt.xlim([-30, 30])
 plt.ylim([-0.5, 6])
 
