@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
 from scipy.constants import g
+import os
 
 from pseudopotential import PseudopotentialPlanarTrap, plot_trap_escape_vary_dc
 
@@ -16,6 +17,12 @@ plt.rcParams['axes.labelsize'] = 10
 plt.rcParams['xtick.labelsize'] = 10
 plt.rcParams['ytick.labelsize'] = 10
 plt.rcParams['axes.titlesize'] = 12
+COLORS = {
+        'main': (0.280267, 0.073417, 0.397163),  # Purple Color
+        'error': (0.170948, 0.694384, 0.493803)  # Green Color
+    }
+pixel_size_mm = 0.0164935065
+fname = 'Data/Micromotion_Experiment_Data/8-18_Trial18_data.txt'
 
 def get_default_trap():
     """
@@ -64,7 +71,7 @@ def potential_energy_panel():
     fig.tight_layout()
     fig.savefig('figures/Figure 2/fig2-potential_energy.pdf')
 
-def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
+def get_data(fname):
     """
     Reads and sorts experimental data from a text file.
     :param fname: The filename of the text file that will be read from
@@ -82,6 +89,14 @@ def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
             line = line.strip().replace('[', '').replace(']', '')
             # Convert the split string values into floats and add them to the list
             data_list.append([float(value) for value in line.split(',')])
+    fname = fname.replace('Data/Micromotion_Experiment_Data/',  '')
+    fname = fname.replace('.txt', '')
+    with open("Data/Analyzed_Micromotion_Data/" + fname + "_analyzed.txt") as file:
+        for line in file:
+            line = line.strip()
+            analyzed_data = eval(line)
+            c2m, null_volt, null_height = analyzed_data[0], analyzed_data[1], analyzed_data[2]
+
 
     # Convert the list to a NumPy array
     rawdata = np.array(data_list)
@@ -90,7 +105,7 @@ def get_data(fname='Height Adjusted FInal Data/8-18_Trial18_data.txt'):
     y_spread = rawdata[:, 2]
     y0 = rawdata[:, 1]
     v_min, y_min, micro_min = rawdata[np.argmin(rawdata[:, 2])]
-    return -dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3
+    return -dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height
 
 def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     """
@@ -103,7 +118,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     trap = get_default_trap()
     parameters = ['charge_to_mass']
     bounds = [(-1.E-2, -1.E-4)]
-    dc_voltages, y0, yspread, v_min, y_min, micro_min = get_data()
+    dc_voltages, y0, yspread, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data(fname)
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     # Calculate charge to mass from rf_null position and plot data versus model given that value
     trap.v_dc = v_min
@@ -166,6 +181,49 @@ def plot_escape(figsize=(3.5, 3)):
     fig.tight_layout()
     fig.savefig('figures/Figure 4/fig4-trap_escape.pdf')
 
+def plot_height_and_micro(pixelsize_error, figsize=(3.5, 3)):
+    voltage, height, micromotion, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data(fname)
+    fig, (ax2, ax1) = plt.subplots(2, 1, sharex=True, figsize=(8, 7), height_ratios=[2, 1])
+
+    ax1.errorbar(-voltage, micromotion*1e3, yerr=pixel_size_mm, color=COLORS['error'], fmt='', capsize=4, alpha=1,
+                 ls='none', elinewidth=3)
+    ax1.scatter(-voltage, micromotion*1e3, color=COLORS['main'], zorder=3)
+    ax1.set_xlabel('Voltage (-V)')
+    ax1.set_ylabel('Amplitude (mm)')
+    ax1.axvline(minvolt_raw, color='black', alpha=0.6)
+    ax1.annotate(f'RF null = {int(minvolt_raw)}',
+                 (int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw - 40, 0.25),
+                 fontsize=18)
+
+    ax2.scatter(-voltage, height*1e3, color=COLORS['main'])
+    ax2.errorbar(-voltage, height*1e3, yerr=micromotion*1e3, fmt='', capsize=0, color=COLORS['main'], alpha=0.4, elinewidth=4)
+    ax2.set_ylabel('Height (mm)')
+    ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)})',
+                 (minvolt_raw, RF_height), (minvolt_raw - 40, RF_height - 0.6), fontsize=18)
+    ax2.axhline(RF_height, color='black', alpha=0.6)
+    ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
+    ax2.axvline(minvolt_raw, color='black', alpha=0.6)
+    fig.savefig('figures/Figure 3/fig3-height-micro-plot.pdf')
+    plt.show()
+
+def plot_c2m_hist(folder):
+    files = os.listdir(folder)
+    c2m_values = []
+    for file_name in files:
+        voltage, height, micromotion, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data('Data/Micromotion_Experiment_Data/' + file_name)
+        c2m_values.append(c2m)
+    plt.figure()
+    plt.hist(c2m_values, edgecolor='black', bins=22, range=(-0.003, 0), color=COLORS['main'])
+    plt.axvline(x=-0.0025, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
+    plt.axvline(x=-0.0015, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
+    plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
+    plt.xlabel('Charge-to-Mass Ratio (C/kg)')
+    plt.ylabel('Number of Occurrences')
+    plt.savefig('figures/Figure 3/fig3-histogram.pdf')
+    plt.show()
+
+
+
 
 if __name__ == "__main__":
     y_cuts_panel()
@@ -173,4 +231,6 @@ if __name__ == "__main__":
     potential_energy_panel()
     plot_escape(figsize=(3.5, 3))
     plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    plot_height_and_micro(0.0164935065)
+    plot_c2m_hist("Data/Micromotion_Experiment_Data")
     plt.show()
