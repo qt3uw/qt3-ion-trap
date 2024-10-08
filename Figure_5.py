@@ -104,7 +104,7 @@ plt.tick_params(axis='y', labelsize='large')
 # Place the legend at the bottom right
 plt.legend(loc='upper right', fontsize='small')
 
-plt.savefig('COMSOLShuttleGraph.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('figures/Figure 5/COMSOLShuttleGraph.pdf', format='pdf', bbox_inches='tight')
 
 # Get the bounding box of the axes in display (pixel) coordinates
 bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
@@ -156,7 +156,7 @@ plt.tick_params(axis='y', labelsize='large')
 # Place the legend at the bottom right
 plt.legend(loc='upper right', fontsize='small')
 
-plt.savefig('COMSOLSplitGraph.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('figures/Figure 5/COMSOLSplitGraph.pdf', format='pdf', bbox_inches='tight')
 
 # Get the bounding box of the axes in display (pixel) coordinates
 bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
@@ -177,7 +177,8 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data('Data/Shuttle_Experiment_Data/TruncatedShuttleData.txt', frameOffset, 'zero')
+position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
+    'Data/Shuttle_Experiment_Data/TruncatedShuttleData.txt', frameOffset, 'zero')
 print(maxVel)
 
 # Building the graph
@@ -206,7 +207,7 @@ plt.tick_params(axis='y', labelsize='large')
 # Place the legend at the bottom right
 plt.legend(loc='lower right', fontsize='small')
 
-plt.savefig('ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('figures/Figure 5/ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()
 
 
@@ -250,5 +251,5 @@ plt.tick_params(axis='y', labelsize='large')
 # Place the legend at the bottom right
 plt.legend(loc='lower right', fontsize='small')
 
-plt.savefig('SplitPlot.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('figures/Figure 5/SplitPlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()

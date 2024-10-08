@@ -524,7 +524,7 @@ class PseudopotentialPlanarTrap:
         linewidth = 1.5
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
-        ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
+        # ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
         ax.plot(y * 1.E3, -u_dc, label='DC',  color='indianred',linewidth=linewidth)
         ax.plot(y * 1.E3, -u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
         ax.plot(y * 1.E3, -(u_ac + u_dc + u_grav), label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
