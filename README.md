@@ -9,6 +9,10 @@ This project can perform three experiments:
 * Experiment 3: Observe the separation (splitting) motion of two particles and identify their maximum velocities
 
 
+## How to Graph
+We have included python scripts in the "Graphing Code" folder which were used to produce our plots for figures 2, 4, and 5. To use them, 
+
+
 
 ## Python Code Installation
 These instructions assume you've installed [anaconda](https://www.anaconda.com/).  I also recommend the [pycharm community](https://www.jetbrains.com/pycharm/download) IDE for editing and debugging python code.  The instructions also assume that you know how to use the [command line "cd" command to change directory](https://www.digitalcitizen.life/command-prompt-how-use-basic-commands/).
