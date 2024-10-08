@@ -42,7 +42,7 @@ def y_cuts_panel():
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
-    fig.savefig(r'figures/Figure 2/fig2-y-cuts.pdf')
+    fig.savefig('figures/Figure_2/fig2-y-cuts.pdf')
 
 def e_field_panel():
     """
@@ -69,7 +69,7 @@ def potential_energy_panel():
         a.set_ylabel('y (mm)')
     ax.set_title(None)
     fig.tight_layout()
-    fig.savefig('figures/Figure 2/fig2-potential_energy.pdf')
+    fig.savefig('/figures/Figure 2/fig2-potential_energy.pdf')
 
 def get_data(fname):
     """
