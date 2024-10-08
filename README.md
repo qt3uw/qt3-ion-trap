@@ -10,7 +10,7 @@ This project can perform three experiments:
 
 
 ## How to Graph
-We have included python scripts in the "Graphing Code" folder which were used to produce our plots for figures 2, 4, and 5. To use them, 
+In our "Graphing Code" and "Data" folders, we have included the python scripts and text data files which were used to produce our plots for figures 2, 4, and 5. To plot with our "Figures_2_4.py" file, set the fname parameter to your desired file name such as "Data/Micromotion_Experiment_Data/8-18_Trial18_data.txt". To plot with our "Figure_5.py" script, put your desired file name (e.g. "Data/Shuttle_Experiment_Data/COMSOLShuttle1.txt") in the build_data_comsol() function argument. This applies to each of the four plots produced by that script.
 
 
 
