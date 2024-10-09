@@ -3,7 +3,6 @@
 /tests/.pytest_cache/
 /.idea
 *.pyc
-*.pdf
 *.ipynb_checkpoints
 *.egg-info
 /__pycache__
