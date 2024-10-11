@@ -2,7 +2,7 @@ import cv2
 
 """
 This is where we define all of our functions for tracking particle height
-in TRACKING.py and particle position in ShuttleTracking.py
+in tracking.py and particle position in shuttle_tracking.py
 """
 
 # -----------------------------------Shuttling Tracking-----------------------------------

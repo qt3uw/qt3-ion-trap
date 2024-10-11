@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import math
-from TrackingFunctions import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
+from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
 
 print("Running program...")
 
@@ -51,7 +51,7 @@ IMAGE_SAVE = False
 IMAGE_SAVE_TIMES = [0, 2, 4, 6]
 
 # Assign a storage file for data collection
-DATA_STORAGE = open('data.txt', 'a')
+DATA_STORAGE = open('shuttle_data.txt', 'a')
 
 # Toggle data collection
 COLLECT_POSITION = False
