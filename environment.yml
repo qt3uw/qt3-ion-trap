@@ -6,10 +6,7 @@ channels:
 
 dependencies:
   - python>3.7
-  - pip
   - numpy
   - scipy
   - matplotlib
-  - jupyter
-  - plotly
-  - pandas
+  - opencv
