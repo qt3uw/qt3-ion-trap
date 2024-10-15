@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 # --------------------------- Constants Definition ---------------------------------------------- #
-VIDEO_FILE = "Sample Video/8-18Trial19.avi"
+VIDEO_FILE = "8-18Trial19.avi"
 VIEW_TYPE = "image"  # Options: "binary", "image"
 POOR_TRACKING = False  # Ignoring index of the particle if varying
 FPS = 20
