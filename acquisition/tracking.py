@@ -4,9 +4,9 @@ import numpy as np
 import math
 
 # --------------------------- Constants Definition ---------------------------------------------- #
-VIDEO_FILE = "8-18Trial19.avi"
+VIDEO_FILE = "Sample Video/8-18Trial19.avi"
 VIEW_TYPE = "image"  # Options: "binary", "image"
-POOR_TRACKING = False  # Ignoring index of the particle if varying
+POOR_TRACKING = False  # Ignores index of the particle if varying (Only for single particle!)
 FPS = 20
 CHANGE_INTERVAL = 5
 SAMPLE_FRAMES = 15
@@ -17,7 +17,6 @@ BOTTOM_BAR = 100
 TOP_BAR = 0
 LEFT_BAR = 0
 RIGHT_BAR = 0
-INDEX_LIST = []  # Indices of desired tracking particles if "POOR_TRACKING" is true
 
 
 # ------------------------------- Helper Functions ---------------------------------------------- #
@@ -220,6 +219,7 @@ def run_frame(cap, frame_num):
         cv2.imshow("binary", closing)
     frame_num = frame_num + 1
     return frame_num
+
 
 def save_data(yav, hav, y_start, y_end, frame_num):
     try:
