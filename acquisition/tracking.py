@@ -23,7 +23,6 @@ class TrackingConfig:
         self.RIGHT_BAR = 0
         self.INDEX_LIST = []
 
-# --------------------------- Video Processing Functions ---------------------------------------------- #
 def initialize_video(cap):
     """Initialize video capture and kernels"""
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -53,7 +52,6 @@ def gen_initial_frame(cap):
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
-# --------------------------- Particle Detection  ---------------------------------------------- #
 def setup_detector():
     """Configure and create blob detector"""
     params = cv2.SimpleBlobDetector_Params()
@@ -82,7 +80,6 @@ def define_blockers(frame_num):
     
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
-# --------------------------- Image Processing  ---------------------------------------------- #
 def post_processing(cap, frame, frame_num):
     """Process frame and apply filters"""
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
@@ -108,7 +105,6 @@ def post_processing(cap, frame, frame_num):
     closing = cv2.morphologyEx(clean_thresh, cv2.MORPH_CLOSE, filling_kernel, iterations=2)
     return roi_frame, closing, clean_thresh
 
-# --------------------------- Tracking ---------------------------------------------- #
 def setup_tracker():
     """Initialize tracking objects"""
     return {}, 0, []
@@ -189,7 +185,6 @@ def _process_contours(contours, tracking_objects, y_end, y_start):
                 y <= tracking_objects[key][0][1] <= y + h):
                 tracking_objects[key].append(h)
 
-# --------------------------- Analysis Functions ---------------------------------------------- #
 def analyze_trial(datapoint):
     """Analyze trial data and compute averages"""
     if not datapoint:
@@ -241,7 +236,6 @@ def auto_run(cap):
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
 
-# --------------------------- Main Function ---------------------------------------------- #
 def main():
     """Main entry point"""
     global config
