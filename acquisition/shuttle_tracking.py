@@ -3,263 +3,247 @@ import numpy as np
 import math
 from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
 
-print("Running program...")
+# --------------------------- Config ---------------------------------------------- #
 
-# Setting program parameters
-# ------------------------------------------------------------------------------------------------------------------------
+class TrackingConfig:
+    def __init__(self):
+        # video settings
+        self.VIDEO_PATH = '../ExampleSplit.avi'
+        self.START_FRAME_NUM = 100
 
-# Choosing the video to track in
-VID_CAP = cv2.VideoCapture('../ExampleSplit.avi')
+        # regions of interest
+        self.X_START = 0
+        self.Y_START = 550
+        self.X_END = 1600
+        self.Y_END = 700
 
-# Define region of interest (Crop the video)
-X_START, Y_START = 0, 550 # Pixels
-X_END, Y_END = 1600, 700 # Pixels
+        # image processing
+        self.BIN_THRESH = 25
+        self.CLEANING_KERNEL = np.ones((2, 2), np.uint8)
+        self.FILLING_KERNEL = np.ones((4, 2), np.uint8)
 
-# Used when you need to add more indeces to the list (this happens if tracking has to jump up in indeces)
-ALL_INDICES_OF_INTEREST = []
+        # frame erasure rectangles
+        self.TOP_RECT = ((0, 0), (0, 0))
+        self.LEFT_RECT = ((0, 0), (0, 0))
+        self.RIGHT_RECT = ((0, 0), (0, 0))
+        self.BOTTOM_RECT = ((0, 0), (0, 0))
+        self.RECTANGLE_COLOR = (0, 0, 0)
 
-# Defining up morphological transformations kernels (Can be different for some optimizations)
-CLEANING_KERNEL = np.ones((2,2), np.uint8)
-FILLING_KERNEL = np.ones((4, 2), np.uint8)
+        # tracking settings
+        self.STORE_HEIGHT_DATA = False
+        self.CONTOUR_DET = False
+        self.COLLECT_POSITION = False
+        self.ALL_INDICES_OF_INTEREST = []
 
-# Set the binary threshold (Intensity cutoff between white and black)
-BIN_THRESH = 25
+        # image capture settings
+        self.IMAGE_SAVE = False
+        self.IMAGE_SAVE_TIMES = [0, 2, 4, 6]
 
-# Frame erasure (Setting up black rectangles to erase unwanted regions of light)
-TOP_RECT_PT1, TOP_RECT_PT2 = (0, 0), (0, 0)
-LEFT_RECT_PT1, LEFT_RECT_PT2 = (0, 0), (0, 0)
-RIGHT_RECT_PT1, RIGHT_RECT_PT2 = (0, 0), (0, 0)
-BOTTOM_RECT_PT1, BOTTOM_RECT_PT2 = (0, 0), (0, 0)
+        # data storage
+        self.DATA_STORAGE = open('shuttle_data.txt', 'a')
 
-# ADD IN ERASURE RECTANGLES TO REMOVE NOISE
+# --------------------------- Video Processing Functions ---------------------------------------------- #
 
-# (255, 255, 255) to help place rectangles
-# (0, 0, 0) to erase unwanted light
-RECTANGLE_COLOR = (0, 0, 0)
+def initialize_video(config):
+    """Initialize video capture and return basic frame info"""
+    cap = cv2.VideoCapture(config.VIDEO_PATH)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    ret, start_frame = get_frame(cap, config.START_FRAME_NUM)
+    
+    if ret:
+        frame_height, frame_width = start_frame.shape[:2]
+        print(f"Frame height: {frame_height}\nFrame width: {frame_width}")
+        
+        roi = start_frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
+        cv2.imshow("Frame", roi)
+    
+    return cap, total_frames, start_frame
 
-# Define a starting frame number
-START_FRAME_NUM = 100
+# --------------------------- Setup Functions For Tracking ---------------------------------------------- #
 
-# Toggle data collection
-STORE_HEIGHT_DATA = False
+def setup_tracking():
+    """Initialize tracking variables"""
+    return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
 
-# Toggle contour detection
-CONTOUR_DET = False
+def process_frame(config, frame):
+    """Process a single frame"""
+    roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
+    gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
+    
+    clean_thresh, closing = post_processing(
+        thresh,
+        config.CLEANING_KERNEL,
+        config.FILLING_KERNEL,
+        config.RECTANGLE_COLOR,
+        *config.TOP_RECT[0], *config.TOP_RECT[1],
+        *config.LEFT_RECT[0], *config.LEFT_RECT[1],
+        *config.RIGHT_RECT[0], *config.RIGHT_RECT[1],
+        *config.BOTTOM_RECT[0], *config.BOTTOM_RECT[1],
+        0, 1, 4
+    )
+    
+    return roi_frame, closing, clean_thresh
 
-# Toggle frame capture
-IMAGE_SAVE = False
-IMAGE_SAVE_TIMES = [0, 2, 4, 6]
-
-# Assign a storage file for data collection
-DATA_STORAGE = open('shuttle_data.txt', 'a')
-
-# Toggle data collection
-COLLECT_POSITION = False
-# ------------------------------------------------------------------------------------------------------------------------
-
-
-# Setting up the detector
-detector = set_up_detector()
-
-
-# Priming the main loop
-# ------------------------------------------------------------------------------------------------------------------------
-
-# Setting up memory between frames for objects
-keypoints_prev_frame = []
-tracking_objects = {}
-track_id = 0
-
-# Frame counter
-frame_num = START_FRAME_NUM
-total_frames = int(VID_CAP.get(cv2.CAP_PROP_FRAME_COUNT))
-
-# Trial counter
-trial_num = 1
-first_point = False
-
-# Starting point (For clean graphing)
-start_x = 0
-first_detect = False
-# ------------------------------------------------------------------------------------------------------------------------
-
-
-
-# Main Loop
-# ------------------------------------------------------------------------------------------------------------------------
-ret, start_frame = get_frame(VID_CAP, frame_num)
-
-# Object index of interest (Selecting a particle to collect data on)
-index_of_interest = 1
-start_frame_dim = start_frame.shape
-start_frame_height = start_frame_dim[0]
-start_frame_width = start_frame_dim[1]
-print(f"Frame height: {start_frame_height}\n"
-      f"Frame width: {start_frame_width}")
-
-cv2.imshow("Frame", start_frame[Y_START:Y_END, X_START:X_END])
-
-run = True
-run_body = True
-while run:
-
-    # Initializing the frames for the loop to play
-    frames_to_play = 0
-
-    # Waiting for the esc key to end the loop (DEC: 27 on ASCII table)
-    # Space plays 20 frames (DEC: 32 on ASCII table)
-    # Any other key moves to the next frame
-    key = cv2.waitKey()
-    if key == 27:
-        run = False
-    elif key == 32:
-        frames_to_play = 20
-        first_point = True
-    else:
-        frames_to_play = 1
-
-    # Running through the specified number of frames
-    for i in range(frames_to_play):
-        ret, frame = get_frame(VID_CAP, frame_num)
-        if not ret and frame_num < total_frames:
-            print("Cannot retrieve frame.")
-            run = False
-        elif frame_num >= total_frames:
-            sit = True
-            while sit:
-                end_control = cv2.waitKey()
-                if end_control == 27:
-                    run_body = False
-                    run = False
-                    sit = False
-
-        # Handle edge case: Running anything after the last frame causes an unnecessary error
-        if not run_body:
-            break
-
-        # Frame information (Useful for debugging)
-        dimensions = frame.shape
-        height = dimensions[0]
-        width = dimensions[1]
-
-        # Creating the region of interest frame
-        roi_frame = frame[Y_START:Y_END, X_START:X_END]
-        roi_height = roi_frame.shape[0]
-        roi_width = roi_frame.shape[1]
-
-        # Converting to black and white
-        gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
-
-        # Apply binary thresholding (Converting to intensity values of 0 and 255)
-        ret, thresh = cv2.threshold(gray_frame, BIN_THRESH, 255, cv2.THRESH_BINARY)
-
-        # Post-processing
-        clean_thresh, closing = post_processing(thresh, CLEANING_KERNEL, FILLING_KERNEL, RECTANGLE_COLOR, TOP_RECT_PT1, TOP_RECT_PT2,
-                        LEFT_RECT_PT1, LEFT_RECT_PT2, RIGHT_RECT_PT1, RIGHT_RECT_PT2, BOTTOM_RECT_PT1, BOTTOM_RECT_PT2,
-                        0, 1, 4)
-
-        # Finding the locations of the particles
-        keypoints = detector.detect(closing)
-
-        keypoints_cur_frame = []
-        for keypoint in keypoints:
-            point = keypoint.pt
-            keypoints_cur_frame.append(keypoint.pt)
-
-        # If the outimage parameter receives an argument of None or an empty array,
-        # it will be a copy of the source image
-        image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
-
-        # Finding the contours
-        contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Compare prev and cur point only at the beginning
-        if frame_num <= 2:
-            for pt1 in keypoints_cur_frame:
-                for pt2 in keypoints_prev_frame:
-                    distance = math.dist(pt1, pt2)
-
-                    # Add an identified object to the tracking_objects dict and prepare the next id
-                    if distance < 10:
-                        tracking_objects[track_id] = [pt1]
-                        track_id += 1
-        else:
-            # Create a copy because we can't remove dictionary elements while traversing it
-            tracking_objects_copy = tracking_objects.copy()
-            keypoints_cur_frame_copy = keypoints_cur_frame.copy()
-
-            for object_id, item2 in tracking_objects_copy.items():
-                object_exists = False
-                for pt1 in keypoints_cur_frame:
-                    distance = math.dist(pt1, item2[0])
-
-                    # Update object position
-                    if distance < 10:
-                        tracking_objects[object_id] = [pt1]
-                        object_exists = True
-                        if pt1 in keypoints_cur_frame:
-                            keypoints_cur_frame.remove(pt1)
-                        continue # Moves on to checking next id once we confirm existence
-
-                # Remove lost IDs
-                if not object_exists:
-                    tracking_objects.pop(object_id)
-
-        # Add found IDs
+def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_prev_frame, contours=None):
+    """Update tracking information"""
+    if len(tracking_objects) <= 2:
         for pt1 in keypoints_cur_frame:
-            tracking_objects[track_id] = [pt1]
-            track_id += 1
+            for pt2 in keypoints_prev_frame:
+                if math.dist(pt1, pt2) < 10:
+                    tracking_objects[track_id] = [pt1]
+                    track_id += 1
+    else:
+        tracking_objects_copy = tracking_objects.copy()
+        for object_id, item2 in tracking_objects_copy.items():
+            object_exists = False
+            for pt1 in keypoints_cur_frame:
+                if math.dist(pt1, item2[0]) < 10:
+                    tracking_objects[object_id] = [pt1]
+                    object_exists = True
+                    if pt1 in keypoints_cur_frame:
+                        keypoints_cur_frame.remove(pt1)
+                    break
+            if not object_exists:
+                tracking_objects.pop(object_id)
+    
+    for pt1 in keypoints_cur_frame:
+        tracking_objects[track_id] = [pt1]
+        track_id += 1
 
+    if contours is not None:
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            for key in tracking_objects.keys():
+                if x <= tracking_objects[key][0][0] <= x + w and y <= tracking_objects[key][0][1] <= y + h:
+                    tracking_objects[key].append(h)
 
-        if CONTOUR_DET:
-            # Iterate over each contour to find the bounding rectangle and get the height
-            for contour in contours:
-                # Get the bounding rectangle for each contour
-                x, y, w, h = cv2.boundingRect(contour)
+    return tracking_objects, track_id
 
-                # CONTINUE HERE
-                # Check which tracking object is in the bounding box
-                for key in tracking_objects.keys():
-                    if x <= tracking_objects[key][0][0] <= x + w and y <= tracking_objects[key][0][1] <= y + h:
-                        tracking_objects[key].append(h)
+def draw_frame_info(image, frame_num, time, total_frames):
+    """Draw frame information on the image"""
+    if frame_num >= total_frames - 1:
+        cv2.putText(image, "Frame: end", (5, 20), 0, 0.5, (0, 255, 0), 1)
+    else:
+        cv2.putText(image, f"Frame: {frame_num}", (5, 20), 0, 0.5, (255, 255, 255), 1)
+        cv2.putText(image, f"Time: {time}", (5, 40), 0, 0.5, (255, 255, 255), 1)
 
-        # Setting the starting position of the object of interest to 0
-        if first_detect is False and len(tracking_objects.keys()) > index_of_interest:
-            start_x = tracking_objects[index_of_interest][0][0]
-            print("Start x: " + str(start_x))
-            first_detect = True
+def draw_tracking_info(image, tracking_objects):
+    """Draw tracking information on image"""
+    for object_id, item in tracking_objects.items():
+        cv2.putText(image, str(object_id),
+                   (int(item[0][0] - 5), int(item[0][1] - 17)),
+                   0, 0.5, (0, 255, 0), 1)
 
-        if COLLECT_POSITION:
-            collect_pos_data(start_x, DATA_STORAGE, tracking_objects, index_of_interest, ALL_INDICES_OF_INTEREST, frame_num)
+# --------------------------- Main Processing Loop ---------------------------------------------- #
 
-        # Drawing index values
-        for object_id, item in tracking_objects.items():
-            cv2.putText(image_with_keypoints, str(object_id), (int(item[0][0] - 5), int(item[0][1] - 17)), 0, 0.5, (0, 255, 0), 1)
-
-        time = round((frame_num - 100) * 0.05, 2)
-
-        # Showing the current frame annotated with the keypoints
-        if frame_num >= total_frames - 1:
-            cv2.putText(clean_thresh, "Frame: end", (5, 20), 0, 0.5, (0, 255, 0), 1)
+def run_tracking(config, cap, detector, total_frames, start_frame):
+    """Main processing loop"""
+    frame_num = config.START_FRAME_NUM
+    tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
+    
+    # Initial tracking variables
+    index_of_interest = 1
+    first_detect = False
+    start_x = 0
+    
+    run = True
+    run_body = True
+    
+    while run:
+        frames_to_play = 0
+        
+        key = cv2.waitKey()
+        if key == 27:  # ESC
+            run = False
+        elif key == 32:  # Space
+            frames_to_play = 20
         else:
-            cv2.putText(clean_thresh, "Frame: " + str(frame_num), (5, 20), 0, 0.5, (255, 255, 255), 1)
-            cv2.putText(clean_thresh, "Time: " + str(time), (5, 40), 0, 0.5, (255, 255, 255), 1)
+            frames_to_play = 1
 
-        if IMAGE_SAVE:
-            save_image('NewShuttleParticleAtTime', time, IMAGE_SAVE_TIMES, clean_thresh)
+        for _ in range(frames_to_play):
+            ret, frame = get_frame(cap, frame_num)
+            
+            if not ret and frame_num < total_frames:
+                print("Cannot retrieve frame.")
+                run = False
+                break
+            elif frame_num >= total_frames:
+                if cv2.waitKey() == 27:  # ESC
+                    run = False
+                    run_body = False
+                break
+            
+            if not run_body:
+                break
 
-        # Measurement aid
-        cv2.rectangle(image_with_keypoints, TOP_RECT_PT1, TOP_RECT_PT2, RECTANGLE_COLOR, -1)
-        cv2.imshow("Frame", image_with_keypoints)
-        cv2.waitKey(50)
+            # process frame
+            roi_frame, closing, clean_thresh = process_frame(config, frame)
+            
+            # detect particles
+            keypoints = detector.detect(closing)
+            keypoints_cur_frame = [kp.pt for kp in keypoints]
+            image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
+            
+            # Find contours if enabled
+            contours = None
+            if config.CONTOUR_DET:
+                contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            # Update tracking
+            tracking_objects, track_id = update_tracking(
+                tracking_objects, track_id, keypoints_cur_frame, 
+                keypoints_prev_frame, contours
+            )
+            
+            # set starting position
+            if not first_detect and len(tracking_objects.keys()) > index_of_interest:
+                start_x = tracking_objects[index_of_interest][0][0]
+                print("Start x:", start_x)
+                first_detect = True
+            
+            # collect position data if enabled
+            if config.COLLECT_POSITION:
+                collect_pos_data(
+                    start_x,
+                    config.DATA_STORAGE,
+                    tracking_objects,
+                    index_of_interest,
+                    config.ALL_INDICES_OF_INTEREST,
+                    frame_num
+                )
+            
+            # draw information
+            draw_tracking_info(image_with_keypoints, tracking_objects)
+            time = round((frame_num - 100) * 0.05, 2)
+            draw_frame_info(clean_thresh, frame_num, time, total_frames)
+            
+            # if enabled, save image
+            if config.IMAGE_SAVE:
+                save_image('NewShuttleParticleAtTime', time, 
+                          config.IMAGE_SAVE_TIMES, clean_thresh)
+            
+            # Display frame
+            cv2.rectangle(image_with_keypoints, *config.TOP_RECT, config.RECTANGLE_COLOR, -1)
+            cv2.imshow("Frame", image_with_keypoints)
+            cv2.waitKey(50)
+            
+            keypoints_prev_frame = keypoints_cur_frame
+            frame_num += 1
 
-        frame_num += 1
+def main():
+    print("Running program...")
+    
+    config = TrackingConfig()
+    
+    cap, total_frames, start_frame = initialize_video(config)
+    detector = set_up_detector()
+    
+    run_tracking(config, cap, detector, total_frames, start_frame)
+    
+    # cleanup
+    cap.release()
+    cv2.destroyAllWindows()
 
-# ------------------------------------------------------------------------------------------------------------------------
-
-
-# Releasing the VideoCapture object we created
-VID_CAP.release()
-
-# Close any open windows
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
