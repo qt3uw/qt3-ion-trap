@@ -45,7 +45,6 @@ class TrackingConfig:
 # --------------------------- Video Processing Functions ---------------------------------------------- #
 
 def initialize_video(config):
-    """Initialize video capture and return basic frame info"""
     cap = cv2.VideoCapture(config.VIDEO_PATH)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     ret, start_frame = get_frame(cap, config.START_FRAME_NUM)
@@ -62,11 +61,9 @@ def initialize_video(config):
 # --------------------------- Setup Functions For Tracking ---------------------------------------------- #
 
 def setup_tracking():
-    """Initialize tracking variables"""
     return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
 
 def process_frame(config, frame):
-    """Process a single frame"""
     roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
@@ -86,7 +83,6 @@ def process_frame(config, frame):
     return roi_frame, closing, clean_thresh
 
 def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_prev_frame, contours=None):
-    """Update tracking information"""
     if len(tracking_objects) <= 2:
         for pt1 in keypoints_cur_frame:
             for pt2 in keypoints_prev_frame:
@@ -121,7 +117,6 @@ def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_p
     return tracking_objects, track_id
 
 def draw_frame_info(image, frame_num, time, total_frames):
-    """Draw frame information on the image"""
     if frame_num >= total_frames - 1:
         cv2.putText(image, "Frame: end", (5, 20), 0, 0.5, (0, 255, 0), 1)
     else:
@@ -129,7 +124,6 @@ def draw_frame_info(image, frame_num, time, total_frames):
         cv2.putText(image, f"Time: {time}", (5, 40), 0, 0.5, (255, 255, 255), 1)
 
 def draw_tracking_info(image, tracking_objects):
-    """Draw tracking information on image"""
     for object_id, item in tracking_objects.items():
         cv2.putText(image, str(object_id),
                    (int(item[0][0] - 5), int(item[0][1] - 17)),
@@ -138,7 +132,6 @@ def draw_tracking_info(image, tracking_objects):
 # --------------------------- Main Processing Loop ---------------------------------------------- #
 
 def run_tracking(config, cap, detector, total_frames, start_frame):
-    """Main processing loop"""
     frame_num = config.START_FRAME_NUM
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
