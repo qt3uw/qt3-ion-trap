@@ -17,7 +17,7 @@ be identified by manually running the code with auto = False and observing the g
 # --------------------------- Parameter Definition ---------------------------------------------- #
 
 
-videofile = cv2.VideoCapture('../ExampleSplit.avi')   # Specifies the video file
+videofile = cv2.VideoCapture('acquisition/8-16Trial4.avi')   # Specifies the video file
 viewtype = "image"   # "binary" for binary image, "image" for annotated video, "frame" for original video, "cleanthresh" for undialated
 output = "none"   # "tuple" for tuple output, "none" for none
 showquant = "none"   # height, micromotion, or both can be displayed on the image
