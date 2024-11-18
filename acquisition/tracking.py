@@ -119,6 +119,8 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # extract keypoints
     for keypoint in keypoints:
         keypoints_cur_frame.append(keypoint.pt)
+        print(keypoints_cur_frame)
+
     
     image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
     
@@ -126,7 +128,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # track particles
-    if frame_num <= 2:
+    if frame_num >= 2:
         track_id = _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id)
     else:
         _update_tracking(keypoints_cur_frame, tracking_objects)
@@ -142,8 +144,10 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
             height = int(tracking_objects[0][1])
         except (KeyError, IndexError):
             pass
+
+    keypoints_prev_frame = keypoints_cur_frame
     
-    return x_position, y_position, height
+    return x_position, y_position, height, image_with_keypoints, keypoints_prev_frame
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
     """Initialize tracking for new particles"""
@@ -151,6 +155,7 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
         for pt2 in keypoints_prev_frame:
             if math.dist(pt1, pt2) < 10:
                 tracking_objects[track_id] = [pt1]
+                print(tracking_objects)
                 track_id += 1
     return track_id
 
@@ -217,25 +222,36 @@ def auto_run(cap):
     
     # process frames
     for frame_num in range(total_frames):
+        print(frame_num)
         ret, frame = get_frame(cap, frame_num)
         if not ret:
             break
-            
+        if frame_num == 0:
+            keypoints_passover = []
         roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
-        x, y, h = locate_particles(roi_frame, closing, keypoints_prev_frame, 
+        x, y, h, dummyvar, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
+        keypoint_passover = keypoints_prev_frame
+        print(x,y,h)
         
         # collect and analyze data
         if frame_num in collection_frames:
+            print('collection started')
             collect_data = True
         if frame_num in end_collection_frames:
+            print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
             trial.append([xav, yav, hav])
+            print(trial)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a66d2308268c56058b125dcabef00d122dc70152
 def run_frame(cap, frame_num):
     ret, frame = get_frame(cap, frame_num)
     if not ret:
@@ -254,6 +270,11 @@ def run_frame(cap, frame_num):
 
     frame_num = frame_num + 1
     return frame_num
+<<<<<<< HEAD
+=======
+        
+
+>>>>>>> a66d2308268c56058b125dcabef00d122dc70152
 
 def main():
     """Main entry point"""
