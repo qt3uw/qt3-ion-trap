@@ -23,7 +23,6 @@ COLORS = {
     }
 pixel_size_mm = 0.0164935065
 fname = 'data/raw_micromotion/8-18_Trial18_data.txt'
-fig_dir = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]
 
 def get_default_trap():
     """
@@ -43,8 +42,7 @@ def y_cuts_panel():
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
-    os.makedirs(fig_dir[0], exist_ok =True)
-    fig.savefig(fig_dir[0]+"fig2-y-cuts.pdf")
+    fig.savefig('figures/figure_2/fig2-y-cuts.pdf')
 
 def e_field_panel():
     """
@@ -53,9 +51,7 @@ def e_field_panel():
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
                                   resolution=(256, 256), figsize=(6, 3.5))
-    os.makedirs(fig_dir[0], exist_ok =True)
-    figp.savefig(fig_dir[0]+"fig2-efield.pdf")
-
+    figp.savefig('figures/figure_2/fig2-efield.pdf')
 
 def potential_energy_panel():
     """
@@ -73,8 +69,7 @@ def potential_energy_panel():
         a.set_ylabel('y (mm)')
     ax.set_title(None)
     fig.tight_layout()
-    os.makedirs(fig_dir[0], exist_ok =True)
-    fig.savefig(fig_dir[0]+"fig2-potential_energy.pdf")
+    fig.savefig('figures/figure_2/fig2-potential_energy.pdf')
 
 def get_data(fname):
     """
@@ -169,8 +164,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
-    os.makedirs(fig_dir[2], exist_ok =True)
-    fig.savefig(fig_dir[2]+"fig4-height_fit.pdf")
+    fig.savefig('figures/figure_4/fig4-height_fit.pdf')
     return trap
 
 def plot_escape(figsize=(3.5, 3)):
@@ -185,8 +179,7 @@ def plot_escape(figsize=(3.5, 3)):
     ax.set_title(None)
     plt.gca().invert_yaxis()
     fig.tight_layout()
-    os.makedirs(fig_dir[2], exist_ok =True)
-    fig.savefig(fig_dir[2]+"fig4-trap_escape.pdf")
+    fig.savefig('figures/figure_4/fig4-trap_escape.pdf')
 
 def plot_height_and_micro(pixelsize_error, figsize=(3.5, 3)):
     voltage, height, micromotion, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data(fname)
@@ -210,8 +203,7 @@ def plot_height_and_micro(pixelsize_error, figsize=(3.5, 3)):
     ax2.axhline(RF_height, color='black', alpha=0.6)
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
-    os.makedirs(fig_dir[1], exist_ok =True)
-    fig.savefig(fig_dir[1]+"fig3-height-micro-plot.pdf")
+    fig.savefig('figures/figure_3/fig3-height-micro-plot.pdf')
     plt.show()
 
 def plot_c2m_hist(folder):
@@ -227,9 +219,7 @@ def plot_c2m_hist(folder):
     plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.xlabel('Charge-to-Mass Ratio (C/kg)')
     plt.ylabel('Number of Occurrences')
-    os.makedirs(fig_dir[1], exist_ok =True)
-    plt.savefig(fig_dir[1]+"fig3-histogram.pdf")
-
+    plt.savefig('figures/figure_3/fig3-histogram.pdf')
 
 
 
