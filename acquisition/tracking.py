@@ -128,10 +128,10 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # track particles
-    if frame_num: #<= 2:
+    if frame_num <= 2:
         track_id = _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id)
-    #else:
-    #     _update_tracking(keypoints_cur_frame, tracking_objects)
+    else:
+        _update_tracking(keypoints_cur_frame, tracking_objects)
     
     # process contours and get measurements
     _process_contours(contours, tracking_objects, y_end, y_start)
@@ -156,6 +156,7 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
             print('c')
             if math.dist(pt1, pt2) < 10:
                 tracking_objects[track_id] = [pt1]
+                print('Initialize')
                 print(tracking_objects)
                 track_id += 1
     return track_id
@@ -182,7 +183,8 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
     for pt1 in keypoints_cur_frame:
         tracking_objects[track_id_2] = [pt1]
         track_id_2 += 1
-
+    
+    print("update")
     print(tracking_objects)
 
 def _process_contours(contours, tracking_objects, y_end, y_start):
