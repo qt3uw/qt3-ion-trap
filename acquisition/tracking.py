@@ -22,6 +22,7 @@ class TrackingConfig:
         self.LEFT_BAR = 0
         self.RIGHT_BAR = 0
         self.INDEX_LIST = []
+        self.TRACKING_OBJECTS = {}
 
 def initialize_video(cap):
     """Initialize video capture and kernels"""
@@ -249,7 +250,7 @@ def auto_run(cap):
 def run_frame(cap, frame_num, keypoints_prev_frame):
     if frame_num == 0:
         tracking_objects, track_id, keypoints_prev_frame = setup_tracker()
-        print('done')
+    tracking_objects = {111: 2}
     ret, frame = get_frame(cap, frame_num)
     if not ret:
         exit()
