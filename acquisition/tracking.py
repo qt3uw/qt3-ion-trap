@@ -148,16 +148,11 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     return x_position, y_position, height, image_with_keypoints, keypoints_cur_frame
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
-    print('A')
     """Initialize tracking for new particles"""
     for pt1 in keypoints_cur_frame:
-        print('b')
         for pt2 in keypoints_prev_frame:
-            print('c')
             if math.dist(pt1, pt2) < 10:
                 tracking_objects[track_id] = [pt1]
-                print('Initialize')
-                print(tracking_objects)
                 track_id += 1
     return track_id
 
@@ -183,9 +178,7 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
     for pt1 in keypoints_cur_frame:
         tracking_objects[track_id_2] = [pt1]
         track_id_2 += 1
-    
-    print("update")
-    print(tracking_objects)
+
 
 def _process_contours(contours, tracking_objects, y_end, y_start):
     """Process contours to get particle measurements"""
@@ -212,6 +205,24 @@ def analyze_trial(datapoint):
     return (round(np.mean(x), 2),
             round(np.mean(y), 2),
             round(np.mean(h), 2))
+
+def save_data(yav, hav, y_start, y_end, frame_num):
+    try:
+        if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
+            acknowledgement = ""
+            while acknowledgement != "continue":
+                acknowledgement = input(
+                    'Tuple.txt already contains data. Type "continue" to add to the existing file, otherwise stop. ')
+            print("\ncontinuing...")
+        with open('Tuple.txt', 'a') as f:
+            yav_oriented = (y_end - y_start) - yav
+            f.write('[' + str(round(yav_oriented, 2)) + ', ' + str(round(hav, 2)) + ']\n')
+            print("Saved: " + str(yav_oriented) + ', ' + str(hav))
+    except FileNotFoundError:
+        with open('Tuple.txt', 'w') as f:
+            yav_oriented = (y_end - y_start) - yav
+            f.write('[' + str(round(yav_oriented, 2)) + ', ' + str(round(hav, 2)) + ']\n')
+            print("Saved: " + str(yav_oriented) + ', ' + str(hav))
 
 def auto_run(cap):
     """Automatic processing of video frames"""
@@ -251,15 +262,14 @@ def auto_run(cap):
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
             trial.append([xav, yav, hav])
+            save_data(yav, hav, y_start, y_end, frame_num)
             print(trial)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
-    # if frame_num == 0:
     tracking_objects, track_id, _ = setup_tracker()
-    # tracking_objects = {111: 2}
     ret, frame = get_frame(cap, frame_num)
     if not ret:
         exit()
