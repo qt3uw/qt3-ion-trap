@@ -16,7 +16,7 @@ class TrackingConfig:
         self.SAMPLE_FRAMES = 15
         self.BIN_THRESH = 26
         self.X_RANGE = (800, 1200)
-        self.Y_RANGE = (547, 933)
+        self.Y_RANGE = (555, 933)
         self.BOTTOM_BAR = 100
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
@@ -142,7 +142,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
         try:
             x_position = int(tracking_objects[0][0][0])
             height = int(tracking_objects[0][1])
-            y_position = int(tracking_objects[0][0][1]) + (height / 2)
+            y_position = int(tracking_objects[0][0][1])
         except (KeyError, IndexError):
             pass
     
@@ -206,8 +206,8 @@ def analyze_trial(datapoint):
             round(np.mean(y), 2),
             round(np.mean(h), 2))
 
-def save_data(yav, hav, y_start, y_end, frame_num):
-    """Puts height and micromotion data into Tuple.txt file"""
+def save_data(yav, hav, y_start, y_end, frame_num, config):
+    """Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file"""
     try:
         if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
             acknowledgement = ""
@@ -217,8 +217,9 @@ def save_data(yav, hav, y_start, y_end, frame_num):
             print("\ncontinuing...")
         with open('Tuple.txt', 'a') as f:
             yav_oriented = (y_end - y_start) - yav
-            f.write('[' + str(round(yav_oriented, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_oriented) + ', ' + str(hav))
+            yav_mm = yav_oriented * config.PIXELCONVERSION
+            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
+            print("Saved: " + str(yav_mm) + ', ' + str(hav))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_oriented = (y_end - y_start) - yav
@@ -262,7 +263,7 @@ def auto_run(cap):
             print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
-            save_data(yav, hav, y_start, y_end, frame_num)
+            save_data(yav, hav, y_start, y_end, frame_num, config)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
