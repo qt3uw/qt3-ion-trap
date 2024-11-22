@@ -23,6 +23,7 @@ class TrackingConfig:
         self.RIGHT_BAR = 0
         self.INDEX_LIST = []
         self.TRACKING_OBJECTS = {}
+        self.PIXELCONVERSION = 0.01628
 
 def initialize_video(cap):
     """Initialize video capture and kernels"""
@@ -140,8 +141,8 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
         try:
             x_position = int(tracking_objects[0][0][0])
-            y_position = int(tracking_objects[0][0][1])
             height = int(tracking_objects[0][1])
+            y_position = int(tracking_objects[0][0][1]) + (height / 2)
         except (KeyError, IndexError):
             pass
     
@@ -186,7 +187,6 @@ def _process_contours(contours, tracking_objects, y_end, y_start):
         x, y, w, h = cv2.boundingRect(i)
         centroid_x = int(x + w / 2)
         centroid_y = int(y + h / 2)
-        adj_centroid_y = (y_end - y_start) - centroid_y
         
         for key in tracking_objects.keys():
             if (x <= tracking_objects[key][0][0] <= x + w and 
@@ -207,6 +207,7 @@ def analyze_trial(datapoint):
             round(np.mean(h), 2))
 
 def save_data(yav, hav, y_start, y_end, frame_num):
+    """Puts height and micromotion data into Tuple.txt file"""
     try:
         if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
             acknowledgement = ""
@@ -267,6 +268,7 @@ def auto_run(cap):
             datapoint.append([x, y, h])
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
+    """Manually processing and displaying each frame. Press a letter or arrow key to progress"""
     tracking_objects, track_id, _ = setup_tracker()
     ret, frame = get_frame(cap, frame_num)
     if not ret:
