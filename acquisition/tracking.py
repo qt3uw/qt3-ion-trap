@@ -261,9 +261,7 @@ def auto_run(cap):
             print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
-            trial.append([xav, yav, hav])
             save_data(yav, hav, y_start, y_end, frame_num)
-            print(trial)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
@@ -277,8 +275,9 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
     x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                 frame_num, tracking_objects, track_id, y_end, y_start)
-
-
+    
+    print(x,y,h)
+    
     cv2.imshow("Frame", image_with_keypoints)
 
     frame_num = frame_num + 1
