@@ -109,3 +109,7 @@ def save_image(name, time, image_save_times, frame):
     if time in image_save_times:
         # Save the frame as an image file
         cv2.imwrite(name + str(time) + '.tif', frame)
+
+def setup_tracking():
+    """Initializing tracking variables"""
+    return {}, 0, []

@@ -17,7 +17,7 @@ class TrackingConfig:
         self.SAMPLE_FRAMES = 15
         self.BIN_THRESH = 26
         self.X_RANGE = (800, 1200)
-        self.Y_RANGE = (555, 933)
+        self.Y_RANGE = (545, 933)
         self.BOTTOM_BAR = 100
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
@@ -98,7 +98,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     detector = set_up_detector()
     keypoints = detector.detect(closing)
     keypoints_cur_frame = []
-    x_position, y_position, height = "NaN", "NaN", "NaN"
+    x_position, y_position_adj, height = "NaN", "NaN", "NaN"
     
     # extract keypoints
     for keypoint in keypoints:
@@ -125,10 +125,11 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
             x_position = int(tracking_objects[0][0][0])
             height = int(tracking_objects[0][1])
             y_position = int(tracking_objects[0][0][1])
+            y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
         except (KeyError, IndexError):
             pass
     
-    return x_position, y_position, height, image_with_keypoints, keypoints_cur_frame
+    return x_position, y_position_adj, height, image_with_keypoints, keypoints_cur_frame
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
     """Initialize tracking for new particles"""
@@ -198,15 +199,14 @@ def save_data(yav, hav, y_start, y_end, frame_num, config):
                     'Tuple.txt already contains data. Type "continue" to add to the existing file, otherwise stop. ')
             print("\ncontinuing...")
         with open('Tuple.txt', 'a') as f:
-            yav_oriented = (y_end - y_start) - yav
-            yav_mm = yav_oriented * config.PIXELCONVERSION
+            yav_mm = yav * config.PIXELCONVERSION
             f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
             print("Saved: " + str(yav_mm) + ', ' + str(hav))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
-            yav_oriented = (y_end - y_start) - yav
-            f.write('[' + str(round(yav_oriented, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_oriented) + ', ' + str(hav))
+            yav_mm = yav * config.PIXELCONVERSION
+            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
+            print("Saved: " + str(yav_mm) + ', ' + str(hav))
 
 def auto_run(cap):
     """Automatic processing of video frames"""
@@ -235,7 +235,6 @@ def auto_run(cap):
         roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
         x, y, h, dummyvar, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
-        keypoint_passover = keypoints_prev_frame
         
         # collect and analyze data
         if frame_num in collection_frames:
@@ -261,7 +260,8 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                 frame_num, tracking_objects, track_id, y_end, y_start)
     
-    print(x,y,h)
+    if frame_num >=4:
+        print(y*config.PIXELCONVERSION, h*config.PIXELCONVERSION)
     
     cv2.imshow("Frame", image_with_keypoints)
 

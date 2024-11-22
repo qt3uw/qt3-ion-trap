@@ -60,6 +60,9 @@ def initialize_video(config):
 
 # --------------------------- Setup Functions For Tracking ---------------------------------------------- #
 
+# def setup_tracking():
+#     return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
+
 def process_frame(config, frame):
     roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
