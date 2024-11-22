@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import math
+from tracking_methods import get_frame, set_up_detector
 
 class TrackingConfig:
     def __init__(self):
@@ -32,10 +33,6 @@ def initialize_video(cap):
     filling_kernel = np.ones((2, 2), np.uint8)
     return total_frames, cleaning_kernel, filling_kernel
 
-def get_frame(cap, frame_num):
-    """Get a specific frame from video"""
-    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
-    return cap.read()
 
 def frame_dimensions(cap, frame_num):
     """Calculate frame dimensions and ranges"""
@@ -53,21 +50,6 @@ def gen_initial_frame(cap):
     ret, start_frame = get_frame(cap, 1)
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
-
-def setup_detector():
-    """Configure and create blob detector"""
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByColor = True
-    params.blobColor = 255
-    params.filterByArea = True
-    params.minArea = 5
-    params.maxArea = 300
-    params.filterByCircularity = False
-    params.filterByConvexity = False
-    params.filterByInertia = False
-    params.minInertiaRatio = 0.01
-    params.maxInertiaRatio = 0.3
-    return cv2.SimpleBlobDetector_create(params)
 
 def define_blockers(cap, frame_num):
     """Define blocking rectangles for frame processing"""
@@ -113,7 +95,7 @@ def setup_tracker():
 
 def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
     """Locate and track particles in frame"""
-    detector = setup_detector()
+    detector = set_up_detector()
     keypoints = detector.detect(closing)
     keypoints_cur_frame = []
     x_position, y_position, height = "NaN", "NaN", "NaN"

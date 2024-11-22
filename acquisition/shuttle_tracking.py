@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import math
-from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
+from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image, setup_tracking
 
 # --------------------------- Config ---------------------------------------------- #
 
@@ -59,9 +59,6 @@ def initialize_video(config):
     return cap, total_frames, start_frame
 
 # --------------------------- Setup Functions For Tracking ---------------------------------------------- #
-
-def setup_tracking():
-    return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
 
 def process_frame(config, frame):
     roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
