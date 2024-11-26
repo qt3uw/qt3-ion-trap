@@ -64,25 +64,17 @@ def define_blockers(cap, frame_num):
     
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
-def post_processing(cap, frame, frame_num):
+def post_processing(frame, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color):
     """Process frame and apply filters"""
-    x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
-    blockers = define_blockers(cap, frame_num)
-    rectangle_color = (255, 255, 255) if config.VIEW_TYPE == "binary" else (0, 0, 0)
-    
-    # intialize kernels
-    cleaning_kernel = np.ones((2, 2), np.uint8)
-    filling_kernel = np.ones((2, 2), np.uint8)
-    
     # process image
     roi_frame = frame[y_start:y_end, x_start:x_end]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
     
-    # apply morphological operations
+    # apply the morphological operations
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     
-    # apply blocking rectangles
+    # blocking rectangles
     for i in range(0, len(blockers), 2):
         cv2.rectangle(clean_thresh, blockers[i], blockers[i+1], rectangle_color, -1)
     
@@ -93,17 +85,10 @@ def setup_tracker():
     """Initialize tracking objects"""
     return {}, 0, []
 
-def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
+def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, detector):
     """Locate and track particles in frame"""
-    detector = set_up_detector()
     keypoints = detector.detect(closing)
-    keypoints_cur_frame = []
-    x_position, y_position_adj, height = "NaN", "NaN", "NaN"
-    
-    # extract keypoints
-    for keypoint in keypoints:
-        keypoints_cur_frame.append(keypoint.pt)
-
+    keypoints_cur_frame = [keypoint.pt for keypoint in keypoints]
     
     image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
     
@@ -119,16 +104,18 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # process contours and get measurements
     _process_contours(contours, tracking_objects, y_end, y_start)
     
-    # get position data
-    if frame_num >= 2 and len(tracking_objects.keys()) > 0:
+    # getter for position data
+    x_position, y_position_adj, height = "NaN", "NaN", "NaN"
+    if frame_num >= 2 and tracking_objects:
         try:
             x_position = int(tracking_objects[0][0][0])
             height = int(tracking_objects[0][1])
             y_position = int(tracking_objects[0][0][1])
-            y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
+            y_position_adj = (y_end - y_start) - y_position
         except (KeyError, IndexError):
             pass
     
+    # just return the get
     return x_position, y_position_adj, height, image_with_keypoints, keypoints_cur_frame
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
@@ -227,13 +214,11 @@ def save_data(yav, hav, y_start, y_end, frame_num, config):
     
     return True
 
-def auto_run(cap):
+def auto_run(cap, total_frames, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color, detector):
     """Automatic processing of video frames"""
-    total_frames, _, _ = initialize_video(cap)
     tracking_objects, track_id, keypoints_prev_frame = setup_tracker()
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
     
-    # calculate collection frames
+    # calculating collection frames
     collection_frames = [
         int((config.FPS * config.CHANGE_INTERVAL * i) + 
             (config.FPS * config.CHANGE_INTERVAL * 0.4))
@@ -241,26 +226,23 @@ def auto_run(cap):
     ]
     end_collection_frames = [cf + config.SAMPLE_FRAMES for cf in collection_frames]
     
-    trial, datapoint = [], []
+    datapoint = []
     collect_data = False
     
-    # process frames
+    # process frames (this should be faster than my previous implementation)
     for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
         if not ret:
             break
-        if frame_num == 0:
-            keypoints_passover = []
-        roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
-        x, y, h, dummyvar, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
-                                 frame_num, tracking_objects, track_id, y_end, y_start)
+        roi_frame, closing, clean_thresh = post_processing(frame, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color)
+        x, y, h, image_with_keypoints, keypoints_prev_frame = locate_particles(
+            roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, detector
+        )
         
-        # collect and analyze data
+        # collecting and analyze data
         if frame_num in collection_frames:
-            print('collection started')
             collect_data = True
         if frame_num in end_collection_frames:
-            print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
             save_data(yav, hav, y_start, y_end, frame_num, config)
@@ -268,52 +250,56 @@ def auto_run(cap):
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
 
-def run_frame(cap, frame_num, keypoints_prev_frame):
+def run_frame(cap, frame_num, keypoints_prev_frame, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color, detector):
     """Manually processing and displaying each frame. Press a letter or arrow key to progress"""
     tracking_objects, track_id, _ = setup_tracker()
     ret, frame = get_frame(cap, frame_num)
     if not ret:
         exit()
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
-    roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
-    x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
-                                frame_num, tracking_objects, track_id, y_end, y_start)
+        
+    # once again, just initalize here to hopefully reduce complexity
+    roi_frame, closing, clean_thresh = post_processing(frame, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color)
+    x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(
+        roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, detector
+    )
     
-    if frame_num >=4:
-        print(y*config.PIXELCONVERSION, h*config.PIXELCONVERSION)
+    if frame_num >= 4:
+        print(y * config.PIXELCONVERSION, h * config.PIXELCONVERSION)
     
     cv2.imshow("Frame", image_with_keypoints)
-
-    frame_num = frame_num + 1
+    
+    frame_num += 1
     return frame_num, keypoints_cur_frame
         
-
-
 def main():
     """Main entry point"""
     global config
     config = TrackingConfig()
     
     cap = cv2.VideoCapture(config.VIDEO_FILE)
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
     
+    # intialize constants and objects once instead of having to do it repeatedly
+    total_frames, cleaning_kernel, filling_kernel = initialize_video(cap)
+    x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num=1)
+    blockers = define_blockers(cap, frame_num=1)
+    detector = set_up_detector()
+    rectangle_color = (255, 255, 255) if config.VIEW_TYPE == "binary" else (0, 0, 0)
+    
+    # begin with the processing
     key = cv2.waitKey()
     if key == 27:  # ESC
         return
     if key == 32:  # Space
-        auto_run(cap)
+        auto_run(cap, total_frames, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color, detector)
     else:
         cv2.destroyAllWindows()
         frame_num = 0
+        keypoints_prev_frame = []
         for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
-            if i == 0:
-                keypoints_prev_frame = []
-            frame_num, keypoints_prev_frame = run_frame(cap, frame_num, keypoints_prev_frame)
+            frame_num, keypoints_prev_frame = run_frame(cap, frame_num, keypoints_prev_frame, x_start, x_end, y_start, y_end, blockers, cleaning_kernel, filling_kernel, rectangle_color, detector)
             key = cv2.waitKey()
             if key == 27:
                 exit()
-            if key != 27:
-                pass
 
 if __name__ == "__main__":
     main()
