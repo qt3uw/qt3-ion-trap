@@ -26,13 +26,6 @@ class TrackingConfig:
         self.TRACKING_OBJECTS = {}
         self.PIXELCONVERSION = 0.01628
 
-def initialize_video(cap):
-    """Initialize video capture and kernels"""
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cleaning_kernel = np.ones((2, 2), np.uint8)
-    filling_kernel = np.ones((2, 2), np.uint8)
-    return total_frames, cleaning_kernel, filling_kernel
-
 
 def frame_dimensions(cap, frame_num):
     """Calculate frame dimensions and ranges"""
@@ -45,7 +38,6 @@ def frame_dimensions(cap, frame_num):
 
 def gen_initial_frame(cap):
     """Generate and display initial frame"""
-    total_frames, cleaning_kernel, filling_kernel = initialize_video(cap)
     x_start, x_end, y_start, y_end = frame_dimensions(cap, 1)
     ret, start_frame = get_frame(cap, 1)
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
@@ -210,7 +202,9 @@ def save_data(yav, hav, y_start, y_end, frame_num, config):
 
 def auto_run(cap):
     """Automatic processing of video frames"""
-    total_frames, _, _ = initialize_video(cap)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cleaning_kernel = np.ones((2, 2), np.uint8)
+    filling_kernel = np.ones((2, 2), np.uint8)
     tracking_objects, track_id, keypoints_prev_frame = setup_tracker()
     x_start, x_end, y_start, y_end = gen_initial_frame(cap)
     
