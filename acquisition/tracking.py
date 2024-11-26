@@ -188,25 +188,44 @@ def analyze_trial(datapoint):
     return (round(np.mean(x), 2),
             round(np.mean(y), 2),
             round(np.mean(h), 2))
-
+          
 def save_data(yav, hav, y_start, y_end, frame_num, config):
-    """Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file"""
+    """
+    Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file
+    """
+    # Extrapolating a lot of the things we are using in the logic so it looks cleaner
+    filename = 'Tuple.txt'
+    yav_mm = round(yav * config.PIXELCONVERSION, 2)
+    hav_rounded = round(hav, 2)
+    data_string = f'[{yav_mm}, {hav_rounded}]\n'
+
     try:
-        if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
-            acknowledgement = ""
-            while acknowledgement != "continue":
-                acknowledgement = input(
-                    'Tuple.txt already contains data. Type "continue" to add to the existing file, otherwise stop. ')
-            print("\ncontinuing...")
-        with open('Tuple.txt', 'a') as f:
-            yav_mm = yav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_mm) + ', ' + str(hav))
-    except FileNotFoundError:
-        with open('Tuple.txt', 'w') as f:
-            yav_mm = yav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_mm) + ', ' + str(hav))
+        # check if we need to ask the user for confirmation
+        if frame_num < 150:
+            is_empty = True
+            try:
+                is_empty = os.path.getsize(filename) == 0
+            except OSError:
+                pass  
+
+            if not is_empty:
+                while True:
+                    ack = input(
+                        'Tuple.txt already contains data. Press "y" to add to the existing file, otherwise stop.'
+                    )
+                    if ack == "y":
+                        break
+                print("\ncontinuing...")
+
+        write_mode = 'a' if os.path.exists(filename) else 'w'
+        with open(filename, write_mode, buffering=8192) as f: # I think this is a buffered writing trick for writing to files
+            f.write(data_string)
+        print(f"Saved: {yav_mm}, {hav_rounded}")
+    except IOError as e:
+        print(f"Error saving data: {e}")
+        return False
+    
+    return True
 
 def auto_run(cap):
     """Automatic processing of video frames"""
