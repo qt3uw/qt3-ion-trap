@@ -1,14 +1,14 @@
 import cv2
 import numpy as np
 import math
-from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image, setup_tracking
+from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
 
 # --------------------------- Config ---------------------------------------------- #
 
 class TrackingConfig:
     def __init__(self):
         # video settings
-        self.VIDEO_PATH = '../ExampleSplit.avi'
+        self.VIDEO_PATH = 'ShuttleBackForth.avi'
         self.START_FRAME_NUM = 100
 
         # regions of interest
@@ -18,7 +18,7 @@ class TrackingConfig:
         self.Y_END = 700
 
         # image processing
-        self.BIN_THRESH = 25
+        self.BIN_THRESH = 45
         self.CLEANING_KERNEL = np.ones((2, 2), np.uint8)
         self.FILLING_KERNEL = np.ones((4, 2), np.uint8)
 
@@ -32,11 +32,11 @@ class TrackingConfig:
         # tracking settings
         self.STORE_HEIGHT_DATA = False
         self.CONTOUR_DET = False
-        self.COLLECT_POSITION = False
+        self.COLLECT_POSITION = True
         self.ALL_INDICES_OF_INTEREST = []
 
         # image capture settings
-        self.IMAGE_SAVE = False
+        self.IMAGE_SAVE = True
         self.IMAGE_SAVE_TIMES = [0, 2, 4, 6]
 
         # data storage
@@ -60,8 +60,8 @@ def initialize_video(config):
 
 # --------------------------- Setup Functions For Tracking ---------------------------------------------- #
 
-# def setup_tracking():
-#     return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
+def setup_tracking():
+    return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
 
 def process_frame(config, frame):
     roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
@@ -73,17 +73,17 @@ def process_frame(config, frame):
         config.CLEANING_KERNEL,
         config.FILLING_KERNEL,
         config.RECTANGLE_COLOR,
-        *config.TOP_RECT[0], *config.TOP_RECT[1],
-        *config.LEFT_RECT[0], *config.LEFT_RECT[1],
-        *config.RIGHT_RECT[0], *config.RIGHT_RECT[1],
-        *config.BOTTOM_RECT[0], *config.BOTTOM_RECT[1],
+        config.TOP_RECT[0], config.TOP_RECT[1],
+        config.LEFT_RECT[0], config.LEFT_RECT[1],
+        config.RIGHT_RECT[0], config.RIGHT_RECT[1],
+        config.BOTTOM_RECT[0], config.BOTTOM_RECT[1],
         0, 1, 4
     )
     
     return roi_frame, closing, clean_thresh
 
-def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_prev_frame, contours=None):
-    if len(tracking_objects) <= 2:
+def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_prev_frame, frame_num, contours=None):
+    if frame_num <= 2:
         for pt1 in keypoints_cur_frame:
             for pt2 in keypoints_prev_frame:
                 if math.dist(pt1, pt2) < 10:
@@ -136,7 +136,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
     # Initial tracking variables
-    index_of_interest = 1
+    index_of_interest = 0
     first_detect = False
     start_x = 0
     
@@ -186,7 +186,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             # Update tracking
             tracking_objects, track_id = update_tracking(
                 tracking_objects, track_id, keypoints_cur_frame, 
-                keypoints_prev_frame, contours
+                keypoints_prev_frame, frame_num, contours
             )
             
             # set starting position
@@ -210,6 +210,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             draw_tracking_info(image_with_keypoints, tracking_objects)
             time = round((frame_num - 100) * 0.05, 2)
             draw_frame_info(clean_thresh, frame_num, time, total_frames)
+            draw_frame_info(image_with_keypoints, frame_num, time, total_frames)
             
             # if enabled, save image
             if config.IMAGE_SAVE:
