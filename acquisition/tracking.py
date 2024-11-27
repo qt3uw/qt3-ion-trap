@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import math
-from tracking_methods import get_frame, set_up_detector
+from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
     def __init__(self):
@@ -95,11 +95,6 @@ def post_processing(cap, frame, frame_num):
 
     return roi_frame, closing, clean_thresh
 
-def setup_tracker():
-    """
-    Initialize tracking objects
-    """
-    return {}, 0, []
 
 def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
     """
@@ -262,7 +257,7 @@ def auto_run(cap):
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cleaning_kernel = np.ones((2, 2), np.uint8)
     filling_kernel = np.ones((2, 2), np.uint8)
-    tracking_objects, track_id, keypoints_prev_frame = setup_tracker()
+    tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     x_start, x_end, y_start, y_end = gen_initial_frame(cap)
     
     # calculate collection frames
@@ -309,7 +304,7 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     :return frame_num: Frame number of the next frame to analyze
     :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
     """
-    tracking_objects, track_id, _ = setup_tracker()
+    tracking_objects, track_id, _ = setup_tracking()
     ret, frame = get_frame(cap, frame_num)
     if not ret:
         exit()
@@ -326,7 +321,9 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
 
 
 def main():
-    """Main entry point"""
+    """
+    Main entry point
+    """
     global config
     config = TrackingConfig()
     
