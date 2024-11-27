@@ -240,25 +240,25 @@ def save_data(yav, hav, frame_num, config, total_frames):
     :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
     """
     try:
-        if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
+        if os.stat('Tuple.txt').st_size != 0 and frame_num <= 70:
             acknowledgement = ""
             while acknowledgement != "continue":
                 acknowledgement = input(
-                    'Tuple.txt already contains data. Type "continue" to add to the existing file, otherwise stop. ')
+                    'Tuple.txt already contains data. Please cancel and clear the file before proceeding. Type "continue" to override')
             print("\ncontinuing...")
         with open('Tuple.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
             f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 1)))
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '%')
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
             f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)))
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '%')
 
 
 def auto_run(cap):
@@ -268,10 +268,8 @@ def auto_run(cap):
     :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
     """
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cleaning_kernel = np.ones((2, 2), np.uint8)
-    filling_kernel = np.ones((2, 2), np.uint8)
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
+    _, _, y_start, y_end = gen_initial_frame(cap)
     
     # calculate collection frames
     collection_frames = [
@@ -281,18 +279,18 @@ def auto_run(cap):
     ]
     end_collection_frames = [cf + config.SAMPLE_FRAMES for cf in collection_frames]
     
-    trial, datapoint = [], []
+    _, datapoint = [], []
     collect_data = False
     
+    keypoints_passover = []
+
     # process frames
     for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
         if not ret:
             break
-        if frame_num == 0:
-            keypoints_passover = []
-        roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
-        x, y, h, dummyvar, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
+        roi_frame, closing, _ = post_processing(cap, frame, frame_num)
+        x, y, h, _, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
         
         # collect and analyze data
@@ -322,7 +320,7 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
         exit()
     _, _, y_start, y_end = gen_initial_frame(cap)
     roi_frame, closing, _ = post_processing(cap, frame, frame_num)
-    x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
+    _, _, _, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                 frame_num, tracking_objects, track_id, y_end, y_start)
     
     cv2.imshow("Frame", image_with_keypoints)
