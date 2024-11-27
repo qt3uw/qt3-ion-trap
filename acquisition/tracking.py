@@ -2,7 +2,6 @@ import os
 import cv2
 import numpy as np
 import math
-import time
 from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
@@ -142,20 +141,24 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # process contours and get measurements
     _process_contours(contours, tracking_objects)
     # get position data
+
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
         for i in tracking_objects.keys():
             try:
                 if tracking_objects[i][1] <= 8:
-                    print(str(tracking_objects[i]) + 'removed')
                     tracking_objects[i].remove
                 else:
                     try:
-                        if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 0.5:
+                        if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
                             try:
                                 x_position = int(tracking_objects[i][0][0])
                                 height = int(tracking_objects[i][1])
                                 y_position = int(tracking_objects[i][0][1])
                                 y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
+                                for k in range(len(keypoints_copy)):
+                                    if x_position == keypoints_copy[k][0]:
+                                        keypoints_copy = keypoints_copy[k]
+                                        break
                                 break
                             except (KeyError, IndexError):
                                 pass
@@ -163,9 +166,6 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
                         pass
             except IndexError:
                 pass
-
-    # if frame_num in range (1105, 1500):
-    #     print(tracking_objects)
 
     return x_position, y_position_adj, height, image_with_keypoints, keypoints_copy
 
@@ -304,7 +304,7 @@ def auto_run(cap):
     keypoints_prev_frame = []
 
     # process frames
-    for frame_num in range(1100, total_frames):
+    for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
         tracking_objects, track_id, _ = setup_tracking()
         if not ret:
