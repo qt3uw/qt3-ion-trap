@@ -141,23 +141,32 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     
     # process contours and get measurements
     _process_contours(contours, tracking_objects)
-    
     # get position data
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
         for i in tracking_objects.keys():
             try:
-                if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
+                if tracking_objects[i][1] <= 8:
+                    print(str(tracking_objects[i]) + 'removed')
+                    tracking_objects[i].remove
+                else:
                     try:
-                        x_position = int(tracking_objects[i][0][0])
-                        height = int(tracking_objects[i][1])
-                        y_position = int(tracking_objects[i][0][1])
-                        y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
-                        break
-                    except (KeyError, IndexError):
+                        if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 0.5:
+                            try:
+                                x_position = int(tracking_objects[i][0][0])
+                                height = int(tracking_objects[i][1])
+                                y_position = int(tracking_objects[i][0][1])
+                                y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
+                                break
+                            except (KeyError, IndexError):
+                                pass
+                    except IndexError:
                         pass
             except IndexError:
                 pass
-    
+
+    # if frame_num in range (1105, 1500):
+    #     print(tracking_objects)
+
     return x_position, y_position_adj, height, image_with_keypoints, keypoints_copy
 
 
@@ -200,7 +209,7 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
         if not object_exists:
             tracking_objects.pop(object_id)
 
-    track_id_2 = 0
+    track_id_2 = max(tracking_objects.keys(), default=-1) + 1
     for pt1 in keypoints_cur_frame:
         tracking_objects[track_id_2] = [pt1]
         track_id_2 += 1
@@ -295,7 +304,7 @@ def auto_run(cap):
     keypoints_prev_frame = []
 
     # process frames
-    for frame_num in range(total_frames):
+    for frame_num in range(1100, total_frames):
         ret, frame = get_frame(cap, frame_num)
         tracking_objects, track_id, _ = setup_tracking()
         if not ret:
