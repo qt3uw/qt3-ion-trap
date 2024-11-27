@@ -41,6 +41,7 @@ def frame_dimensions(cap, frame_num):
     y_start, y_end = (imageheight - config.Y_RANGE[1]), (imageheight - config.Y_RANGE[0])
     return x_start, x_end, y_start, y_end
 
+
 def gen_initial_frame(cap):
     """
     Generate and display initial frame
@@ -51,6 +52,7 @@ def gen_initial_frame(cap):
     ret, start_frame = get_frame(cap, 1)
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
+
 
 def define_blockers(cap, frame_num):
     """
@@ -69,6 +71,7 @@ def define_blockers(cap, frame_num):
     bottom_rect = ((0, ylength - config.BOTTOM_BAR), (1616, ylength))
     
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
+
 
 def post_processing(cap, frame, frame_num):
     """
@@ -147,6 +150,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     
     return x_position, y_position_adj, height, image_with_keypoints, keypoints_cur_frame
 
+
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
     """
     Initialize tracking for new particles
@@ -162,6 +166,7 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
                 tracking_objects[track_id] = [pt1]
                 track_id += 1
     return track_id
+
 
 def _update_tracking(keypoints_cur_frame, tracking_objects):
     """
@@ -205,6 +210,7 @@ def _process_contours(contours, tracking_objects):
                 y <= tracking_objects[key][0][1] <= y + h):
                 tracking_objects[key].append(h)
 
+
 def analyze_trial(datapoint):
     """
     Analyze trial data and compute averages
@@ -222,13 +228,15 @@ def analyze_trial(datapoint):
             round(np.mean(y), 2),
             round(np.mean(h), 2))
 
-def save_data(yav, hav, frame_num, config):
+
+def save_data(yav, hav, frame_num, config, total_frames):
     """
     Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
     :param hav: Average height of the particle over the sample frames
     :param frame_num: Frame number of interest
     :param config: Class object containing relevant parameters, found at the top of the file
+    :param total_frames: Total frames contained in the video object
     :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
     """
     try:
@@ -240,13 +248,18 @@ def save_data(yav, hav, frame_num, config):
             print("\ncontinuing...")
         with open('Tuple.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_mm) + ', ' + str(hav))
+            hav_mm = hav * config.PIXELCONVERSION
+            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            percentage = (frame_num / total_frames) * 100
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 1)))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav, 2)) + ']\n')
-            print("Saved: " + str(yav_mm) + ', ' + str(hav))
+            hav_mm = hav * config.PIXELCONVERSION
+            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            percentage = (frame_num / total_frames) * 100
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)))
+
 
 def auto_run(cap):
     """
@@ -284,16 +297,15 @@ def auto_run(cap):
         
         # collect and analyze data
         if frame_num in collection_frames:
-            print('collection started')
             collect_data = True
         if frame_num in end_collection_frames:
-            print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
-            save_data(yav, hav, frame_num, config)
+            save_data(yav, hav, frame_num, config, total_frames)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
+
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
     """
@@ -318,7 +330,6 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     frame_num = frame_num + 1
     return frame_num, keypoints_cur_frame
         
-
 
 def main():
     """
