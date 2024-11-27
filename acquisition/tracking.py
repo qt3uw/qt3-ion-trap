@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import math
+import time
 from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
@@ -17,7 +18,7 @@ class TrackingConfig:
         self.SAMPLE_FRAMES = 15
         self.BIN_THRESH = 26
         self.X_RANGE = (800, 1200)
-        self.Y_RANGE = (545, 933)
+        self.Y_RANGE = (552, 933)
         self.BOTTOM_BAR = 100
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
@@ -82,6 +83,7 @@ def post_processing(cap, frame, frame_num):
     :return roi_frame: Image of the frame, cropped to the region of interest
     :return closing: Binary image of the frame after erasing small imperfections, cropped to the region of interest
     :return clean_thresh: "Cleaned" image of the frame with small binary imperfections erased
+    :return closing_raw: Binary image of the frame post-erasure without the binary blocker
     """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     blockers = define_blockers(cap, frame_num)
@@ -92,11 +94,12 @@ def post_processing(cap, frame, frame_num):
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
+    closing_raw = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     for i in range(0, len(blockers), 2):
         cv2.rectangle(clean_thresh, blockers[i], blockers[i+1], rectangle_color, -1)
     closing = cv2.morphologyEx(clean_thresh, cv2.MORPH_CLOSE, filling_kernel, iterations=2)
 
-    return roi_frame, closing, clean_thresh
+    return roi_frame, closing, clean_thresh, closing_raw
 
 
 def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
@@ -289,10 +292,10 @@ def auto_run(cap):
         ret, frame = get_frame(cap, frame_num)
         if not ret:
             break
-        roi_frame, closing, _ = post_processing(cap, frame, frame_num)
+        roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
         x, y, h, _, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
-        
+        keypoints_passover = keypoints_prev_frame
         # collect and analyze data
         if frame_num in collection_frames:
             collect_data = True
@@ -319,11 +322,11 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     if not ret:
         exit()
     _, _, y_start, y_end = gen_initial_frame(cap)
-    roi_frame, closing, _ = post_processing(cap, frame, frame_num)
+    roi_frame, closing, _, closing_raw = post_processing(cap, frame, frame_num)
     _, _, _, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                 frame_num, tracking_objects, track_id, y_end, y_start)
     
-    cv2.imshow("Frame", image_with_keypoints)
+    cv2.imshow("Frame", closing_raw)
 
     frame_num = frame_num + 1
     return frame_num, keypoints_cur_frame
@@ -340,22 +343,19 @@ def main():
     x_start, x_end, y_start, y_end = gen_initial_frame(cap)
     
     key = cv2.waitKey()
-    if key == 27:  # ESC
-        return
-    if key == 32:  # Space
-        auto_run(cap)
-    else:
-        cv2.destroyAllWindows()
-        frame_num = 0
-        for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
-            if i == 0:
-                keypoints_prev_frame = []
-            frame_num, keypoints_prev_frame = run_frame(cap, frame_num, keypoints_prev_frame)
-            key = cv2.waitKey()
-            if key == 27:
-                exit()
-            if key != 27:
-                pass
+    cv2.destroyAllWindows()
+    frame_num = 0
+    for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
+        if i == 0:
+            keypoints_prev_frame = []
+        frame_num, keypoints_prev_frame = run_frame(cap, frame_num, keypoints_prev_frame)
+        key = cv2.waitKey()
+        if key == 27:  # ESC
+            exit()
+        if key == 32:  # Space
+            auto_run(cap)
+        else:
+            pass
 
 if __name__ == "__main__":
     main()
