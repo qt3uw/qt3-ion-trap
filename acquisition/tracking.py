@@ -145,11 +145,6 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # get position data
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
         for i in tracking_objects.keys():
-            # print(tracking_objects)
-            # print(keypoints_prev_frame)
-            # print(tracking_objects[i][0][0])
-            # print(keypoints_prev_frame[0][0])
-            # print('')
             try:
                 if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
                     try:
