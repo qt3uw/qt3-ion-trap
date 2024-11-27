@@ -7,7 +7,7 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
     def __init__(self):
-        self.VIDEO_FILE = "acquisition/8-16Trial4.avi"
+        self.VIDEO_FILE = "acquisition/ExampleMicromotion.avi"
         self.VIEW_TYPE = "image"  # Options: "binary", "image", "frame", "cleanthresh"
         self.OUTPUT = "none"      # Options: "tuple", "none"
         self.SHOW_QUANT = "none"  # Options: "height", "micromotion", "both"
@@ -17,13 +17,12 @@ class TrackingConfig:
         self.POINTS_TO_IMAGE = []
         self.SAMPLE_FRAMES = 15
         self.BIN_THRESH = 26
-        self.X_RANGE = (800, 1200)
-        self.Y_RANGE = (552, 933)
+        self.X_RANGE = (100, 900)  
+        self.Y_RANGE = (556, 1000)
         self.BOTTOM_BAR = 100
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
         self.RIGHT_BAR = 0
-        self.INDEX_LIST = []
         self.TRACKING_OBJECTS = {}
         self.PIXELCONVERSION = 0.01628
 
@@ -126,6 +125,8 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # extract keypoints
     for keypoint in keypoints:
         keypoints_cur_frame.append(keypoint.pt)
+
+    keypoints_copy = keypoints_cur_frame
     
     image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
     
@@ -143,15 +144,26 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     
     # get position data
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
-        try:
-            x_position = int(tracking_objects[0][0][0])
-            height = int(tracking_objects[0][1])
-            y_position = int(tracking_objects[0][0][1])
-            y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
-        except (KeyError, IndexError):
-            pass
+        for i in tracking_objects.keys():
+            # print(tracking_objects)
+            # print(keypoints_prev_frame)
+            # print(tracking_objects[i][0][0])
+            # print(keypoints_prev_frame[0][0])
+            # print('')
+            try:
+                if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
+                    try:
+                        x_position = int(tracking_objects[i][0][0])
+                        height = int(tracking_objects[i][1])
+                        y_position = int(tracking_objects[i][0][1])
+                        y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
+                        break
+                    except (KeyError, IndexError):
+                        pass
+            except IndexError:
+                pass
     
-    return x_position, y_position_adj, height, image_with_keypoints, keypoints_cur_frame
+    return x_position, y_position_adj, height, image_with_keypoints, keypoints_copy
 
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
@@ -254,14 +266,14 @@ def save_data(yav, hav, frame_num, config, total_frames):
             hav_mm = hav * config.PIXELCONVERSION
             f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '%')
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
             f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '%')
+            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
 
 
 def auto_run(cap):
@@ -285,17 +297,18 @@ def auto_run(cap):
     _, datapoint = [], []
     collect_data = False
     
-    keypoints_passover = []
+    keypoints_prev_frame = []
 
     # process frames
     for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
+        tracking_objects, track_id, _ = setup_tracking()
         if not ret:
             break
         roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
-        x, y, h, _, keypoints_prev_frame = locate_particles(roi_frame, closing, keypoints_passover, 
+        x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
-        keypoints_passover = keypoints_prev_frame
+        keypoints_prev_frame = keypoints_cur_frame
         # collect and analyze data
         if frame_num in collection_frames:
             collect_data = True
@@ -340,10 +353,8 @@ def main():
     config = TrackingConfig()
     
     cap = cv2.VideoCapture(config.VIDEO_FILE)
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
+    _, _, _, _ = gen_initial_frame(cap)
     
-    key = cv2.waitKey()
-    cv2.destroyAllWindows()
     frame_num = 0
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
