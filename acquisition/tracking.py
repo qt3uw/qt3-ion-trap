@@ -140,7 +140,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
         for i in tracking_objects.keys():
             try:
-                if tracking_objects[i][1] <= 8:
+                if tracking_objects[i][1] <= 10:
                     tracking_objects[i].remove
                 else:
                     try:
