@@ -28,7 +28,12 @@ class TrackingConfig:
 
 
 def frame_dimensions(cap, frame_num):
-    """Calculate frame dimensions and ranges"""
+    """
+    Calculate frame dimensions and ranges
+    :param cap: Video capture object from the OpenCV package
+    :param frame_num: Frame number of interest
+    :return x_start, x_end,...: Define the rectangular region of interest
+    """
     ret, start_frame = get_frame(cap, frame_num)
     start_frame_dim = start_frame.shape
     imageheight = start_frame_dim[0]
@@ -37,14 +42,23 @@ def frame_dimensions(cap, frame_num):
     return x_start, x_end, y_start, y_end
 
 def gen_initial_frame(cap):
-    """Generate and display initial frame"""
+    """
+    Generate and display initial frame
+    :param cap: Video capture object from the OpenCV package
+    :return x_start, x_end,...: Define the rectangular region of interest
+    """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, 1)
     ret, start_frame = get_frame(cap, 1)
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
 def define_blockers(cap, frame_num):
-    """Define blocking rectangles for frame processing"""
+    """
+    Define blocking rectangles for frame processing
+    :param cap: Video capture object from the OpenCV package
+    :param frame_num: Frame number of interest
+    :return: Tuple object containing tuple elements that define the locations of rectangles for omission
+    """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     ylength = y_end - y_start
     xlength = x_end - x_start
@@ -57,36 +71,52 @@ def define_blockers(cap, frame_num):
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
 def post_processing(cap, frame, frame_num):
-    """Process frame and apply filters"""
+    """
+    Process frame and apply filters
+    :param cap: Video capture object from the OpenCV package
+    :param frame: Image of the frame returned by cap.read()
+    :param frame_num: Frame number of interest
+    :return roi_frame: Image of the frame, cropped to the region of interest
+    :return closing: Binary image of the frame after erasing small imperfections, cropped to the region of interest
+    :return clean_thresh: "Cleaned" image of the frame with small binary imperfections erased
+    """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     blockers = define_blockers(cap, frame_num)
     rectangle_color = (255, 255, 255) if config.VIEW_TYPE == "binary" else (0, 0, 0)
-    
-    # intialize kernels
     cleaning_kernel = np.ones((2, 2), np.uint8)
     filling_kernel = np.ones((2, 2), np.uint8)
-    
-    # process image
     roi_frame = frame[y_start:y_end, x_start:x_end]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
-    
-    # apply morphological operations
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
-    
-    # apply blocking rectangles
     for i in range(0, len(blockers), 2):
         cv2.rectangle(clean_thresh, blockers[i], blockers[i+1], rectangle_color, -1)
-    
     closing = cv2.morphologyEx(clean_thresh, cv2.MORPH_CLOSE, filling_kernel, iterations=2)
+
     return roi_frame, closing, clean_thresh
 
 def setup_tracker():
-    """Initialize tracking objects"""
+    """
+    Initialize tracking objects
+    """
     return {}, 0, []
 
 def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
-    """Locate and track particles in frame"""
+    """
+    Locate and track particles in frame
+    :param roi_frame: Image of the frame, cropped to the region of interest
+    :param closing: Binary image of the frame after erasing imperfections, cropped to the region of interest
+    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+    :param frame_num: Frame number of interest
+    :param tracking_objects: Dictionary object containing particles' locations
+    :param track_id: Index of particle in tracking_objects dictionary
+    :param y_end, y_start: Define the y frame of interest
+    :return x_position: X position of the particle's centroid, indicated in pixels from the left of the frame of interest
+    :return y_position_adj: Y position of the particle's centroid, indicated in pixels from the bottom of the frame of interest
+    :return height: Height of detected object in pixels
+    :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
+    :return keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+    """
     detector = set_up_detector()
     keypoints = detector.detect(closing)
     keypoints_cur_frame = []
@@ -95,7 +125,6 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # extract keypoints
     for keypoint in keypoints:
         keypoints_cur_frame.append(keypoint.pt)
-
     
     image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
     
@@ -109,7 +138,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
         _update_tracking(keypoints_cur_frame, tracking_objects)
     
     # process contours and get measurements
-    _process_contours(contours, tracking_objects, y_end, y_start)
+    _process_contours(contours, tracking_objects)
     
     # get position data
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
@@ -124,7 +153,14 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     return x_position, y_position_adj, height, image_with_keypoints, keypoints_cur_frame
 
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
-    """Initialize tracking for new particles"""
+    """
+    Initialize tracking for new particles
+    :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+    :param tracking_objects: Dictionary object containing particles' locations
+    :param track_id: Index of particle in tracking_objects dictionary
+    :return track_id : Index of next particle in tracking_objects dictionary
+    """
     for pt1 in keypoints_cur_frame:
         for pt2 in keypoints_prev_frame:
             if math.dist(pt1, pt2) < 10:
@@ -133,7 +169,11 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
     return track_id
 
 def _update_tracking(keypoints_cur_frame, tracking_objects):
-    """Update tracking for existing particles"""
+    """
+    Update tracking for existing particles in tracking_objects
+    :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+    :param tracking_objects: Dictionary object containing particles' locations
+    """
     tracking_objects_copy = tracking_objects.copy()
     keypoints_cur_frame_copy = keypoints_cur_frame.copy()
     
@@ -156,12 +196,14 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
         track_id_2 += 1
 
 
-def _process_contours(contours, tracking_objects, y_end, y_start):
-    """Process contours to get particle measurements"""
+def _process_contours(contours, tracking_objects):
+    """
+    Process contours to get particle dimensions
+    :param contours: List object containing contours stored as arrays of points outlining shapes of interest
+    :param tracking_objects: Dictionary object containing particles' locations
+    """
     for i in contours:
         x, y, w, h = cv2.boundingRect(i)
-        centroid_x = int(x + w / 2)
-        centroid_y = int(y + h / 2)
         
         for key in tracking_objects.keys():
             if (x <= tracking_objects[key][0][0] <= x + w and 
@@ -169,7 +211,11 @@ def _process_contours(contours, tracking_objects, y_end, y_start):
                 tracking_objects[key].append(h)
 
 def analyze_trial(datapoint):
-    """Analyze trial data and compute averages"""
+    """
+    Analyze trial data and compute averages
+    :param datapoint: List object containing tuples (x,y,h) for particles location and height from each of the previous frames
+    :return: Tuple reflecting the average of the tuples in datapoint
+    """
     if not datapoint:
         return 0, 0, 0
         
@@ -181,8 +227,15 @@ def analyze_trial(datapoint):
             round(np.mean(y), 2),
             round(np.mean(h), 2))
 
-def save_data(yav, hav, y_start, y_end, frame_num, config):
-    """Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file"""
+def save_data(yav, hav, frame_num, config):
+    """
+    Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file
+    :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
+    :param hav: Average height of the particle over the sample frames
+    :param frame_num: Frame number of interest
+    :param config: Class object containing relevant parameters, found at the top of the file
+    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
+    """
     try:
         if os.stat('Tuple.txt').st_size != 0 and frame_num < 150:
             acknowledgement = ""
@@ -201,7 +254,11 @@ def save_data(yav, hav, y_start, y_end, frame_num, config):
             print("Saved: " + str(yav_mm) + ', ' + str(hav))
 
 def auto_run(cap):
-    """Automatic processing of video frames"""
+    """
+    Automatic processing of video frames, outputs datapoints as described below in a Tuple.txt data file
+    :param cap: Video capture object from the OpenCV package
+    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
+    """
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cleaning_kernel = np.ones((2, 2), np.uint8)
     filling_kernel = np.ones((2, 2), np.uint8)
@@ -238,24 +295,28 @@ def auto_run(cap):
             print('collection ended')
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
-            save_data(yav, hav, y_start, y_end, frame_num, config)
+            save_data(yav, hav, frame_num, config)
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
-    """Manually processing and displaying each frame. Press a letter or arrow key to progress"""
+    """
+    Manually processes and displays each frame. Press a letter or arrow key to progress
+    :param cap: Video capture object from the OpenCV package
+    :param frame_num: Frame number of interest
+    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+    :return frame_num: Frame number of the next frame to analyze
+    :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
+    """
     tracking_objects, track_id, _ = setup_tracker()
     ret, frame = get_frame(cap, frame_num)
     if not ret:
         exit()
-    x_start, x_end, y_start, y_end = gen_initial_frame(cap)
-    roi_frame, closing, clean_thresh = post_processing(cap, frame, frame_num)
+    _, _, y_start, y_end = gen_initial_frame(cap)
+    roi_frame, closing, _ = post_processing(cap, frame, frame_num)
     x, y, h, image_with_keypoints, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                 frame_num, tracking_objects, track_id, y_end, y_start)
-    
-    if frame_num >=4:
-        print(y*config.PIXELCONVERSION, h*config.PIXELCONVERSION)
     
     cv2.imshow("Frame", image_with_keypoints)
 
