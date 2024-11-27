@@ -7,23 +7,18 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 class TrackingConfig:
     def __init__(self):
         self.VIDEO_FILE = "acquisition/ExampleMicromotion.avi"
-        self.VIEW_TYPE = "image"  # Options: "binary", "image", "frame", "cleanthresh"
-        self.OUTPUT = "none"      # Options: "tuple", "none"
-        self.SHOW_QUANT = "none"  # Options: "height", "micromotion", "both"
-        self.POOR_TRACKING = False
-        self.FPS = 20
-        self.CHANGE_INTERVAL = 5
-        self.POINTS_TO_IMAGE = []
-        self.SAMPLE_FRAMES = 15
-        self.BIN_THRESH = 26
-        self.X_RANGE = (100, 900)  
-        self.Y_RANGE = (556, 1000)
-        self.BOTTOM_BAR = 100
+        self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
+        self.FPS = 20                   # FPS of the camera
+        self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
+        self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
+        self.BIN_THRESH = 26            # Binary threshold for object detection
+        self.X_RANGE = (100, 900)       # x-axis frame of interest limits
+        self.Y_RANGE = (556, 1000)      # y-axis frame of interest limits
+        self.BOTTOM_BAR = 100           # Erasure rectangles, measured in pixels from the corresponding edge
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
         self.RIGHT_BAR = 0
-        self.TRACKING_OBJECTS = {}
-        self.PIXELCONVERSION = 0.01628
+        self.PIXELCONVERSION = 0.01628  # Pixel-to-millimeter conversion, gathered from calibration image. Set to 1 to output the rawpixel data
 
 
 def frame_dimensions(cap, frame_num):
