@@ -7,29 +7,28 @@ in tracking.py and particle position in shuttle_tracking.py
 
 # -----------------------------------Shuttling Tracking-----------------------------------
 
-"""
-Reads a specific frame, converting from a cv2 video capture to an individual frame
-:param cap: cv2 video capture
-:param got_frame_num: frame number
-:return: (frame validity boolean, frame)
-"""
+
 def get_frame(cap, got_frame_num):
+    """
+    Reads a specific frame, converting from a cv2 video capture to an individual frame
+    :param cap: cv2 video capture
+    :param got_frame_num: frame number
+    :return: (frame validity boolean, frame)
+    """
     cap.set(cv2.CAP_PROP_POS_FRAMES, got_frame_num)
     return cap.read()
 
-"""
-Puts position data from a main loop dictionary into a file
-:param start_x: First data point's pixel x-coordinate
-:param storage_file:
-:param tracking_objects_dict: Main loop position data structure
-:param index_of_interest: identify an object to store data for
-:param all_indices_of_interest:
-:param frame_num:
-:return: None
-"""
 def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_interest, all_indices_of_interest, frame_num):
-
-    # Putting position points in a file
+    """
+    Puts position data from a main loop dictionary into a file
+    :param start_x: First data point's pixel x-coordinate
+    :param storage_file:
+    :param tracking_objects_dict: Main loop position data structure
+    :param index_of_interest: identify an object to store data for
+    :param all_indices_of_interest:
+    :param frame_num:
+    :return: None
+    """
     if len(tracking_objects_dict.keys()) > 0:
         for i in all_indices_of_interest:
             if i in tracking_objects_dict.keys():
@@ -43,12 +42,13 @@ def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_inte
 
 # ------------------------------------------Both------------------------------------------
 
-"""
-Sets up the opencv blob detector
-:param: None
-:return: detector object
-"""
 def set_up_detector():
+    """
+    Sets up the opencv blob detector
+    :param: None
+    :return: detector object
+    """
+
     params = cv2.SimpleBlobDetector.Params()
 
     # Filter by color
@@ -80,17 +80,18 @@ def set_up_detector():
 
     return detector
 
-"""
-Runs a post-processing sequence that cleans noise out of a frame
-:param thresh: Binary threshold image
-:param cleaning_kernel: Numpy matrix
-:param filling_kernel: Numpy matrix
-:param clean_iter: Number of erosion iterations for cleaning
-:param dilate_iter: Number of dilation iterations for filling holes
-:param close_iter: Number of erosion iterations for returning to original particle size
-"""
+
 def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
                     right_rect_pt1, right_rect_pt2, bottom_rect_pt1, bottom_rect_pt2, clean_iter, dilate_iter, close_iter):
+    """
+    Runs a post-processing sequence that cleans noise out of a frame
+    :param thresh: Binary threshold image
+    :param cleaning_kernel: Numpy matrix
+    :param filling_kernel: Numpy matrix
+    :param clean_iter: Number of erosion iterations for cleaning
+    :param dilate_iter: Number of dilation iterations for filling holes
+    :param close_iter: Number of erosion iterations for returning to original particle size
+    """
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=clean_iter)
     cv2.rectangle(clean_thresh, top_rect_pt1, top_rect_pt2, rectangle_color, -1)  # Top Erasure
     cv2.rectangle(clean_thresh, left_rect_pt1, left_rect_pt2, rectangle_color, -1)   # Left Erasure
@@ -100,16 +101,19 @@ def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, to
     closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, filling_kernel, iterations=close_iter)
     return clean_thresh, closing
 
-"""
-Saves images at specified times
-:param name: File name
-:param image_save_times: List of times(s) to save an image at
-"""
+
 def save_image(name, time, image_save_times, frame):
+    """
+    Saves images at specified times
+    :param name: File name
+    :param image_save_times: List of times(s) to save an image at
+    """
     if time in image_save_times:
         # Save the frame as an image file
         cv2.imwrite(name + str(time) + '.tif', frame)
 
 def setup_tracking():
-    """Initializing tracking variables"""
+    """
+    Initializing tracking variables
+    """
     return {}, 0, []
