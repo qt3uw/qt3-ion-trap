@@ -8,7 +8,7 @@ class TrackingConfig:
     def __init__(self):
         self.VIDEO_FILE = "acquisition/8-16Trial4.avi"
         self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 1220            # Defines starting frame. Only change for debugging
+        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
         self.FPS = 20                   # FPS of the camera
         self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
         self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
@@ -146,25 +146,12 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
                     tracking_objects.pop(i)
                 elif last_known != 0:
                     if abs(last_known[0][0] - tracking_objects[i][0][0]) >= 5 or abs(last_known[0][1] - tracking_objects[i][0][1]) >= 5:
-                        # print('REMOVED: ' + str(last_known) + '   ' + str(tracking_objects[i][0]) + '  ' + str(frame_num))
                         tracking_objects.pop(i)
                     else:
-                        try:
-                            if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
-                                try:
-                                    x_position = int(tracking_objects[i][0][0])
-                                    height = int(tracking_objects[i][1])
-                                    y_position = int(tracking_objects[i][0][1])
-                                    y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
-                                    for k in range(len(keypoints_copy)):
-                                        if x_position == keypoints_copy[k][0]:
-                                            keypoints_copy = keypoints_copy[k]
-                                            break
-                                    break
-                                except (KeyError, IndexError):
-                                    pass
-                        except (TypeError, IndexError):
-                            pass
+                        x_position = int(tracking_objects[i][0][0])
+                        height = int(tracking_objects[i][1])
+                        y_position = int(tracking_objects[i][0][1])
+                        y_position_adj = (y_end - y_start) - y_position
             except IndexError:
                 pass
 
@@ -334,11 +321,7 @@ def auto_run(cap):
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
-        if frame_num in range(1272,1280):
-            print(x,y, frame_num)
-            print(str(tracking_objects) + '   ' + str(frame_num))
-            #print(str(last_known) + '   ' + str(frame_num))
-            print()
+
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
     """
