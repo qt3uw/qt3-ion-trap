@@ -95,7 +95,7 @@ def post_processing(cap, frame, frame_num):
     return roi_frame, closing, clean_thresh, closing_raw
 
 
-def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start):
+def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, last_known = None):
     """
     Locate and track particles in frame
     :param roi_frame: Image of the frame, cropped to the region of interest
@@ -142,23 +142,27 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
             try:
                 if tracking_objects[i][1] <= 10:
                     tracking_objects[i].remove
-                else:
-                    try:
-                        if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
-                            try:
-                                x_position = int(tracking_objects[i][0][0])
-                                height = int(tracking_objects[i][1])
-                                y_position = int(tracking_objects[i][0][1])
-                                y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
-                                for k in range(len(keypoints_copy)):
-                                    if x_position == keypoints_copy[k][0]:
-                                        keypoints_copy = keypoints_copy[k]
-                                        break
-                                break
-                            except (KeyError, IndexError):
-                                pass
-                    except (TypeError, IndexError):
-                        pass
+                if last_known != 0:
+                    if (last_known[0][0] - tracking_objects[i][0][0]) >= 5 or (last_known[0][1] - tracking_objects[i][0][1]) >= 5:
+                        tracking_objects[i].remove
+                        print('REMOVED: ' + str(last_known) + '   ' + str(tracking_objects[i][0]) + '  ' + str(frame_num))
+                    else:
+                        try:
+                            if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
+                                try:
+                                    x_position = int(tracking_objects[i][0][0])
+                                    height = int(tracking_objects[i][1])
+                                    y_position = int(tracking_objects[i][0][1])
+                                    y_position_adj = (y_end - y_start) - y_position  # inverts from top-down index to bottom up index
+                                    for k in range(len(keypoints_copy)):
+                                        if x_position == keypoints_copy[k][0]:
+                                            keypoints_copy = keypoints_copy[k]
+                                            break
+                                    break
+                                except (KeyError, IndexError):
+                                    pass
+                        except (TypeError, IndexError):
+                            pass
             except IndexError:
                 pass
 
@@ -301,16 +305,23 @@ def auto_run(cap):
     # process frames
     for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
+        if frame_num >= 2:
+            last_known = tracking_objects[0]
         tracking_objects, track_id, _ = setup_tracking()
         if not ret:
             break
         roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
-        x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
+        if frame_num >= 2:
+            x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
+                                 frame_num, tracking_objects, track_id, y_end, y_start, last_known)
+        else:
+            x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
         keypoints_prev_frame = keypoints_cur_frame
         # collect and analyze data
         if frame_num in collection_frames:
             collect_data = True
+            print(tracking_objects)
         if frame_num in end_collection_frames:
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
@@ -348,10 +359,15 @@ def main():
     """
     Main entry point
     """
+    
     global config
     config = TrackingConfig()
     
     cap = cv2.VideoCapture(config.VIDEO_FILE)
+    # x_start, x_end, y_start, y_end = frame_dimensions(cap, 1320)
+    # ret, start_frame = get_frame(cap, 1320)
+    # cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
+    # cv2.waitKey()
     _, _, _, _ = gen_initial_frame(cap)
     
     frame_num = 0
