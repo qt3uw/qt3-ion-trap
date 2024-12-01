@@ -8,11 +8,12 @@ class TrackingConfig:
     def __init__(self):
         self.VIDEO_FILE = "acquisition/8-16Trial4.avi"
         self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
+        self.start_frame = 1220            # Defines starting frame. Only change for debugging
         self.FPS = 20                   # FPS of the camera
         self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
         self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
         self.BIN_THRESH = 26            # Binary threshold for object detection
-        self.X_RANGE = (700, 1200)       # x-axis frame of interest limits
+        self.X_RANGE = (700, 1200)      # x-axis frame of interest limits
         self.Y_RANGE = (550, 1000)      # y-axis frame of interest limits
         self.BOTTOM_BAR = 100           # Erasure rectangles, measured in pixels from the corresponding edge
         self.TOP_BAR = 0
@@ -42,8 +43,8 @@ def gen_initial_frame(cap):
     :param cap: Video capture object from the OpenCV package
     :return x_start, x_end,...: Define the rectangular region of interest
     """
-    x_start, x_end, y_start, y_end = frame_dimensions(cap, 1)
-    ret, start_frame = get_frame(cap, 1)
+    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.start_frame)
+    ret, start_frame = get_frame(cap, config.start_frame)
     cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
@@ -128,7 +129,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # track particles
-    if frame_num <= 2:
+    if frame_num <= config.start_frame + 2:
         track_id = _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id)
     else:
         _update_tracking(keypoints_cur_frame, tracking_objects)
@@ -137,15 +138,15 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     _process_contours(contours, tracking_objects)
     # get position data
 
-    if frame_num >= 2 and len(tracking_objects.keys()) > 0:
+    if frame_num >= (config.start_frame + 2) and len(tracking_objects.keys()) > 0:
         tracking_objects_copy = tracking_objects.copy()
         for i in tracking_objects_copy.keys():
             try:
                 if tracking_objects[i][1] <= 10:
                     tracking_objects.pop(i)
                 elif last_known != 0:
-                    if (last_known[0][0] - tracking_objects[i][0][0]) >= 5 or (last_known[0][1] - tracking_objects[i][0][1]) >= 5:
-                        print('REMOVED: ' + str(last_known) + '   ' + str(tracking_objects[i][0]) + '  ' + str(frame_num))
+                    if abs(last_known[0][0] - tracking_objects[i][0][0]) >= 5 or abs(last_known[0][1] - tracking_objects[i][0][1]) >= 5:
+                        # print('REMOVED: ' + str(last_known) + '   ' + str(tracking_objects[i][0]) + '  ' + str(frame_num))
                         tracking_objects.pop(i)
                     else:
                         try:
@@ -304,9 +305,9 @@ def auto_run(cap):
     keypoints_prev_frame = []
 
     # process frames
-    for frame_num in range(total_frames):
+    for frame_num in range(config.start_frame, total_frames):
         ret, frame = get_frame(cap, frame_num)
-        if frame_num >= 2 and len(tracking_objects.keys()) > 0 :
+        if frame_num >= config.start_frame + 2 and len(tracking_objects.keys()) > 0 :
             for i in tracking_objects.keys():
                 try:
                     last_known = tracking_objects[i]
@@ -316,7 +317,7 @@ def auto_run(cap):
         if not ret:
             break
         roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
-        if frame_num >= 2:
+        if frame_num >= config.start_frame + 2:
             x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start, last_known)
         else:
@@ -333,7 +334,11 @@ def auto_run(cap):
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
-
+        if frame_num in range(1272,1280):
+            print(x,y, frame_num)
+            print(str(tracking_objects) + '   ' + str(frame_num))
+            #print(str(last_known) + '   ' + str(frame_num))
+            print()
 
 def run_frame(cap, frame_num, keypoints_prev_frame):
     """
@@ -374,7 +379,7 @@ def main():
     # cv2.waitKey()
     _, _, _, _ = gen_initial_frame(cap)
     
-    frame_num = 0
+    frame_num = config.start_frame
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
             keypoints_prev_frame = []
