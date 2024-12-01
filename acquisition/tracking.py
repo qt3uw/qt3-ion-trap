@@ -144,7 +144,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
             try:
                 if tracking_objects[i][1] <= 10:
                     tracking_objects.pop(i)
-                elif last_known != 0:
+                elif last_known != 0 and last_known is not None:
                     if abs(last_known[0][0] - tracking_objects[i][0][0]) >= 5 or abs(last_known[0][1] - tracking_objects[i][0][1]) >= 5:
                         tracking_objects.pop(i)
                     else:
@@ -356,10 +356,6 @@ def main():
     config = TrackingConfig()
     
     cap = cv2.VideoCapture(config.VIDEO_FILE)
-    # x_start, x_end, y_start, y_end = frame_dimensions(cap, 1320)
-    # ret, start_frame = get_frame(cap, 1320)
-    # cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
-    # cv2.waitKey()
     _, _, _, _ = gen_initial_frame(cap)
     
     frame_num = config.start_frame
