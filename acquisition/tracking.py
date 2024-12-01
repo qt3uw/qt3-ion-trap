@@ -138,14 +138,15 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     # get position data
 
     if frame_num >= 2 and len(tracking_objects.keys()) > 0:
-        for i in tracking_objects.keys():
+        tracking_objects_copy = tracking_objects.copy()
+        for i in tracking_objects_copy.keys():
             try:
                 if tracking_objects[i][1] <= 10:
-                    tracking_objects[i].remove
-                if last_known != 0:
+                    tracking_objects.pop(i)
+                elif last_known != 0:
                     if (last_known[0][0] - tracking_objects[i][0][0]) >= 5 or (last_known[0][1] - tracking_objects[i][0][1]) >= 5:
-                        tracking_objects[i].remove
                         print('REMOVED: ' + str(last_known) + '   ' + str(tracking_objects[i][0]) + '  ' + str(frame_num))
+                        tracking_objects.pop(i)
                     else:
                         try:
                             if abs(tracking_objects[i][0][0] - keypoints_prev_frame[0][0]) < 2:
@@ -305,8 +306,12 @@ def auto_run(cap):
     # process frames
     for frame_num in range(total_frames):
         ret, frame = get_frame(cap, frame_num)
-        if frame_num >= 2:
-            last_known = tracking_objects[0]
+        if frame_num >= 2 and len(tracking_objects.keys()) > 0 :
+            for i in tracking_objects.keys():
+                try:
+                    last_known = tracking_objects[i]
+                except KeyError:
+                    pass
         tracking_objects, track_id, _ = setup_tracking()
         if not ret:
             break
@@ -321,7 +326,6 @@ def auto_run(cap):
         # collect and analyze data
         if frame_num in collection_frames:
             collect_data = True
-            print(tracking_objects)
         if frame_num in end_collection_frames:
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
