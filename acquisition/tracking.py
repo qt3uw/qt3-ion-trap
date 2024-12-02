@@ -244,9 +244,9 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
     :param hav: Average height of the particle over the sample frames
     :param frame_num: Frame number of interest
-    :param config: Class object containing relevant parameters, found at the top of the file
     :param total_frames: Total frames contained in the video object
-    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
+    :param datapoint_num: Datapoint number, starting at 0
+    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
     """
     voltage = config.START_VOLTAGE + (datapoint_num * config.VOLTAGE_INCREMENT)
     try:
@@ -259,16 +259,22 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
         with open('Tuple.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
+            if (yav_mm, hav_mm) == (0, 0):
+                yav_mm = "NaN"
+                hav_mm = "NaN"
             f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
+            print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
+            if (yav_mm, hav_mm) == (0, 0):
+                yav_mm = "NaN"
+                hav_mm = "NaN"
             f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
+            print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
 
 
 def auto_run(cap):

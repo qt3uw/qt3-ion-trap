@@ -22,7 +22,7 @@ COLORS = {
         'error': (0.170948, 0.694384, 0.493803)  # Green Color
     }
 pixel_size_mm = 0.0164935065
-fname = 'data/raw_micromotion/8-18_Trial18_data.txt'
+fname = 'Tuple.txt'
 
 def get_default_trap():
     """
@@ -225,11 +225,11 @@ def plot_c2m_hist(folder):
 
 
 if __name__ == "__main__":
-    y_cuts_panel()
-    e_field_panel()
-    potential_energy_panel()
-    plot_escape(figsize=(3.5, 3))
-    plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    # y_cuts_panel()
+    # e_field_panel()
+    # potential_energy_panel()
+    # plot_escape(figsize=(3.5, 3))
+    # plot_height_fit(figsize=(2.5, 3), include_gaps=True)
     plot_height_and_micro(0.0164935065)
     plot_c2m_hist("data/raw_micromotion")
     plt.show()

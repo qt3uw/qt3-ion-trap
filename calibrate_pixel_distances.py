@@ -6,15 +6,16 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 # --------------------------------------- Constants -------------------------------------------- #
 
-FUNCTION_PUSH = "False"       # Set the inactive variable to "" and the active variable to it's function (Push or Pull)
-FUNCTION_PULL = "Pull"
+FUNCTION_PUSH = "Push"       # Set the inactive variable to "" and the active variable to it's function (Push or Pull)
+FUNCTION_PULL = ""        # "Push" extracts the Tuple.txt data from a single trial and outputs results
+                              # "Pull" iterates over a folder of files and produces corresponding results files
 
 READ_FILE = "Tuple.txt"
 SAVE_FILE = "TESTSAVEFILE.txt"
-AMPLIFICATION_FACTOR = 0.0164935  # mm/pixel
 
 DATA_PATH = "Data/Micromotion_Experiment_Data"
 TEST_FILE = "8-18_Trial18_data.txt"
+OUTPUT_DATA = False
 PRINT_STATS = True
 
 POINTS_TAKEN = 12  # Minimum points for voltage best fit
@@ -42,20 +43,15 @@ def load_data(file_path):
 
 def extract_data(tuples_list):
     '''
-    This function extracts the data from the given tuples. If it is raw data from Tracking.py, the amplification
-    factor is applied to the data.
+    This function extracts the data from the given tuples
     :param tuples_list:
     :return:
     '''
     height = []
     micromotion = []
     for i in range(len(tuples_list)):
-        if tuples_list[i][1] != 0 and len(tuples_list[i]) == 3:
-            height.append(tuples_list[i][1])
-            micromotion.append(tuples_list[i][2] / 2)
-        if tuples_list[i][1] != 0 and len(tuples_list[i]) == 2:
-            height.append(tuples_list[i][0] * AMPLIFICATION_FACTOR)
-            micromotion.append((tuples_list[i][2] / 2) * AMPLIFICATION_FACTOR)
+        height.append(tuples_list[i][1])
+        micromotion.append(tuples_list[i][2] / 2)
     return height, micromotion
 
 
@@ -74,6 +70,7 @@ def analyze_data(micromotion, voltage, height, file_name, testfile):
     indices = full_indices[0:POINTS_TAKEN]
     smallest_voltage = [voltage[i] for i in indices]
     smallest_micromotion = [micromotion[i] for i in indices]
+
 
     coefficients = np.polyfit(smallest_voltage, smallest_micromotion, 2)
     poly = np.poly1d(coefficients)
@@ -125,7 +122,10 @@ def main():
     ej_volt_vals = []
     charge_to_mass = []
 
-    files = os.listdir(DATA_PATH)
+    try:
+        files = os.listdir(DATA_PATH)
+    except FileNotFoundError:
+        pass
 
     if FUNCTION_PULL == "Pull" and FUNCTION_PUSH != "Push":
         for file_name in files:
@@ -156,17 +156,14 @@ def main():
             c2mval_float = float(np.asarray(c2mval[0]))
             print(f'Trial Q/m = {c2mval[0]}')
             print(f'Trial RF Height = {RF_height[0]}')
-            output_analyzed(c2mval_float, minvolt_raw, RF_height, SAVE_FILE)
-        if os.stat(SAVE_FILE).st_size != 0:
-            acknowledgement = ""
-            while acknowledgement != "continue":
-                acknowledgement = input(
-                    '\nThe save file already contains data. Type "continue" to overwrite, otherwise cancel. ')
-        with open("Data/Micromotion_Experiment_Data/" + SAVE_FILE, 'w') as file:
-            for i in range(len(voltage)):
-                file.write('[' + str(voltage[i]) + ', ' + str(round(height[i], 2)) + ', ' + str(
-                    round(micromotion[i], 2)) + ']\n')
-        print('\nThe data has been saved to "' + SAVE_FILE + '".')
+            if OUTPUT_DATA == True:
+                output_analyzed(c2mval_float, minvolt_raw, RF_height, SAVE_FILE)
+                print('\nThe data has been saved to "' + SAVE_FILE + '".')
+                if os.stat(SAVE_FILE).st_size != 0:
+                    acknowledgement = ""
+                    while acknowledgement != "continue":
+                        acknowledgement = input(
+                            '\nThe save file already contains data. Type "continue" to overwrite, otherwise cancel. ')
 
 
 if __name__ == "__main__":
