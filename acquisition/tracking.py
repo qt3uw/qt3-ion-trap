@@ -8,8 +8,10 @@ class TrackingConfig:
     def __init__(self):
         self.VIDEO_FILE = "acquisition/8-16Trial4.avi"
         self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
+        self.START_FRAME = 0            # Defines starting frame. ONLY FOR DEBUGGING
         self.FPS = 20                   # FPS of the camera
+        self.START_VOLTAGE = 40         # Initial voltage value 
+        self.VOLTAGE_INCREMENT = 5      # Voltage step between datapoints
         self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
         self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
         self.BIN_THRESH = 26            # Binary threshold for object detection
@@ -43,9 +45,9 @@ def gen_initial_frame(cap):
     :param cap: Video capture object from the OpenCV package
     :return x_start, x_end,...: Define the rectangular region of interest
     """
-    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.start_frame)
-    ret, start_frame = get_frame(cap, config.start_frame)
-    cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
+    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.START_FRAME)
+    ret, START_FRAME = get_frame(cap, config.START_FRAME)
+    cv2.imshow("Frame", START_FRAME[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
 
@@ -129,7 +131,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # track particles
-    if frame_num <= config.start_frame + 2:
+    if frame_num <= config.START_FRAME + 2:
         track_id = _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id)
     else:
         _update_tracking(keypoints_cur_frame, tracking_objects)
@@ -138,7 +140,7 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     _process_contours(contours, tracking_objects)
     # get position data
 
-    if frame_num >= (config.start_frame + 2) and len(tracking_objects.keys()) > 0:
+    if frame_num >= (config.START_FRAME + 2) and len(tracking_objects.keys()) > 0:
         tracking_objects_copy = tracking_objects.copy()
         for i in tracking_objects_copy.keys():
             try:
@@ -236,7 +238,7 @@ def analyze_trial(datapoint):
             round(np.mean(h), 2))
 
 
-def save_data(yav, hav, frame_num, config, total_frames):
+def save_data(yav, hav, frame_num, total_frames, datapoint_num):
     """
     Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
@@ -246,6 +248,7 @@ def save_data(yav, hav, frame_num, config, total_frames):
     :param total_frames: Total frames contained in the video object
     :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
     """
+    voltage = config.START_VOLTAGE + (datapoint_num * config.VOLTAGE_INCREMENT)
     try:
         if os.stat('Tuple.txt').st_size != 0 and frame_num <= 70:
             acknowledgement = ""
@@ -256,14 +259,14 @@ def save_data(yav, hav, frame_num, config, total_frames):
         with open('Tuple.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
             print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
-            f.write('[' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
             percentage = (frame_num / total_frames) * 100
             print("Saved: " + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
 
@@ -290,11 +293,12 @@ def auto_run(cap):
     collect_data = False
     
     keypoints_prev_frame = []
+    datapoint_num = 0
 
     # process frames
-    for frame_num in range(config.start_frame, total_frames):
+    for frame_num in range(config.START_FRAME, total_frames):
         ret, frame = get_frame(cap, frame_num)
-        if frame_num >= config.start_frame + 2 and len(tracking_objects.keys()) > 0 :
+        if frame_num >= config.START_FRAME + 2 and len(tracking_objects.keys()) > 0 :
             for i in tracking_objects.keys():
                 try:
                     last_known = tracking_objects[i]
@@ -304,7 +308,7 @@ def auto_run(cap):
         if not ret:
             break
         roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
-        if frame_num >= config.start_frame + 2:
+        if frame_num >= config.START_FRAME + 2:
             x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start, last_known)
         else:
@@ -317,7 +321,8 @@ def auto_run(cap):
         if frame_num in end_collection_frames:
             collect_data = False
             xav, yav, hav = analyze_trial(datapoint)
-            save_data(yav, hav, frame_num, config, total_frames)
+            save_data(yav, hav, frame_num, total_frames, datapoint_num)
+            datapoint_num = datapoint_num + 1
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
@@ -358,7 +363,7 @@ def main():
     cap = cv2.VideoCapture(config.VIDEO_FILE)
     _, _, _, _ = gen_initial_frame(cap)
     
-    frame_num = config.start_frame
+    frame_num = config.START_FRAME
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
             keypoints_prev_frame = []
