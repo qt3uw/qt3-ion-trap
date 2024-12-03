@@ -47,12 +47,14 @@ where python
 The path that we want is the middle line.  If using pycharm, follow [these instructions](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html#view_list) to set your interpereter to that path.
 
 ### Tracking.py Usage Instructions ###
-1. Collect a calibration image or video of a measuring tool in the viewframe. Use this to determine the pixel-to-millimeter conversion, using the following steps if necessary. 
+1. Collect a calibration image or video of a measuring tool in the viewframe. Use this to determine the pixel-to-millimeter conversion, using the following steps if necessary. Do not move the optical setup beyond this point.
 2. Place your video file into the acquisition directory, then open tracking.py and change the class variable "self.VIDEO_FILE" to the desired .avi file.
 3. Ensure all parameters within the "TrackingConfig" class reflect those of your experiment.
 4. Run the code. Use any letter or arrow key to progress through the frames one at a time.
-5. Identify the desired object's location and change the "self.X_RANGE" and "self.Y_RANGE" class variables to fit the object in frame. Make sure the bottom of the frame is set to the surface of the trap. This ensures proper height data collection.
+5. Identify the desired object's location and change the "self.X_RANGE" and "self.Y_RANGE" class variables to fit the object in frame. Make sure the bottom of the frame is set to the central surface of the trap, as gathered from the calibration video. This ensures proper height data collection.
 6. Once the viewframe is set, press the spacebar and the data will begin to collect automatically. The results are output to a file titled "Tuple.txt" containing the object's y-coordinate (height from the surface of the trap) and the object's vertical size (micromotion), both in millimeters.
+7. "calibrate_pixel_distances.py" can be used to analyze the data. It will generate a file containing the list [charge to mass ratio (C/kg), RF null voltage (-V), RF null height (mm)]
+8. "figures234py" can then be used to visualize the data via the "plot_height_and_micro" and "plot_c2m_hist" functions
 
 
 # LICENSE

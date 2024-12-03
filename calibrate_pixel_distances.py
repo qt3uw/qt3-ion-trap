@@ -4,21 +4,21 @@ import os
 import statistics as sts
 from pseudopotential import PseudopotentialPlanarTrap
 
-# --------------------------------------- Constants -------------------------------------------- #
+# --------------------------------------- Parameters -------------------------------------------- #
 
-FUNCTION_PUSH = "Push"       # Set the inactive variable to "" and the active variable to it's function (Push or Pull)
-FUNCTION_PULL = ""        # "Push" extracts the Tuple.txt data from a single trial and outputs results
-                              # "Pull" iterates over a folder of files and produces corresponding results files
+FUNCTION = "SINGLE_EXTRACT"                  # "SINGLE_EXTRACT" extracts the Tuple.txt data from a single trial and outputs results
+                                             # "FOLDER_EXTRACT" iterates over a folder of files and produces corresponding results files
 
-READ_FILE = "Tuple.txt"
-SAVE_FILE = "TESTSAVEFILE.txt"
+READ_FILE = "Tuple.txt"                      # SINGLE_EXTRACT: Read file, normally Tuple.txt
+SAVE_FILE = "TESTSAVEFILE.txt"               # SINGLE_EXTRACT: File save name
 
-DATA_PATH = "Data/Micromotion_Experiment_Data"
-TEST_FILE = "8-18_Trial18_data.txt"
-OUTPUT_DATA = False
-PRINT_STATS = True
+DATA_PATH = "data/analyzed_micromotion"      # FOLDER_EXTRACT: Folder containing raw data files
+TEST_FILE = "8-18_Trial18_data.txt"          # FOLDER_EXTRACT: Single file to print analyzed data from
 
-POINTS_TAKEN = 12  # Minimum points for voltage best fit
+OUTPUT_DATA = True                           # BOTH: If True, generates and outputs new file with analyzed data
+PRINT_STATS = True                           # BOTH: If True, prints statistics for the trial specified by TEST_FILE
+
+POINTS_TAKEN = 12                            # Minimum points for voltage best fit, default 12
 
 
 # -------------------------------------- Functions ----------------------------------------- #
@@ -33,8 +33,8 @@ def load_data(file_path):
     with open(file_path, 'r') as file:
         for line in file:
             tuple_str = line.strip()
-            if tuple_str == "[nan, nan]":
-                tuples_list.append([0, 0])
+            if tuple_str == "[NaN, NaN, NaN]":
+                tuples_list.append([0, 0, 0])
             else:
                 tuple_data = eval(tuple_str)
                 tuples_list.append(tuple_data)
@@ -47,12 +47,13 @@ def extract_data(tuples_list):
     :param tuples_list:
     :return:
     '''
-    height = []
-    micromotion = []
+    voltage, height, micromotion = [], [], []
+
     for i in range(len(tuples_list)):
+        voltage.append(tuples_list[i][0])
         height.append(tuples_list[i][1])
         micromotion.append(tuples_list[i][2] / 2)
-    return height, micromotion
+    return voltage, height, micromotion
 
 
 def analyze_data(micromotion, voltage, height, file_name, testfile):
@@ -99,7 +100,11 @@ def analyze_data(micromotion, voltage, height, file_name, testfile):
 
 def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
     cut_file_name = file_name.replace('.txt', '')
-    with open("Data/Analyzed_Micromotion_Data/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
+    with open("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
+        if os.stat("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt").st_size != 0:
+            acknowledgement = ""
+            while acknowledgement != "continue":
+                acknowledgement = input('\nThe save file already contains data. Type "continue" to overwrite, otherwise use Ctrl + C to exit. ')
         f.write("[" + str(c2mval) + ", " + str(minvolt_raw) + ", " + str(RF_height[0]) + "]\n")
 
 
@@ -127,16 +132,13 @@ def main():
     except FileNotFoundError:
         pass
 
-    if FUNCTION_PULL == "Pull" and FUNCTION_PUSH != "Push":
+    if FUNCTION == "FOLDER_EXTRACT":
         for file_name in files:
             full_file_path = os.path.join(DATA_PATH, file_name)
             tuples_list = load_data(full_file_path)
 
-            height, micromotion = extract_data(tuples_list)
+            voltage, height, micromotion = extract_data(tuples_list)
 
-            # Generate voltage vector
-            voltage = [tuples_list[i][0] for i in range(len(height))] if len(tuples_list[0]) == 3 else list(
-                range(40, 40 + len(height) * 5, 5))
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, TEST_FILE)
 
             rf_height_vals.append(RF_height)
@@ -146,24 +148,20 @@ def main():
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list)
-    if FUNCTION_PUSH == "Push" and FUNCTION_PULL != "Pull":
+    if FUNCTION == "SINGLE_EXTRACT":
+        TEST_FILE = READ_FILE
         with open(READ_FILE, 'r') as file:
             tuples_list = load_data(READ_FILE)
-            height, micromotion = extract_data(tuples_list)
-            voltage = [tuples_list[i][0] for i in range(len(height))] if len(tuples_list[0]) == 3 else list(
-                range(40, 40 + len(height) * 5, 5))
+            voltage, height, micromotion = extract_data(tuples_list)
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, READ_FILE, TEST_FILE)
             c2mval_float = float(np.asarray(c2mval[0]))
             print(f'Trial Q/m = {c2mval[0]}')
             print(f'Trial RF Height = {RF_height[0]}')
+
             if OUTPUT_DATA == True:
                 output_analyzed(c2mval_float, minvolt_raw, RF_height, SAVE_FILE)
-                print('\nThe data has been saved to "' + SAVE_FILE + '".')
-                if os.stat(SAVE_FILE).st_size != 0:
-                    acknowledgement = ""
-                    while acknowledgement != "continue":
-                        acknowledgement = input(
-                            '\nThe save file already contains data. Type "continue" to overwrite, otherwise cancel. ')
+                cut_file_name = SAVE_FILE.replace('.txt', '')
+                print('\nThe data has been saved to "' + "data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt" + '".')
 
 
 if __name__ == "__main__":

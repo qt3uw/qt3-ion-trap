@@ -259,23 +259,22 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
         with open('Tuple.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
-            if (yav_mm, hav_mm) == (0, 0):
-                yav_mm = "NaN"
-                hav_mm = "NaN"
-            f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
-            percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
+            if (yav_mm, hav_mm) != (0, 0):
+                f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+                percentage = (frame_num / total_frames) * 100
+                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
+            else:
+                print('No Particle Detected')
     except FileNotFoundError:
         with open('Tuple.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
-            if (yav_mm, hav_mm) == (0, 0):
-                yav_mm = "NaN"
-                hav_mm = "NaN"
-            f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
-            percentage = (frame_num / total_frames) * 100
-            print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
-
+            if (yav_mm, hav_mm) != (0, 0):
+                f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+                percentage = (frame_num / total_frames) * 100
+                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
+            else: 
+                print('No Particle Detected')
 
 def auto_run(cap):
     """
