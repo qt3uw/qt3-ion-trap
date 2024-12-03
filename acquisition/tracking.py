@@ -167,7 +167,7 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
     :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
     :param tracking_objects: Dictionary object containing particles' locations
     :param track_id: Index of particle in tracking_objects dictionary
-    :return track_id : Index of next particle in tracking_objects dictionary
+    :return track_id: Index of next particle in tracking_objects dictionary
     """
     for pt1 in keypoints_cur_frame:
         for pt2 in keypoints_prev_frame:
@@ -182,6 +182,7 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
     Update tracking for existing particles in tracking_objects
     :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
     :param tracking_objects: Dictionary object containing particles' locations
+    :return: Updated tracking_objects dictionary for the current frame
     """
     tracking_objects_copy = tracking_objects.copy()
     keypoints_cur_frame_copy = keypoints_cur_frame.copy()
@@ -340,7 +341,7 @@ def run_frame(cap, frame_num, keypoints_prev_frame):
     :param frame_num: Frame number of interest
     :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
     :return frame_num: Frame number of the next frame to analyze
-    :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
+    :return keypoints_cur_frame: List object containing detected objects of current frame
     """
     tracking_objects, track_id, _ = setup_tracking()
     ret, frame = get_frame(cap, frame_num)
