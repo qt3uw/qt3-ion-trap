@@ -23,7 +23,7 @@ COLORS = {
 }
 
 SAVE_FIG = True
-SAVE_PATH = ''
+SAVE_PATH = 'data'
 PIXEL_SIZE_MM = 0.0164935065
 FNAME = 'Tuple.txt'
 ANALYZED_FNAME = 'TESTSAVEFILE'
@@ -188,6 +188,10 @@ def plot_escape(figsize=(3.5, 3)):
     fig.savefig('figures/figure_4/fig4-trap_escape.pdf')
 
 def plot_height_and_micro(pixelsize_error, figsize=(3.5, 3)):
+    '''
+    Plots and labels the height and micromotion graphs
+    :param pixelsize_error: Calculated error of video capture. Typically identical to the mm/pixel ratio
+    '''
     voltage, height, micromotion, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data(FNAME)
     fig, (ax2, ax1) = plt.subplots(2, 1, sharex=True, figsize=(8, 7), height_ratios=[2, 1])
 
@@ -215,6 +219,10 @@ def plot_height_and_micro(pixelsize_error, figsize=(3.5, 3)):
     plt.show()
 
 def plot_c2m_hist(folder):
+    '''
+    Iterates over a folder to graph a histogram of charge-to-mass values
+    :param folder: Iterated object
+    '''
     files = os.listdir(folder)
     c2m_values = []
     for file_name in files:
@@ -229,15 +237,12 @@ def plot_c2m_hist(folder):
     plt.ylabel('Number of Occurrences')
     plt.savefig('figures/figure_3/fig3-histogram.pdf')
 
-
-
-
 if __name__ == "__main__":
-    # y_cuts_panel()
-    # e_field_panel()
-    # potential_energy_panel()
-    # plot_escape(figsize=(3.5, 3))
-    # plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    y_cuts_panel()
+    e_field_panel()
+    potential_energy_panel()
+    plot_escape(figsize=(3.5, 3))
+    plot_height_fit(figsize=(2.5, 3), include_gaps=True)
     plot_height_and_micro(0.0164935065)
-    # plot_c2m_hist("data/raw_micromotion")
+    plot_c2m_hist("data/raw_micromotion")
     plt.show()
