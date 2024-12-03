@@ -6,7 +6,7 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
     def __init__(self):
-        self.VIDEO_FILE = "acquisition/8-16Trial4.avi"
+        self.VIDEO_FILE = "acquisition/ExampleMicromotion.avi"
         self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
         self.START_FRAME = 0            # Defines starting frame. ONLY FOR DEBUGGING
         self.FPS = 20                   # FPS of the camera
@@ -15,8 +15,8 @@ class TrackingConfig:
         self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
         self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
         self.BIN_THRESH = 26            # Binary threshold for object detection
-        self.X_RANGE = (700, 1200)      # x-axis frame of interest limits
-        self.Y_RANGE = (550, 1000)      # y-axis frame of interest limits
+        self.X_RANGE = (200, 900)      # x-axis frame of interest limits
+        self.Y_RANGE = (554, 1000)      # y-axis frame of interest limits
         self.BOTTOM_BAR = 100           # Erasure rectangles, measured in pixels from the corresponding edge
         self.TOP_BAR = 0
         self.LEFT_BAR = 0
@@ -280,7 +280,7 @@ def auto_run(cap):
     """
     Automatic processing of video frames, outputs datapoints as described below in a Tuple.txt data file
     :param cap: Video capture object from the OpenCV package
-    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[yav, hav]" on each line
+    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
     """
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
