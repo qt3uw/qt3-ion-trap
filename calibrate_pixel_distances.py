@@ -5,17 +5,29 @@ import statistics as sts
 from pseudopotential import PseudopotentialPlanarTrap
 
 
+# class FunctionConfig:
+#     def __init__(self):
+#         self.FUNCTION = "SINGLE_EXTRACT"                  # "SINGLE_EXTRACT" extracts the .txt data from a single trial and outputs results
+#                                                           # "FOLDER_EXTRACT" iterates over a folder of files and produces corresponding results file
+#         self.READ_FILE = "ExampleMicromotion_data.txt"    # SINGLE_EXTRACT: Read file
+#         self.SAVE_FILE = "TESTSAVEFILE.txt"               # SINGLE_EXTRACT: File save name for analyzed data
+#         self.DATA_PATH = "data/analyzed_micromotion"      # FOLDER_EXTRACT: Folder containing raw data files
+#         self.TEST_FILE = "8-18_Trial18_data.txt"          # FOLDER_EXTRACT: Single file to print analyzed data from
+#         self.OUTPUT_DATA = True                           # BOTH: If True, generates and outputs new file with analyzed data
+#         self.PRINT_STATS = True                           # BOTH: If True, prints statistics for the trial specified by TEST_FILE
+#         self.POINTS_TAKEN = 12                            # BOTH: Minimum points for voltage best fit, default 12
+
 class FunctionConfig:
     def __init__(self):
-        self.FUNCTION = "SINGLE_EXTRACT"                  # "SINGLE_EXTRACT" extracts the .txt data from a single trial and outputs results
-                                                          # "FOLDER_EXTRACT" iterates over a folder of files and produces corresponding results file
-        self.READ_FILE = "ExampleMicromotion_data.txt"    # SINGLE_EXTRACT: Read file
-        self.SAVE_FILE = "TESTSAVEFILE.txt"               # SINGLE_EXTRACT: File save name for analyzed data
-        self.DATA_PATH = "data/analyzed_micromotion"      # FOLDER_EXTRACT: Folder containing raw data files
-        self.TEST_FILE = "8-18_Trial18_data.txt"          # FOLDER_EXTRACT: Single file to print analyzed data from
-        self.OUTPUT_DATA = True                           # BOTH: If True, generates and outputs new file with analyzed data
-        self.PRINT_STATS = True                           # BOTH: If True, prints statistics for the trial specified by TEST_FILE
-        self.POINTS_TAKEN = 12                            # BOTH: Minimum points for voltage best fit, default 12
+        self.input = "acquisition/ExampleMicromotion_data.txt"
+        self.file_to_print = "8-18_Trial18_data.txt"
+        self.output_data = True
+        self.print_stats = True
+        self.points_taken = 12
+
+
+def get_default_config():
+    return FunctionConfig()
 
 
 def load_data(file_path):
@@ -51,7 +63,7 @@ def extract_data(tuples_list):
     return voltage, height, micromotion
 
 
-def analyze_data(micromotion, voltage, height, file_name, testfile):
+def analyze_data(micromotion, voltage, height, file_name, testfile, config = get_default_config()):
     '''
     Executes the data analysis and returns values for the RF null height, the RF null voltage, and the charge-to-mass
     :param micromotion: Individual micromotion list
@@ -63,9 +75,8 @@ def analyze_data(micromotion, voltage, height, file_name, testfile):
     :return minvolt_raw: Voltage at which micromotion is minimized (RF null)
     :return c2mval: Calculated charge-to-mass ratio
     '''
-    micromotion_sorted = sorted(micromotion)
     full_indices = sorted(range(len(micromotion)), key=micromotion.__getitem__)
-    indices = full_indices[0:config.POINTS_TAKEN]
+    indices = full_indices[0:config.points_taken]
     smallest_voltage = [voltage[i] for i in indices]
     smallest_micromotion = [micromotion[i] for i in indices]
 
@@ -86,7 +97,7 @@ def analyze_data(micromotion, voltage, height, file_name, testfile):
 
     trap = PseudopotentialPlanarTrap()
     trap.v_dc = minvolt_raw
-    c2mval = -9.80665 / trap.grad_u_dc(trap.a / 2, RF_height / 1000)
+    c2mval = -9.80665 / trap.grad_u_dc(trap.a / 2, RF_height / 1000, trap.x1())
 
     if file_name == testfile:
         print(f'Specified Trial Q/m = {c2mval[0]}')
@@ -103,6 +114,7 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
     :param RF_height: Vertical position of micromotion-minimized point (RF null)
     :param file_name: File name of analyzed file
     '''
+    file_name = os.path.basename(file_name)
     cut_file_name = file_name.replace('.txt', '')
     with open("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
         if os.stat("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt").st_size != 0:
@@ -113,13 +125,13 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
 
 
 
-def print_statistics(charge_to_mass, rf_height_list):
+def print_statistics(charge_to_mass, rf_height_list, config = get_default_config()):
     '''
     Prints statistics for charge-to-mass and RF null heights. For FOLDER_EXTRACT function.
     :param charge_to_mass: List object of calculated charge-to-mass ratio. Based on RF null voltage and RF null height
     :param rf_height_list: List object of RF null height values
     '''
-    if config.PRINT_STATS:
+    if config.print_stats:
         print('Mean Q/m =', sts.mean(charge_to_mass))
         print('Med. Q/m =', sts.median(charge_to_mass))
         print('StDev. Q/m =', sts.stdev(charge_to_mass))
@@ -131,7 +143,6 @@ def print_statistics(charge_to_mass, rf_height_list):
 # -------------------------------------- Main Logic ----------------------------------------- #
 
 def main():
-    global config
     config = FunctionConfig()
 
     rf_height_vals = []
@@ -140,18 +151,22 @@ def main():
     charge_to_mass = []
 
     try:
-        files = os.listdir(config.DATA_PATH)
+        files = os.listdir(config.input)
+        datatype = "folder"
     except FileNotFoundError:
+        print("File could not be found. Check that you are searching in the right directory")
+    except NotADirectoryError:
+        datatype = "file"
         pass
 
-    if config.FUNCTION == "FOLDER_EXTRACT":
+    if datatype == "folder":
         for file_name in files:
-            full_file_path = os.path.join(config.DATA_PATH, file_name)
+            full_file_path = os.path.join("data/analyzed_micromotion", file_name)
             tuples_list = load_data(full_file_path)
 
             voltage, height, micromotion = extract_data(tuples_list)
 
-            RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, config.TEST_FILE)
+            RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, config.file_to_print)
 
             rf_height_vals.append(RF_height)
             c2mval_float = float(np.asarray(c2mval[0]))
@@ -160,19 +175,20 @@ def main():
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list)
-    if config.FUNCTION == "SINGLE_EXTRACT":
-        config.TEST_FILE = config.READ_FILE
-        with open(config.READ_FILE, 'r') as file:
-            tuples_list = load_data(config.READ_FILE)
+    if datatype == "file":
+        config.file_to_print = config.input
+        with open(config.input, 'r') as file:
+            tuples_list = load_data(config.input)
             voltage, height, micromotion = extract_data(tuples_list)
-            RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, config.READ_FILE, config.TEST_FILE)
+            RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, config.input, config.file_to_print)
             c2mval_float = float(np.asarray(c2mval[0]))
             print(f'Trial Q/m = {c2mval[0]}')
             print(f'Trial RF Height = {RF_height[0]}')
 
-            if config.OUTPUT_DATA == True:
-                output_analyzed(c2mval_float, minvolt_raw, RF_height, config.SAVE_FILE)
-                cut_file_name = config.SAVE_FILE.replace('.txt', '')
+            if config.output_data == True:
+                output_analyzed(c2mval_float, minvolt_raw, RF_height, config.input)
+                file_name = os.path.basename(config.input)
+                cut_file_name = file_name.replace('.txt', '')
                 print('\nThe data has been saved to "' + "data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt" + '".')
 
 

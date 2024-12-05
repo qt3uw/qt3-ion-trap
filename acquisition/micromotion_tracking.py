@@ -327,6 +327,9 @@ def auto_run(cap, config = get_default_config()):
             datapoint = []
         if collect_data and x != "NaN":
             datapoint.append([x, y, h])
+        if frame_num == total_frames - 1:
+            print("Video processing complete")
+            break
 
 
 def run_frame(cap, frame_num, keypoints_prev_frame):

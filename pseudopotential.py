@@ -236,8 +236,8 @@ class PseudopotentialPlanarTrap:
         else:
             return (self.v_dc / np.pi) * (np.arctan((self.a - x) / y) - np.arctan(((- x) / y)))
     
-    def grad_u_dc(self, x, y, include_gaps = True):
-        return -self.v_dc * ((0.001 - x) / ((1 + (0.001 - x) ** 2 / y ** 2) * y ** 2) - (0.004175 - x) / ((1 + (0.004175 - x) ** 2 / y ** 2) * y ** 2)) / np.pi
+    def grad_u_dc(self, x, y, x1, include_gaps = True):
+        return -self.v_dc * ((x1 - x) / ((1 + (x1 - x) ** 2 / y ** 2) * y ** 2) - ((self.a - (self.gap_width / 2)) - x) / ((1 + (self.a - (self.gap_width / 2) - x) ** 2 / y ** 2) * y ** 2)) / np.pi
 
     def u_gravity(self, x, y):
         """
