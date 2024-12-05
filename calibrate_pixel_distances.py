@@ -4,22 +4,19 @@ import os
 import statistics as sts
 from pseudopotential import PseudopotentialPlanarTrap
 
-# --------------------------------------- Parameters -------------------------------------------- #
 
 class FunctionConfig:
     def __init__(self):
-        self.FUNCTION = "SINGLE_EXTRACT"                  # "SINGLE_EXTRACT" extracts the Tuple.txt data from a single trial and outputs results
+        self.FUNCTION = "SINGLE_EXTRACT"                  # "SINGLE_EXTRACT" extracts the .txt data from a single trial and outputs results
                                                           # "FOLDER_EXTRACT" iterates over a folder of files and produces corresponding results file
-        self.READ_FILE = "Tuple.txt"                      # SINGLE_EXTRACT: Read file, normally Tuple.txt
-        self.SAVE_FILE = "TESTSAVEFILE.txt"               # SINGLE_EXTRACT: File save name
+        self.READ_FILE = "ExampleMicromotion_data.txt"    # SINGLE_EXTRACT: Read file
+        self.SAVE_FILE = "TESTSAVEFILE.txt"               # SINGLE_EXTRACT: File save name for analyzed data
         self.DATA_PATH = "data/analyzed_micromotion"      # FOLDER_EXTRACT: Folder containing raw data files
         self.TEST_FILE = "8-18_Trial18_data.txt"          # FOLDER_EXTRACT: Single file to print analyzed data from
         self.OUTPUT_DATA = True                           # BOTH: If True, generates and outputs new file with analyzed data
         self.PRINT_STATS = True                           # BOTH: If True, prints statistics for the trial specified by TEST_FILE
         self.POINTS_TAKEN = 12                            # BOTH: Minimum points for voltage best fit, default 12
 
-
-# -------------------------------------- Functions ----------------------------------------- #
 
 def load_data(file_path):
     '''

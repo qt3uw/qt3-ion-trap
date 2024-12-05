@@ -17,45 +17,46 @@ class TrackingConfig:
         self.bin_thresh = 26            # Binary threshold for object detection
         self.x_range = (200, 900)       # x-axis frame of interest limits
         self.y_range = (554, 1000)      # y-axis frame of interest limits
-        self.bottom_bar = 100           # Erasure rectangles, measured in pixels from the corresponding edge
-        self.top_bar = 0
-        self.left_bar = 0
-        self.right_bar = 0
-        self.pixel_to_mm = 0.01628  # Pixel-to-millimeter conversion, gathered from calibration image. Set to 1 to output the rawpixel data
+        self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
+        self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
+        self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
+        self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
+        self.pixel_to_mm = 0.01628      # Pixel-to-millimeter conversion, gathered from calibration image. Set to 1 to output the rawpixel data
 
 
 def get_default_config():
     return TrackingConfig()
 
 
-def frame_dimensions(cap, frame_num, config = get_default_config):
+def frame_dimensions(cap, frame_num, config = get_default_config()):
     """
     Calculate frame dimensions and ranges
     :param cap: Video capture object from the OpenCV package
     :param frame_num: Frame number of interest
     :return x_start, x_end,...: Define the rectangular region of interest
     """
-    ret, start_frame = get_frame(cap, frame_num)
-    start_frame_dim = start_frame.shape
-    imageheight = start_frame_dim[0]
+    ret, initial_frame = get_frame(cap, frame_num)
+    initial_frame_dim = initial_frame.shape
+    imageheight = initial_frame_dim[0]
     x_start, x_end = config.x_range
     y_start, y_end = (imageheight - config.y_range[1]), (imageheight - config.y_range[0])
     return x_start, x_end, y_start, y_end
 
 
-def gen_initial_frame(cap, config = get_default_config):
+def gen_initial_frame(cap, config = get_default_config()):
     """
     Generate and display initial frame
     :param cap: Video capture object from the OpenCV package
     :return x_start, x_end,...: Define the rectangular region of interest
     """
-    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.start_frame)
-    ret, start_frame = get_frame(cap, config.start_frame)
-    cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
+    frame_num = config.start_frame
+    x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
+    ret, initial_frame = get_frame(cap, config.start_frame)
+    cv2.imshow("Frame", initial_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
 
-def define_blockers(cap, frame_num, config = get_default_config):
+def define_blockers(cap, frame_num, config = get_default_config()):
     """
     Define blocking rectangles for frame processing
     :param cap: Video capture object from the OpenCV package
@@ -74,7 +75,7 @@ def define_blockers(cap, frame_num, config = get_default_config):
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
 
-def post_processing(cap, frame, frame_num, config = get_default_config):
+def post_processing(cap, frame, frame_num, config = get_default_config()):
     """
     Process frame and apply filters
     :param cap: Video capture object from the OpenCV package
@@ -102,7 +103,7 @@ def post_processing(cap, frame, frame_num, config = get_default_config):
     return roi_frame, closing, clean_thresh, closing_raw
 
 
-def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, last_known = None, config = get_default_config):
+def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, last_known = None, config = get_default_config()):
     """
     Locate and track particles in frame
     :param roi_frame: Image of the frame, cropped to the region of interest
@@ -231,7 +232,7 @@ def analyze_trial(datapoint):
             round(np.mean(h), 2))
 
 
-def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_default_config):
+def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_default_config()):
     """
     Puts height and micromotion data (in millimeters, based on pixel_to_mm parameter) into text file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
@@ -256,7 +257,7 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_def
             if (yav_mm, hav_mm) != (0, 0):
                 f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
                 percentage = (frame_num / total_frames) * 100
-                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round(percentage, 0)) + '% ' + str(frame_num))
+                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion: ' + str(round(percentage, 0)) + '%, ' + str(frame_num))
             else:
                 print('No Particle Detected')
     except FileNotFoundError:
@@ -266,11 +267,11 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_def
             if (yav_mm, hav_mm) != (0, 0):
                 f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
                 percentage = (frame_num / total_frames) * 100
-                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion : ' + str(round((percentage), 0)) + '% ' + str(frame_num))
+                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion: ' + str(round((percentage), 0)) + '%, ' + str(frame_num))
             else: 
                 print('No Particle Detected')
 
-def auto_run(cap, config = get_default_config):
+def auto_run(cap, config = get_default_config()):
     """
     Automatic processing of video frames, outputs datapoints as described below in a text data file
     :param cap: Video capture object from the OpenCV package
@@ -348,9 +349,9 @@ def main():
     """
     Main entry point
     """
-
-    config = TrackingConfig()
     
+    config = TrackingConfig()
+
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)
     
