@@ -5,10 +5,9 @@ import statistics as sts
 from pseudopotential import PseudopotentialPlanarTrap
 
 
-
-class FunctionConfig:
+class ParameterConfig:
     def __init__(self):
-        self.input = "acquisition/ExampleMicromotion_data.txt"
+        self.input = "data/raw_micromotion"                       # "acquisition/ExampleMicromotion_data.txt"
         self.file_to_print = "8-18_Trial18_data.txt"
         self.output_data = True
         self.print_stats = True
@@ -16,7 +15,7 @@ class FunctionConfig:
 
 
 def get_default_config():
-    return FunctionConfig()
+    return ParameterConfig()
 
 
 def load_data(file_path):
@@ -69,7 +68,6 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
     smallest_voltage = [voltage[i] for i in indices]
     smallest_micromotion = [micromotion[i] for i in indices]
 
-
     coefficients = np.polyfit(smallest_voltage, smallest_micromotion, 2)
     poly = np.poly1d(coefficients)
     x_fit = np.linspace(min(smallest_voltage), max(smallest_voltage), 100)
@@ -113,7 +111,6 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
         f.write("[" + str(c2mval) + ", " + str(minvolt_raw) + ", " + str(RF_height[0]) + "]\n")
 
 
-
 def print_statistics(charge_to_mass, rf_height_list, config = get_default_config()):
     '''
     Prints statistics for charge-to-mass and RF null heights. For FOLDER_EXTRACT function.
@@ -132,11 +129,9 @@ def print_statistics(charge_to_mass, rf_height_list, config = get_default_config
 # -------------------------------------- Main Logic ----------------------------------------- #
 
 def main():
-    config = FunctionConfig()
+    config = ParameterConfig()
 
     rf_height_vals = []
-    min_volt_vals = []
-    ej_volt_vals = []
     charge_to_mass = []
 
     try:
@@ -150,7 +145,7 @@ def main():
 
     if datatype == "folder":
         for file_name in files:
-            full_file_path = os.path.join("data/analyzed_micromotion", file_name)
+            full_file_path = os.path.join(config.input, file_name)
             tuples_list = load_data(full_file_path)
 
             voltage, height, micromotion = extract_data(tuples_list)
@@ -160,7 +155,8 @@ def main():
             rf_height_vals.append(RF_height)
             c2mval_float = float(np.asarray(c2mval[0]))
             charge_to_mass.append(c2mval_float)
-            output_analyzed(c2mval_float, minvolt_raw, RF_height, file_name)
+            if config.output_data == True:
+                output_analyzed(c2mval_float, minvolt_raw, RF_height, file_name)
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list)
