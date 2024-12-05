@@ -7,11 +7,11 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 class ParameterConfig:
     def __init__(self):
-        self.input = "data/raw_micromotion"                       # "acquisition/ExampleMicromotion_data.txt"
-        self.file_to_print = "8-18_Trial18_data.txt"
-        self.output_data = True
-        self.print_stats = True
-        self.points_taken = 12
+        self.input = "data/raw_micromotion"              # File or directory to be analyzed
+        self.file_to_print = "8-18_Trial18_data.txt"     # Specific trial to print data from
+        self.output_data = True                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
+        self.print_stats = True                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
+        self.points_taken = 12                           # Number of points used to fit quadratic for RF null identification (point of least micromotion)
 
 
 def get_default_config():
@@ -86,7 +86,7 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
     trap.v_dc = minvolt_raw
     c2mval = -9.80665 / trap.grad_u_dc(trap.a / 2, RF_height / 1000, trap.x1())
 
-    if file_name == testfile:
+    if file_name == testfile and config.print_stats:
         print(f'Specified Trial Q/m = {c2mval[0]}')
         print(f'Specified Trial RF Height = {RF_height[0]}')
 
@@ -167,8 +167,9 @@ def main():
             voltage, height, micromotion = extract_data(tuples_list)
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, config.input, config.file_to_print)
             c2mval_float = float(np.asarray(c2mval[0]))
-            print(f'Trial Q/m = {c2mval[0]}')
-            print(f'Trial RF Height = {RF_height[0]}')
+            if config.print_stats:
+                print(f'Trial Q/m = {c2mval[0]}')
+                print(f'Trial RF Height = {RF_height[0]}')
 
             if config.output_data == True:
                 output_analyzed(c2mval_float, minvolt_raw, RF_height, config.input)
