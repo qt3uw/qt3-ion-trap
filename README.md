@@ -52,8 +52,8 @@ The path that we want is the middle line.  If using pycharm, follow [these instr
 3. Ensure all parameters within the "TrackingConfig" class reflect those of your experiment.
 4. Run the code. Use any letter or arrow key to progress through the frames one at a time.
 5. Identify the desired object's location and change the "self.X_RANGE" and "self.Y_RANGE" class variables to fit the object in frame. Make sure the bottom of the frame is set to the central surface of the trap, as gathered from the calibration video. This ensures proper height data collection.
-6. Once the viewframe is set, press the spacebar and the data will begin to collect automatically. Values will appear in the terminal of the form 
-"Saved: voltage, height, micromotion; Completion: percent completion, pixel number" 
+6. Once the viewframe is set, press the spacebar and the data will begin to collect automatically. Values will appear in the terminal of the form <br/>
+"Saved: {voltage}, {height}, {micromotion}; Completion: {percent completion}, {pixel number}" <br/>
 The results are output to a file titled "Tuple.txt" containing the object's y-coordinate (height from the surface of the trap) and the object's vertical size (micromotion), both in millimeters.
 7. "calibrate_pixel_distances.py" can be used to analyze the data. It will generate a file containing the list [charge to mass ratio (C/kg), RF null voltage (-V), RF null height (mm)]
 8. "figures234py" can then be used to visualize the data via the "plot_height_and_micro" and "plot_c2m_hist" functions
