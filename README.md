@@ -46,17 +46,19 @@ where python
 ```
 The path that we want is the middle line.  If using pycharm, follow [these instructions](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html#view_list) to set your interpereter to that path.
 
-### Tracking.py Usage Instructions ###
+## Micromotion Experiment Instructions ##
+  Relevant code files for micromotion experiments are acquisition/micromotion_tracking.py, micromotion_data_analysis.py, and figures234.py.<br/><br/> micromotion_tracking.py evaluates raw .avi video files to detect a particle's location over time. These results are evaluated using the micromotion_data_analysis.py file to find charge-to-mass ratio, RF null height, and RF null voltage. Lastly, figures234.py can visualize these data and save the resulting figures. Follow the steps below to navigate full video analysis.
+
 1. Collect a calibration image or video of a measuring tool in the viewframe. Use this to determine the pixel-to-millimeter conversion, using the following steps if necessary. Do not move the optical setup beyond this point.
 2. Place your video file into the acquisition directory, then open tracking.py and change the class variable "self.VIDEO_FILE" to the desired .avi file.
 3. Ensure all parameters within the "TrackingConfig" class reflect those of your experiment.
 4. Run the code. Use any letter or arrow key to progress through the frames one at a time.
 5. Identify the desired object's location and change the "self.X_RANGE" and "self.Y_RANGE" class variables to fit the object in frame. Make sure the bottom of the frame is set to the central surface of the trap, as gathered from the calibration video. This ensures proper height data collection.
-6. Once the viewframe is set, press the spacebar and the data will begin to collect automatically. Values will appear in the terminal of the form: <br/><br/>
-"Saved: {voltage}, {height}, {micromotion}; Completion: {percent completion}, {pixel number}" <br/><br/>
-The results are output to a file titled "Tuple.txt" containing the object's y-coordinate (height from the surface of the trap) and the object's vertical size (micromotion), both in millimeters.
-7. "calibrate_pixel_distances.py" can be used to analyze the data. It will generate a file containing the list [charge to mass ratio (C/kg), RF null voltage (-V), RF null height (mm)]
-8. "figures234py" can then be used to visualize the data via the "plot_height_and_micro" and "plot_c2m_hist" functions
+6. Once the viewframe is set, press the spacebar and the data will begin to collect automatically. Values will appear in the terminal of the form: <br/>
+"Saved: {voltage}, {height}, {micromotion}; Completion: {percent completion}, {pixel number}". <br/>
+The results are output to a .txt file of the same name as the video as lists for each data point in the form "[voltage, height, micromotion]".
+7. "calibrate_pixel_distances.py" can be used to analyze the data. It will generate a file containing the list [charge to mass ratio (C/kg), RF null voltage (-V), RF null height (mm)].
+8. "figures234py" can then be used to visualize the data via the "plot_height_and_micro" and "plot_c2m_hist" functions.
 
 
 # LICENSE
