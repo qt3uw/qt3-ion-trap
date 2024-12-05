@@ -15,7 +15,7 @@ class TrackingConfig:
         self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
         self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
         self.BIN_THRESH = 26            # Binary threshold for object detection
-        self.X_RANGE = (200, 900)      # x-axis frame of interest limits
+        self.X_RANGE = (200, 900)       # x-axis frame of interest limits
         self.Y_RANGE = (554, 1000)      # y-axis frame of interest limits
         self.BOTTOM_BAR = 100           # Erasure rectangles, measured in pixels from the corresponding edge
         self.TOP_BAR = 0
@@ -241,23 +241,24 @@ def analyze_trial(datapoint):
 
 def save_data(yav, hav, frame_num, total_frames, datapoint_num):
     """
-    Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into Tuple.txt file
+    Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into text file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
     :param hav: Average height of the particle over the sample frames
     :param frame_num: Frame number of interest
     :param total_frames: Total frames contained in the video object
     :param datapoint_num: Datapoint number, starting at 0
-    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
+    :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
     """
     voltage = config.START_VOLTAGE + (datapoint_num * config.VOLTAGE_INCREMENT)
+    cut_file_name = config.VIDEO_FILE.replace('.avi', '')
     try:
-        if os.stat('Tuple.txt').st_size != 0 and frame_num <= 70:
+        if os.stat(str(cut_file_name) + '_data.txt').st_size != 0 and frame_num <= 70:
             acknowledgement = ""
             while acknowledgement != "continue":
                 acknowledgement = input(
-                    'Tuple.txt already contains data. Please cancel and clear the file before proceeding. Type "continue" to override')
+                    'File name already contains data. Please cancel and clear the file before proceeding. Type "continue" to override')
             print("\ncontinuing...")
-        with open('Tuple.txt', 'a') as f:
+        with open(str(cut_file_name) + '_data.txt', 'a') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
             if (yav_mm, hav_mm) != (0, 0):
@@ -267,7 +268,7 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
             else:
                 print('No Particle Detected')
     except FileNotFoundError:
-        with open('Tuple.txt', 'w') as f:
+        with open(str(cut_file_name) + '_data.txt', 'w') as f:
             yav_mm = yav * config.PIXELCONVERSION
             hav_mm = hav * config.PIXELCONVERSION
             if (yav_mm, hav_mm) != (0, 0):
@@ -279,9 +280,9 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
 
 def auto_run(cap):
     """
-    Automatic processing of video frames, outputs datapoints as described below in a Tuple.txt data file
+    Automatic processing of video frames, outputs datapoints as described below in a text data file
     :param cap: Video capture object from the OpenCV package
-    :return: Generates or amends the "Tuple.txt" file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
+    :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, y-position, height]" on each line
     """
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()

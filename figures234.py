@@ -238,11 +238,11 @@ def plot_c2m_hist(folder):
     plt.savefig('figures/figure_3/fig3-histogram.pdf')
 
 if __name__ == "__main__":
-    y_cuts_panel()
-    e_field_panel()
-    potential_energy_panel()
-    plot_escape(figsize=(3.5, 3))
-    plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    # y_cuts_panel()
+    # e_field_panel()
+    # potential_energy_panel()
+    # plot_escape(figsize=(3.5, 3))
+    # plot_height_fit(figsize=(2.5, 3), include_gaps=True)
     plot_height_and_micro(0.0164935065)
-    plot_c2m_hist("data/raw_micromotion")
+    # plot_c2m_hist("data/raw_micromotion")
     plt.show()
