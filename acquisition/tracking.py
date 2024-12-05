@@ -6,25 +6,29 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class TrackingConfig:
     def __init__(self):
-        self.VIDEO_FILE = "acquisition/ExampleMicromotion.avi"
-        self.VIEW_TYPE = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.START_FRAME = 0            # Defines starting frame. ONLY FOR DEBUGGING
-        self.FPS = 20                   # FPS of the camera
-        self.START_VOLTAGE = 40         # Initial voltage value 
-        self.VOLTAGE_INCREMENT = 5      # Voltage step between datapoints
-        self.CHANGE_INTERVAL = 5        # Time between data points in the real-time trial (seconds)
-        self.SAMPLE_FRAMES = 15         # Number of frames averaged over per data point
-        self.BIN_THRESH = 26            # Binary threshold for object detection
-        self.X_RANGE = (200, 900)       # x-axis frame of interest limits
-        self.Y_RANGE = (554, 1000)      # y-axis frame of interest limits
-        self.BOTTOM_BAR = 100           # Erasure rectangles, measured in pixels from the corresponding edge
-        self.TOP_BAR = 0
-        self.LEFT_BAR = 0
-        self.RIGHT_BAR = 0
-        self.PIXELCONVERSION = 0.01628  # Pixel-to-millimeter conversion, gathered from calibration image. Set to 1 to output the rawpixel data
+        self.video_file = "acquisition/ExampleMicromotion.avi"
+        self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
+        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
+        self.fps = 20                   # fps of the camera
+        self.start_voltage = 40         # Initial voltage value 
+        self.voltage_increment = 5      # Voltage step between datapoints
+        self.change_interval = 5        # Time between data points in the real-time trial (seconds)
+        self.sample_frames = 15         # Number of frames averaged over per data point
+        self.bin_thresh = 26            # Binary threshold for object detection
+        self.x_range = (200, 900)       # x-axis frame of interest limits
+        self.y_range = (554, 1000)      # y-axis frame of interest limits
+        self.bottom_bar = 100           # Erasure rectangles, measured in pixels from the corresponding edge
+        self.top_bar = 0
+        self.left_bar = 0
+        self.right_bar = 0
+        self.pixel_to_mm = 0.01628  # Pixel-to-millimeter conversion, gathered from calibration image. Set to 1 to output the rawpixel data
 
 
-def frame_dimensions(cap, frame_num):
+def get_default_config():
+    return TrackingConfig()
+
+
+def frame_dimensions(cap, frame_num, config = get_default_config):
     """
     Calculate frame dimensions and ranges
     :param cap: Video capture object from the OpenCV package
@@ -34,24 +38,24 @@ def frame_dimensions(cap, frame_num):
     ret, start_frame = get_frame(cap, frame_num)
     start_frame_dim = start_frame.shape
     imageheight = start_frame_dim[0]
-    x_start, x_end = config.X_RANGE
-    y_start, y_end = (imageheight - config.Y_RANGE[1]), (imageheight - config.Y_RANGE[0])
+    x_start, x_end = config.x_range
+    y_start, y_end = (imageheight - config.y_range[1]), (imageheight - config.y_range[0])
     return x_start, x_end, y_start, y_end
 
 
-def gen_initial_frame(cap):
+def gen_initial_frame(cap, config = get_default_config):
     """
     Generate and display initial frame
     :param cap: Video capture object from the OpenCV package
     :return x_start, x_end,...: Define the rectangular region of interest
     """
-    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.START_FRAME)
-    ret, START_FRAME = get_frame(cap, config.START_FRAME)
-    cv2.imshow("Frame", START_FRAME[y_start:y_end, x_start:x_end])
+    x_start, x_end, y_start, y_end = frame_dimensions(cap, config.start_frame)
+    ret, start_frame = get_frame(cap, config.start_frame)
+    cv2.imshow("Frame", start_frame[y_start:y_end, x_start:x_end])
     return x_start, x_end, y_start, y_end
 
 
-def define_blockers(cap, frame_num):
+def define_blockers(cap, frame_num, config = get_default_config):
     """
     Define blocking rectangles for frame processing
     :param cap: Video capture object from the OpenCV package
@@ -62,15 +66,15 @@ def define_blockers(cap, frame_num):
     ylength = y_end - y_start
     xlength = x_end - x_start
     
-    top_rect = ((0, 0), (1616, config.TOP_BAR))
-    left_rect = ((0, 0), (config.LEFT_BAR, 1240))
-    right_rect = ((xlength - config.RIGHT_BAR, 0), (xlength, 1240))
-    bottom_rect = ((0, ylength - config.BOTTOM_BAR), (1616, ylength))
+    top_rect = ((0, 0), (1616, config.top_bar))
+    left_rect = ((0, 0), (config.left_bar, 1240))
+    right_rect = ((xlength - config.right_bar, 0), (xlength, 1240))
+    bottom_rect = ((0, ylength - config.bottom_bar), (1616, ylength))
     
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
 
-def post_processing(cap, frame, frame_num):
+def post_processing(cap, frame, frame_num, config = get_default_config):
     """
     Process frame and apply filters
     :param cap: Video capture object from the OpenCV package
@@ -83,12 +87,12 @@ def post_processing(cap, frame, frame_num):
     """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     blockers = define_blockers(cap, frame_num)
-    rectangle_color = (255, 255, 255) if config.VIEW_TYPE == "binary" else (0, 0, 0)
+    rectangle_color = (255, 255, 255) if config.view_type == "binary" else (0, 0, 0)
     cleaning_kernel = np.ones((2, 2), np.uint8)
     filling_kernel = np.ones((2, 2), np.uint8)
     roi_frame = frame[y_start:y_end, x_start:x_end]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(gray_frame, config.bin_thresh, 255, cv2.THRESH_BINARY)
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     closing_raw = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     for i in range(0, len(blockers), 2):
@@ -98,7 +102,7 @@ def post_processing(cap, frame, frame_num):
     return roi_frame, closing, clean_thresh, closing_raw
 
 
-def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, last_known = None):
+def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, last_known = None, config = get_default_config):
     """
     Locate and track particles in frame
     :param roi_frame: Image of the frame, cropped to the region of interest
@@ -118,29 +122,17 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
     keypoints = detector.detect(closing)
     keypoints_cur_frame = []
     x_position, y_position_adj, height = "NaN", "NaN", "NaN"
-    
-    # extract keypoints
     for keypoint in keypoints:
         keypoints_cur_frame.append(keypoint.pt)
-
     keypoints_copy = keypoints_cur_frame
-    
     image_with_keypoints = cv2.drawKeypoints(roi_frame, keypoints, np.array([]), (0, 0, 255))
-    
-    # find contours
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # track particles
-    if frame_num <= config.START_FRAME + 2:
+    if frame_num <= config.start_frame + 2:
         track_id = _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id)
     else:
         _update_tracking(keypoints_cur_frame, tracking_objects)
-    
-    # process contours and get measurements
     _process_contours(contours, tracking_objects)
-    # get position data
-
-    if frame_num >= (config.START_FRAME + 2) and len(tracking_objects.keys()) > 0:
+    if frame_num >= (config.start_frame + 2) and len(tracking_objects.keys()) > 0:
         tracking_objects_copy = tracking_objects.copy()
         for i in tracking_objects_copy.keys():
             try:
@@ -239,9 +231,9 @@ def analyze_trial(datapoint):
             round(np.mean(h), 2))
 
 
-def save_data(yav, hav, frame_num, total_frames, datapoint_num):
+def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_default_config):
     """
-    Puts height and micromotion data (in millimeters, based on PIXELCONVERSION parameter) into text file
+    Puts height and micromotion data (in millimeters, based on pixel_to_mm parameter) into text file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
     :param hav: Average height of the particle over the sample frames
     :param frame_num: Frame number of interest
@@ -249,8 +241,8 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
     :param datapoint_num: Datapoint number, starting at 0
     :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
     """
-    voltage = config.START_VOLTAGE + (datapoint_num * config.VOLTAGE_INCREMENT)
-    cut_file_name = config.VIDEO_FILE.replace('.avi', '')
+    voltage = config.start_voltage + (datapoint_num * config.voltage_increment)
+    cut_file_name = config.video_file.replace('.avi', '')
     try:
         if os.stat(str(cut_file_name) + '_data.txt').st_size != 0 and frame_num <= 70:
             acknowledgement = ""
@@ -259,8 +251,8 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
                     'File name already contains data. Please cancel and clear the file before proceeding. Type "continue" to override')
             print("\ncontinuing...")
         with open(str(cut_file_name) + '_data.txt', 'a') as f:
-            yav_mm = yav * config.PIXELCONVERSION
-            hav_mm = hav * config.PIXELCONVERSION
+            yav_mm = yav * config.pixel_to_mm
+            hav_mm = hav * config.pixel_to_mm
             if (yav_mm, hav_mm) != (0, 0):
                 f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
                 percentage = (frame_num / total_frames) * 100
@@ -269,8 +261,8 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
                 print('No Particle Detected')
     except FileNotFoundError:
         with open(str(cut_file_name) + '_data.txt', 'w') as f:
-            yav_mm = yav * config.PIXELCONVERSION
-            hav_mm = hav * config.PIXELCONVERSION
+            yav_mm = yav * config.pixel_to_mm
+            hav_mm = hav * config.pixel_to_mm
             if (yav_mm, hav_mm) != (0, 0):
                 f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
                 percentage = (frame_num / total_frames) * 100
@@ -278,7 +270,7 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num):
             else: 
                 print('No Particle Detected')
 
-def auto_run(cap):
+def auto_run(cap, config = get_default_config):
     """
     Automatic processing of video frames, outputs datapoints as described below in a text data file
     :param cap: Video capture object from the OpenCV package
@@ -287,25 +279,19 @@ def auto_run(cap):
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     _, _, y_start, y_end = gen_initial_frame(cap)
-    
-    # calculate collection frames
     collection_frames = [
-        int((config.FPS * config.CHANGE_INTERVAL * i) + 
-            (config.FPS * config.CHANGE_INTERVAL * 0.4))
+        int((config.fps * config.change_interval * i) + 
+            (config.fps * config.change_interval * 0.4))
         for i in range(100)
     ]
-    end_collection_frames = [cf + config.SAMPLE_FRAMES for cf in collection_frames]
-    
+    end_collection_frames = [cf + config.sample_frames for cf in collection_frames]
     _, datapoint = [], []
     collect_data = False
-    
     keypoints_prev_frame = []
     datapoint_num = 0
-
-    # process frames
-    for frame_num in range(config.START_FRAME, total_frames):
+    for frame_num in range(config.start_frame, total_frames):
         ret, frame = get_frame(cap, frame_num)
-        if frame_num >= config.START_FRAME + 2 and len(tracking_objects.keys()) > 0 :
+        if frame_num >= config.start_frame + 2 and len(tracking_objects.keys()) > 0 :
             for i in tracking_objects.keys():
                 try:
                     last_known = tracking_objects[i]
@@ -315,14 +301,13 @@ def auto_run(cap):
         if not ret:
             break
         roi_frame, closing, _, _ = post_processing(cap, frame, frame_num)
-        if frame_num >= config.START_FRAME + 2:
+        if frame_num >= config.start_frame + 2:
             x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start, last_known)
         else:
             x, y, h, _, keypoints_cur_frame = locate_particles(roi_frame, closing, keypoints_prev_frame, 
                                  frame_num, tracking_objects, track_id, y_end, y_start)
         keypoints_prev_frame = keypoints_cur_frame
-        # collect and analyze data
         if frame_num in collection_frames:
             collect_data = True
         if frame_num in end_collection_frames:
@@ -363,14 +348,13 @@ def main():
     """
     Main entry point
     """
-    
-    global config
+
     config = TrackingConfig()
     
-    cap = cv2.VideoCapture(config.VIDEO_FILE)
+    cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)
     
-    frame_num = config.START_FRAME
+    frame_num = config.start_frame
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
             keypoints_prev_frame = []
