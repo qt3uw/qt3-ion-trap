@@ -34,7 +34,7 @@ class FigureParameterConfig:
 def get_default_config():
     return FigureParameterConfig()
 
-
+  
 def get_default_trap():
     """
     Creates a and returns a trap object
@@ -53,7 +53,8 @@ def y_cuts_panel():
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
-    fig.savefig('figures/figure_2/fig2-y-cuts.pdf')
+    os.makedirs(fig_dir[0], exist_ok =True)
+    fig.savefig(fig_dir[0]+"fig2-y-cuts.pdf")
 
 def e_field_panel():
     """
@@ -62,7 +63,8 @@ def e_field_panel():
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
                                   resolution=(256, 256), figsize=(6, 3.5))
-    figp.savefig('figures/figure_2/fig2-efield.pdf')
+    os.makedirs(fig_dir[0], exist_ok =True)
+    figp.savefig(fig_dir[0]+"fig2-efield.pdf")
 
 def potential_energy_panel():
     """
@@ -80,8 +82,10 @@ def potential_energy_panel():
         a.set_ylabel('y (mm)')
     ax.set_title(None)
     fig.tight_layout()
-    fig.savefig('figures/figure_2/fig2-potential_energy.pdf')
+    os.makedirs(fig_dir[0], exist_ok =True)
+    fig.savefig(fig_dir[0]+"fig2-potential_energy.pdf")
 
+    
 def get_data(filename = None, config = get_default_config()):
     """
     Reads and sorts experimental data from a text file.
@@ -181,7 +185,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
-    fig.savefig('figures/figure_4/fig4-height_fit.pdf')
+    os.makedirs(fig_dir[2], exist_ok =True)
+    fig.savefig(fig_dir[2]+"fig4-height_fit.pdf")
     return trap
 
 def plot_escape(figsize=(3.5, 3)):
@@ -196,7 +201,8 @@ def plot_escape(figsize=(3.5, 3)):
     ax.set_title(None)
     plt.gca().invert_yaxis()
     fig.tight_layout()
-    fig.savefig('figures/figure_4/fig4-trap_escape.pdf')
+    os.makedirs(fig_dir[2], exist_ok =True)
+    fig.savefig(fig_dir[2]+"fig4-trap_escape.pdf")
 
 def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     '''
@@ -246,6 +252,8 @@ def plot_c2m_hist(config = get_default_config()):
     plt.xlabel('Charge-to-Mass Ratio (C/kg)')
     plt.ylabel('Number of Occurrences')
     plt.savefig(str(config.save_path) + '/figure3-histogram.pdf')
+
+
 
 if __name__ == "__main__":
     config = FigureParameterConfig()
