@@ -235,8 +235,9 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
     if config.save_fig == True:
+        os.makedirs(config.save_path[1], exist_ok =True)
         fig.savefig(str(config.save_path[1]) + '/fig3-height-micro-plot.pdf')
-        print('Figure saved to "' + str(config.save_path[1]) + '/fig3-height-micro-plot.pdf"')
+        print('Figure saved to "' + str(config.save_path[1]) + 'fig3-height-micro-plot.pdf"')
     plt.show()
 
 def plot_c2m_hist(config = get_default_config()):

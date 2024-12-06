@@ -3,9 +3,7 @@
     "",
     "\\acquisition",
     "\\data",
-    "\\figures",
-    "\\figures\\figure_2",
-    "\\figures\\figure_3"
+    "\\figures"
   ],
   "SelectedNode": "\\figures234.py",
   "PreviewInSolutionExplorer": false
