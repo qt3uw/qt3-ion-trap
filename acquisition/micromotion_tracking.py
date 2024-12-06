@@ -8,7 +8,7 @@ class TrackingConfig:
     def __init__(self):
         self.video_file = "acquisition/ExampleMicromotion.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
+        self.start_frame = 1600            # Defines starting frame. ONLY FOR DEBUGGING
         self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints

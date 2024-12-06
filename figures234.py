@@ -24,9 +24,9 @@ COLORS = {
 
 class FigureParameterConfig:
     def __init__(self):
-        self.save_fig = True                                                   # Saves figure to directory specified by self.save_path
+        self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        self.graph_file_name = 'data/raw_micromotion/8-18_Trial18_data.txt'        # File to plot height & micromotion vs. voltage graphs for
+        self.graph_file_name = 'acquisition/ExampleMicromotion_data.txt'        # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
@@ -235,8 +235,9 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
     if config.save_fig == True:
-        fig.savefig(str(config.save_path[1]) + '/fig3-height-micro-plot.pdf')
-        print('Figure saved to "' + str(config.save_path[1]) + '/fig3-height-micro-plot.pdf"')
+        os.makedirs(config.save_path[1], exist_ok =True)
+        fig.savefig(str(config.save_path[1]) + 'fig3-height-micro-plot.pdf')
+        print('Figure saved to "' + str(config.save_path[1]) + 'fig3-height-micro-plot.pdf"')
     plt.show()
 
 def plot_c2m_hist(config = get_default_config()):
