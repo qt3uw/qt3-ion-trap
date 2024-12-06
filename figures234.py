@@ -256,7 +256,7 @@ def plot_c2m_hist(config = get_default_config()):
     plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.xlabel('Charge-to-Mass Ratio (C/kg)')
     plt.ylabel('Number of Occurrences')
-    plt.savefig(str(config.save_path[1]) + '/figure3-histogram.pdf')
+    plt.savefig(str(config.save_path[1]) + 'fig3-histogram.pdf')
 
 
 
