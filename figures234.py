@@ -24,11 +24,11 @@ COLORS = {
 
 class FigureParameterConfig:
     def __init__(self):
-        self.save_fig = False                                                   # Saves figure to directory specified by self.save_path
+        self.save_fig = True                                                   # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        self.graph_file_name = 'acquisition/ExampleMicromotion_data.txt'        # File to plot height & micromotion vs. voltage graphs for
+        self.graph_file_name = 'data/raw_micromotion/8-18_Trial18_data.txt'        # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
-        self.save_path = 'data'                                                 # Path for exported figures
+        self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
 
 def get_default_config():
@@ -49,28 +49,31 @@ def y_cuts_panel():
     """
     Plots and saves the potential energy divided by charge of the various relevant scalar fields
     """
+    config = get_default_config()
     trap = get_default_trap()
     trap.v_dc = -80.
     fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
-    os.makedirs(fig_dir[0], exist_ok =True)
-    fig.savefig(fig_dir[0]+"fig2-y-cuts.pdf")
+    os.makedirs(config.save_path[0], exist_ok =True)
+    fig.savefig(config.save_path[0] +"fig2-y-cuts.pdf")
 
 def e_field_panel():
     """
     Plots and saves the electric field of the planar trap.
     """
+    config = get_default_config()
     trap = get_default_trap()
     figp, axp = trap.plot_E_field(include_gaps=True, x_range=(-trap.c, trap.a + trap.b), normalized = False,
                                   resolution=(256, 256), figsize=(6, 3.5))
-    os.makedirs(fig_dir[0], exist_ok =True)
-    figp.savefig(fig_dir[0]+"fig2-efield.pdf")
+    os.makedirs(config.save_path[0], exist_ok =True)
+    figp.savefig(config.save_path[0] +"fig2-efield.pdf")
 
 def potential_energy_panel():
     """
     Plots and saves the pseudopotential scalar field and equipotential contour lines.
     """
     trap = get_default_trap()
+    config = get_default_config()
     fig, ax = trap.plot_rf_potential_contours(include_gaps=True, figsize=(4.1, 3), x_range=(-trap.c, trap.a + trap.b),
                                               min_contour_level=-20, ncountours=41, resolution=(256, 256))
     for a in [ax]:
@@ -82,8 +85,8 @@ def potential_energy_panel():
         a.set_ylabel('y (mm)')
     ax.set_title(None)
     fig.tight_layout()
-    os.makedirs(fig_dir[0], exist_ok =True)
-    fig.savefig(fig_dir[0]+"fig2-potential_energy.pdf")
+    os.makedirs(config.save_path[0], exist_ok =True)
+    fig.savefig(config.save_path[0]+"fig2-potential_energy.pdf")
 
     
 def get_data(filename = None, config = get_default_config()):
@@ -141,6 +144,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     :return: The trap object from the PseudopotentialPlanarTrap class.
     """
     trap = get_default_trap()
+    config = get_default_config()
     parameters = ['charge_to_mass']
     bounds = [(-1.E-2, -1.E-4)]
     dc_voltages, y0, yspread, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
@@ -185,8 +189,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
-    os.makedirs(fig_dir[2], exist_ok =True)
-    fig.savefig(fig_dir[2]+"fig4-height_fit.pdf")
+    os.makedirs(config.save_path[2], exist_ok =True)
+    fig.savefig(config.save_path[2]+"fig4-height_fit.pdf")
     return trap
 
 def plot_escape(figsize=(3.5, 3)):
@@ -196,13 +200,14 @@ def plot_escape(figsize=(3.5, 3)):
     :param figsize: Figure dimensions in inches
     """
     trap = get_default_trap()
+    config = get_default_config()
     fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
     ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
     ax.set_title(None)
     plt.gca().invert_yaxis()
     fig.tight_layout()
-    os.makedirs(fig_dir[2], exist_ok =True)
-    fig.savefig(fig_dir[2]+"fig4-trap_escape.pdf")
+    os.makedirs(config.save_path[2], exist_ok =True)
+    fig.savefig(config.save_path[2] +"fig4-trap_escape.pdf")
 
 def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     '''
@@ -230,8 +235,8 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
     if config.save_fig == True:
-        fig.savefig(str(config.save_path) + '/fig3-height-micro-plot.pdf')
-        print('Figure saved to "' + str(config.save_path) + '/fig3-height-micro-plot.pdf"')
+        fig.savefig(str(config.save_path[1]) + '/fig3-height-micro-plot.pdf')
+        print('Figure saved to "' + str(config.save_path[1]) + '/fig3-height-micro-plot.pdf"')
     plt.show()
 
 def plot_c2m_hist(config = get_default_config()):
@@ -251,7 +256,7 @@ def plot_c2m_hist(config = get_default_config()):
     plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.xlabel('Charge-to-Mass Ratio (C/kg)')
     plt.ylabel('Number of Occurrences')
-    plt.savefig(str(config.save_path) + '/figure3-histogram.pdf')
+    plt.savefig(str(config.save_path[1]) + '/figure3-histogram.pdf')
 
 
 
