@@ -212,7 +212,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
 def main():
     print("Running program...")
     
-    config = ShuttlingConfig(video_file = 'ShuttleBackForth.avi', start_frame = 100, x_range = (0, 1600), y_range = (550, 700) \
+    config = ShuttlingConfig(video_file = 'ShuttleBackForth.avi', start_frame = 100, x_range = (0, 1600), y_range = (550, 700), \
                             bin_thresh = 45, data_storage = open('shuttle_data.txt', 'a'))
     
     cap, total_frames, start_frame = initialize_video(config)

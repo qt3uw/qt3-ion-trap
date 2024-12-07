@@ -8,9 +8,9 @@ in tracking.py and particle position in shuttle_tracking.py
 # -----------------------------------Shuttling Tracking-----------------------------------
 #____________________________________Tracking Class and Subclasses________________________
 class TrackingConfig:
-    def __init__(self, video_file = "", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000) \
-                 , pixel_to_mm = 0.01628, top_rect= ((0, 0), (0, 0)), left_rect= ((0, 0), (0, 0)), right_rect= ((0, 0), (0, 0)) \ 
-                 , bottom_rect= ((0, 0), (0, 0))):
+    def __init__(self, video_file = " ", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000), \
+                 pixel_to_mm = 0.01628, top_rect= ((0, 0), (0, 0)), left_rect= ((0, 0), (0, 0)), right_rect= ((0, 0), (0, 0)), \
+                 bottom_rect= ((0, 0), (0, 0))):
         #check
         self.video_file = video_file
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
@@ -27,19 +27,21 @@ class TrackingConfig:
         self.pixel_to_mm = pixel_to_mm    # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
 
 class MicromotionConfig(TrackingConfig):
-    def __init__(self, video_file = "", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000) \
-                 , pixel_to_mm = 0.01628, view_type = "image", start_voltage = 40, voltage_increment = 5, \
+    def __init__(self, video_file = " ", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000) \
+                 , pixel_to_mm = 0.01628, top_rect= ((0, 0), (0, 0)), left_rect= ((0, 0), (0, 0)), right_rect= ((0, 0), (0, 0)), \
+                 bottom_rect= ((0, 0), (0, 0)), view_type = "image", start_voltage = 40, voltage_increment = 5, \
                 change_interval = 5, sample_frames = 15):
         self.view_type = view_type        # "image" to block out white binary noise, "binary" to block out black binary noise
         self.start_voltage = start_voltage         # Initial voltage value 
         self.voltage_increment = voltage_increment      # Voltage step between datapoints
         self.change_interval = change_interval        # Time between data points in the real-time trial (seconds)
         self.sample_frames = sample_frames         # Number of frames averaged over per data point
-        super().__init__(self, video_file, start_frame, fps, bin_thresh, x_range, y_range \
-                 , pixel_to_mm)
+        super().__init__(video_file = video_file, start_frame = start_frame, fps = fps, bin_thresh = bin_thresh, x_range = x_range, y_range = y_range \
+                 , pixel_to_mm = pixel_to_mm, top_rect = top_rect, left_rect= left_rect, right_rect=right_rect, \
+                 bottom_rect= bottom_rect)
 
 class ShuttlingConfig(TrackingConfig):
-     def __init__(self, video_file = "", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000) \
+     def __init__(self, video_file = " ", start_frame = 100, fps = 20, bin_thresh = 30, x_range = (100, 1000), y_range = (100, 1000) \
                  , pixel_to_mm = 0.01628, data_storage = open('_.txt', 'a'), all_indices_of_interest = [], \
                  store_height_data = False, contour_det = False, collect_position = True, image_save = True, image_save_times = [0, 2, 4, 6]):
          
@@ -52,7 +54,7 @@ class ShuttlingConfig(TrackingConfig):
          self.image_save = image_save
          self.image_save_times = image_save_times
          self.data_storage = data_storage
-         super().__init__(self, video_file, start_frame, fps, bin_thresh, x_range, y_range \
+         super().__init__(video_file, start_frame, fps, bin_thresh, x_range, y_range \
                  , pixel_to_mm)
 #________________________________________________________________________________________________________________________________________
 

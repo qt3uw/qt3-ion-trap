@@ -16,7 +16,7 @@ class TrackingConfig:
 
 def get_default_config():
     return MicromotionConfig(video_file = "acquisition/ExampleMicromotion.avi", start_frame = 1600, fps = 20, bin_thresh = 26, \
-                            x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628  top_rect = ((0, 0), (1616, 0)), \
+                             x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628,  top_rect = ((0, 0), (1616, 0)), \
                              left_rect = ((0, 0), (0, 1240)),  right_rect = ((700, 0), (700, 1240)),  \
                              bottom_rect = ((0, 346), (1616, 446)))
 
@@ -356,7 +356,9 @@ def main():
     """
     
     config = MicromotionConfig(video_file = "acquisition/ExampleMicromotion.avi", start_frame = 1600, fps = 20, bin_thresh = 26, \
-                            x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628)
+                             x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628,  top_rect = ((0, 0), (1616, 0)), \
+                             left_rect = ((0, 0), (0, 1240)),  right_rect = ((700, 0), (700, 1240)),  \
+                             bottom_rect = ((0, 346), (1616, 446)))
 
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)
