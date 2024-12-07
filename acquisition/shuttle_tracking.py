@@ -1,59 +1,43 @@
 import cv2
 import numpy as np
 import math
-from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
+from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image, TrackingConfig, ShuttlingConfig
 
 # --------------------------- Config ---------------------------------------------- #
-
+"""
 class TrackingConfig:
     def __init__(self):
-        # video settings
-        self.VIDEO_PATH = 'ShuttleBackForth.avi'
-        self.START_FRAME_NUM = 100
 
-        # regions of interest
-        self.X_START = 0
-        self.Y_START = 550
-        self.X_END = 1600
-        self.Y_END = 700
 
-        # image processing
-        self.BIN_THRESH = 45
-        self.CLEANING_KERNEL = np.ones((2, 2), np.uint8)
-        self.FILLING_KERNEL = np.ones((4, 2), np.uint8)
-
-        # frame erasure rectangles
-        self.TOP_RECT = ((0, 0), (0, 0))
-        self.LEFT_RECT = ((0, 0), (0, 0))
-        self.RIGHT_RECT = ((0, 0), (0, 0))
-        self.BOTTOM_RECT = ((0, 0), (0, 0))
-        self.RECTANGLE_COLOR = (0, 0, 0)
+        self.cleaning_kernel = np.ones((2, 2), np.uint8)
+        self.filling_kernel = np.ones((4, 2), np.uint8)
 
         # tracking settings
-        self.STORE_HEIGHT_DATA = False
-        self.CONTOUR_DET = False
-        self.COLLECT_POSITION = True
-        self.ALL_INDICES_OF_INTEREST = []
+        self.store_height_data = False
+        self.contour_det = False
+        self.collect_position = True
+        self.all_indices_of_interest = []
 
         # image capture settings
-        self.IMAGE_SAVE = True
-        self.IMAGE_SAVE_TIMES = [0, 2, 4, 6]
+        self.image_save = True
+        self.image_save_times = [0, 2, 4, 6]
 
         # data storage
-        self.DATA_STORAGE = open('shuttle_data.txt', 'a')
+        self.data_storage = open('shuttle_data.txt', 'a')
+"""
 
 # --------------------------- Video Processing Functions ---------------------------------------------- #
 
 def initialize_video(config):
-    cap = cv2.VideoCapture(config.VIDEO_PATH)
+    cap = cv2.VideoCapture(config.video_file)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    ret, start_frame = get_frame(cap, config.START_FRAME_NUM)
+    ret, start_frame = get_frame(cap, config.start_frame)
     
     if ret:
         frame_height, frame_width = start_frame.shape[:2]
         print(f"Frame height: {frame_height}\nFrame width: {frame_width}")
         
-        roi = start_frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
+        roi = start_frame[config.y_range[0]:config.y_range[1], config.x_range[0]:config.x_range[1]]
         cv2.imshow("Frame", roi)
     
     return cap, total_frames, start_frame
@@ -64,19 +48,19 @@ def setup_tracking():
     return {}, 0, []  # tracking_objects, track_id, keypoints_prev_frame
 
 def process_frame(config, frame):
-    roi_frame = frame[config.Y_START:config.Y_END, config.X_START:config.X_END]
+    roi_frame = frame[config.y_range[0]:config.y_range[1], config.x_range[0]:config.x_range[1]]
     gray_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray_frame, config.BIN_THRESH, 255, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(gray_frame, config.bin_thresh, 255, cv2.THRESH_BINARY)
     
     clean_thresh, closing = post_processing(
         thresh,
-        config.CLEANING_KERNEL,
-        config.FILLING_KERNEL,
-        config.RECTANGLE_COLOR,
-        config.TOP_RECT[0], config.TOP_RECT[1],
-        config.LEFT_RECT[0], config.LEFT_RECT[1],
-        config.RIGHT_RECT[0], config.RIGHT_RECT[1],
-        config.BOTTOM_RECT[0], config.BOTTOM_RECT[1],
+        config.cleaning_kernel,
+        config.filling_kernel,
+        config.rectangle_color,
+        config.top_rect[0], config.top_rect[1],
+        config.left_rect[0], config.left_rect[1],
+        config.right_rect[0], config.right_rect[1],
+        config.bottom_rect[0], config.bottom_rect[1],
         0, 1, 4
     )
     
@@ -132,7 +116,7 @@ def draw_tracking_info(image, tracking_objects):
 # --------------------------- Main Processing Loop ---------------------------------------------- #
 
 def run_tracking(config, cap, detector, total_frames, start_frame):
-    frame_num = config.START_FRAME_NUM
+    frame_num = config.start_frame
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
     # Initial tracking variables
@@ -180,7 +164,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             
             # Find contours if enabled
             contours = None
-            if config.CONTOUR_DET:
+            if config.contour_det:
                 contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
             # Update tracking
@@ -196,13 +180,13 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
                 first_detect = True
             
             # collect position data if enabled
-            if config.COLLECT_POSITION:
+            if config.collect_position:
                 collect_pos_data(
                     start_x,
-                    config.DATA_STORAGE,
+                    config.data_storage,
                     tracking_objects,
                     index_of_interest,
-                    config.ALL_INDICES_OF_INTEREST,
+                    config.all_indices_of_interest,
                     frame_num
                 )
             
@@ -213,12 +197,12 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             draw_frame_info(image_with_keypoints, frame_num, time, total_frames)
             
             # if enabled, save image
-            if config.IMAGE_SAVE:
+            if config.image_save:
                 save_image('NewShuttleParticleAtTime', time, 
-                          config.IMAGE_SAVE_TIMES, clean_thresh)
+                          config.image_save_times, clean_thresh)
             
             # Display frame
-            cv2.rectangle(image_with_keypoints, *config.TOP_RECT, config.RECTANGLE_COLOR, -1)
+            cv2.rectangle(image_with_keypoints, *config.top_rect, config.rectangle_color, -1)
             cv2.imshow("Frame", image_with_keypoints)
             cv2.waitKey(50)
             
@@ -228,7 +212,8 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
 def main():
     print("Running program...")
     
-    config = TrackingConfig()
+    config = ShuttlingConfig(video_file = 'ShuttleBackForth.avi', start_frame = 100, x_range = (0, 1600), y_range = (550, 700) \
+                            bin_thresh = 45, data_storage = open('shuttle_data.txt', 'a'))
     
     cap, total_frames, start_frame = initialize_video(config)
     detector = set_up_detector()

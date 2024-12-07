@@ -2,30 +2,23 @@ import os
 import cv2
 import numpy as np
 import math
-from tracking_methods import get_frame, set_up_detector, setup_tracking
+from tracking_methods import get_frame, set_up_detector, setup_tracking,  TrackingConfig, MicromotionConfig
 
+"""
 class TrackingConfig:
     def __init__(self):
-        self.video_file = "acquisition/ExampleMicromotion.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 1600            # Defines starting frame. ONLY FOR DEBUGGING
-        self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
-        self.bin_thresh = 26            # Binary threshold for object detection
-        self.x_range = (200, 900)       # x-axis frame of interest limits
-        self.y_range = (554, 1000)      # y-axis frame of interest limits
-        self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
-        self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
-        self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
-        self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
-        self.pixel_to_mm = 0.01628      # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
-
+"""
 
 def get_default_config():
-    return TrackingConfig()
+    return MicromotionConfig(video_file = "acquisition/ExampleMicromotion.avi", start_frame = 1600, fps = 20, bin_thresh = 26, \
+                            x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628  top_rect = ((0, 0), (1616, 0)), \
+                             left_rect = ((0, 0), (0, 1240)),  right_rect = ((700, 0), (700, 1240)),  \
+                             bottom_rect = ((0, 346), (1616, 446)))
 
 
 def frame_dimensions(cap, frame_num, config = get_default_config()):
@@ -53,16 +46,15 @@ def gen_initial_frame(cap, config = get_default_config()):
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     ret, initial_frame = get_frame(cap, config.start_frame)
     cv2.imshow("Frame", initial_frame[y_start:y_end, x_start:x_end])
-    return x_start, x_end, y_start, y_end
+    # return x_start, x_end, y_start, y_end
+    return (x_start, x_end), (y_start, y_end)
 
-
+"""
 def define_blockers(cap, frame_num, config = get_default_config()):
-    """
     Define blocking rectangles for frame processing
     :param cap: Video capture object from the OpenCV package
     :param frame_num: Frame number of interest
     :return: Tuple object containing tuple elements that define the locations of rectangles for omission
-    """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
     ylength = y_end - y_start
     xlength = x_end - x_start
@@ -74,6 +66,7 @@ def define_blockers(cap, frame_num, config = get_default_config()):
     
     return (*top_rect, *left_rect, *right_rect, *bottom_rect)
 
+"""
 
 def post_processing(cap, frame, frame_num, config = get_default_config()):
     """
@@ -87,8 +80,9 @@ def post_processing(cap, frame, frame_num, config = get_default_config()):
     :return closing_raw: Binary image of the frame post-erasure without the binary blocker
     """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num)
-    blockers = define_blockers(cap, frame_num)
-    rectangle_color = (255, 255, 255) if config.view_type == "binary" else (0, 0, 0)
+    # blockers = define_blockers(cap, frame_num)
+    blockers = (*config.top_rect, *config.left_rect, *config.right_rect, *config.bottom_rect)
+    config.rectangle_color = (255, 255, 255) if config.view_type == "binary" else (0, 0, 0)
     cleaning_kernel = np.ones((2, 2), np.uint8)
     filling_kernel = np.ones((2, 2), np.uint8)
     roi_frame = frame[y_start:y_end, x_start:x_end]
@@ -97,7 +91,7 @@ def post_processing(cap, frame, frame_num, config = get_default_config()):
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     closing_raw = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=1)
     for i in range(0, len(blockers), 2):
-        cv2.rectangle(clean_thresh, blockers[i], blockers[i+1], rectangle_color, -1)
+        cv2.rectangle(clean_thresh, blockers[i], blockers[i+1], config.rectangle_color, -1)
     closing = cv2.morphologyEx(clean_thresh, cv2.MORPH_CLOSE, filling_kernel, iterations=2)
 
     return roi_frame, closing, clean_thresh, closing_raw
@@ -361,7 +355,8 @@ def main():
     Main entry point
     """
     
-    config = TrackingConfig()
+    config = MicromotionConfig(video_file = "acquisition/ExampleMicromotion.avi", start_frame = 1600, fps = 20, bin_thresh = 26, \
+                            x_range = (200, 900), y_range = (554, 1000), pixel_to_mm = 0.01628)
 
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)

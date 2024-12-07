@@ -3,60 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\figures234.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:figures234.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\pseudopotential.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:pseudopotential.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\micromotion_data_analysis.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:micromotion_data_analysis.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\figure5.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:figure5.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\micromotion_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:acquisition\\micromotion_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\environment.yml||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:environment.yml||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\shuttle_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:acquisition\\shuttle_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\raw_micromotion\\8-8_Trial2_data.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:data\\raw_micromotion\\8-8_Trial2_data.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking_methods.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:acquisition\\tracking_methods.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:acquisition\\tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\shuttle_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:acquisition\\shuttle_tracking.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitattributes||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitattributes||{3B902123-F8A7-4915-9F01-361F908088D0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\Figures_2-4.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Figures_2-4.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\robth\\git repos\\qt3-ion-trap\\micromotion_data_analysis.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:micromotion_data_analysis.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
   ],
   "DocumentGroupContainers": [
@@ -66,175 +26,86 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "figures234.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\figures234.py",
-              "RelativeDocumentMoniker": "figures234.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\figures234.py*",
-              "RelativeToolTip": "figures234.py*",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAO0AAAA4AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-20T18:49:39.603Z",
-              "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "pseudopotential.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\pseudopotential.py",
-              "RelativeDocumentMoniker": "pseudopotential.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\pseudopotential.py",
-              "RelativeToolTip": "pseudopotential.py",
-              "ViewState": "AgIAAAICAAAAAAAAAAAawEsCAAACAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-20T18:39:22.718Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "micromotion_tracking.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\micromotion_tracking.py",
-              "RelativeDocumentMoniker": "acquisition\\micromotion_tracking.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\micromotion_tracking.py",
-              "RelativeToolTip": "acquisition\\micromotion_tracking.py",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-12-06T18:51:15.036Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "micromotion_data_analysis.py",
               "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\micromotion_data_analysis.py",
               "RelativeDocumentMoniker": "micromotion_data_analysis.py",
               "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\micromotion_data_analysis.py",
               "RelativeToolTip": "micromotion_data_analysis.py",
-              "ViewState": "AgIAAH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-12-06T19:56:47.478Z"
+              "WhenOpened": "2024-12-06T22:09:19.208Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 2,
               "Title": "shuttle_tracking.py",
               "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\shuttle_tracking.py",
               "RelativeDocumentMoniker": "acquisition\\shuttle_tracking.py",
               "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\shuttle_tracking.py",
               "RelativeToolTip": "acquisition\\shuttle_tracking.py",
-              "ViewState": "AgIAAJ8AAAAAAAAAAAAAAIwAAAAPAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAACHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-15T22:11:40.713Z"
-            },
+              "WhenOpened": "2024-11-15T22:11:40.713Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "8-8_Trial1_data_analyzed.txt",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt",
-              "RelativeDocumentMoniker": "data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt",
-              "RelativeToolTip": "data\\analyzed_micromotion\\8-8_Trial1_data_analyzed.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2024-12-06T18:56:09.273Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "environment.yml",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\environment.yml",
-              "RelativeDocumentMoniker": "environment.yml",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\environment.yml",
-              "RelativeToolTip": "environment.yml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
-              "WhenOpened": "2024-11-20T18:53:15.801Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "figure5.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\figure5.py",
-              "RelativeDocumentMoniker": "figure5.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\figure5.py",
-              "RelativeToolTip": "figure5.py",
-              "ViewState": "AgIAAMwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "micromotion_tracking.py",
+              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\micromotion_tracking.py",
+              "RelativeDocumentMoniker": "acquisition\\micromotion_tracking.py",
+              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\micromotion_tracking.py",
+              "RelativeToolTip": "acquisition\\micromotion_tracking.py",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAmwCcAAAAHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-20T18:49:40.612Z"
-            },
+              "WhenOpened": "2024-12-06T18:51:15.036Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "FloatingWindowState": {
+        "Id": "28b539e0-43bc-46b4-8b8e-3e086f78a40f",
+        "Display": 0,
+        "X": -95,
+        "Y": 209,
+        "Width": 1118,
+        "Height": 1287,
+        "WindowState": 2
+      },
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "8-8_Trial2_data.txt",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\raw_micromotion\\8-8_Trial2_data.txt",
-              "RelativeDocumentMoniker": "data\\raw_micromotion\\8-8_Trial2_data.txt",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\data\\raw_micromotion\\8-8_Trial2_data.txt",
-              "RelativeToolTip": "data\\raw_micromotion\\8-8_Trial2_data.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2024-12-06T18:56:17.535Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": ".gitignore",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitignore",
-              "RelativeDocumentMoniker": ".gitignore",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitignore",
-              "RelativeToolTip": ".gitignore",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMjSURBVFhH5VbLTttAFL20DivaRHxJt20lVD6g5AMaEEII0Q3QIkqFqGhBBcqbkBDeNJWSBSvCD/AL/QRWbEsXJXEcZ3rvzDgZ22PXoZFYcOLDHV/bM3fOGQ\u002BGewVjTLbuDx0yulAoFHhlVGCTeI4/anhzzrm4zCDWGbsxTbP37ejoT95hq6ACbNv2saay5mWN1et1ViwW2dXVFTs6Pv6V3c09k10G4pGMLvDZILBDsIm2YN22MSqs24DFNEj3E7q7u6H3VW8iFjMuM9lsaBGhBXjRzGqda4CKi8efQk9PT8IwYpfpnUxgEaEF6MtAONcDbkA7eBFPurrg5YvniZhhXMpLPminks//YKnUGzg/P5eZaEgmk3B2dgbX19cyI2B0dsLE2Jh2LG3yez7P\u002BlMpnIXwlECrXQAfoanLINrUDUY8bn7fKMowMB4bUCgWYGJ8XDuW1gJVW/6aUc8czqjKLc7gEvF4AhIJSdlWuvNBW9Xp6SnrHxiAUosW6NDXl4SdTAbev5vQjqXFyckJf9fNqiVoVpusVlkFY8U0lYismKzsYoXdlivMsmpsfWMzUIOAt4D\u002ByIajH6kvUx28pUxI3tIEJpRc00I/tLLgLsYGBwfbZsFWehumJiejW3B4dMS3VyGxJMrK6ZFdJ30ZpSf5HQtW19YDJQjZiCQbFuAE1BXvDhJ0vzeH504fGmhlOTg4ZENDQ1AqtcOCPtjY3ILpD1PRLdjfP\u002BD/3RpSK3L7JffLrrJqWWx5ZSVQAr0FjogUHLqbCjAjDj\u002Bk9CEO6C3I7e2x4eFhuCiVZObueI0WrK1vwMzH6egW7OZyzEIL/FI7FJIHyX57W2Z/JMmCxaXlQA2CNyIXKCFJF8XB6QNe9\u002BZbfguy2V02MjICFxftsWBldRVmZ2aiW4CfUXwD0cqroyK5l2TBwtfFQAlCNqIIILk1knvRsgX4Dcfwk7ptFiwtf4O5T7PRLdhO76AFFspb5vKGSfwvkgVf5hdatID/uMIi8uzdEfa8tgA\u002BMgK/6/\u002BbhJbXwObWNj7jLDARaRrunOxYk2vksS/nfP7zXPQ18IAA8Bcyv5bYM78zewAAAABJRU5ErkJggg==",
-              "WhenOpened": "2024-11-20T19:19:19.221Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 1,
               "Title": "tracking_methods.py",
               "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking_methods.py",
               "RelativeDocumentMoniker": "acquisition\\tracking_methods.py",
               "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking_methods.py",
               "RelativeToolTip": "acquisition\\tracking_methods.py",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-15T22:11:46.001Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "tracking.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking.py",
-              "RelativeDocumentMoniker": "acquisition\\tracking.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\acquisition\\tracking.py",
-              "RelativeToolTip": "acquisition\\tracking.py",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-15T21:36:52.798Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": ".gitattributes",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitattributes",
-              "RelativeDocumentMoniker": ".gitattributes",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\.gitattributes",
-              "RelativeToolTip": ".gitattributes",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMjSURBVFhH5VbLTttAFL20DivaRHxJt20lVD6g5AMaEEII0Q3QIkqFqGhBBcqbkBDeNJWSBSvCD/AL/QRWbEsXJXEcZ3rvzDgZ22PXoZFYcOLDHV/bM3fOGQ\u002BGewVjTLbuDx0yulAoFHhlVGCTeI4/anhzzrm4zCDWGbsxTbP37ejoT95hq6ACbNv2saay5mWN1et1ViwW2dXVFTs6Pv6V3c09k10G4pGMLvDZILBDsIm2YN22MSqs24DFNEj3E7q7u6H3VW8iFjMuM9lsaBGhBXjRzGqda4CKi8efQk9PT8IwYpfpnUxgEaEF6MtAONcDbkA7eBFPurrg5YvniZhhXMpLPminks//YKnUGzg/P5eZaEgmk3B2dgbX19cyI2B0dsLE2Jh2LG3yez7P\u002BlMpnIXwlECrXQAfoanLINrUDUY8bn7fKMowMB4bUCgWYGJ8XDuW1gJVW/6aUc8czqjKLc7gEvF4AhIJSdlWuvNBW9Xp6SnrHxiAUosW6NDXl4SdTAbev5vQjqXFyckJf9fNqiVoVpusVlkFY8U0lYismKzsYoXdlivMsmpsfWMzUIOAt4D\u002ByIajH6kvUx28pUxI3tIEJpRc00I/tLLgLsYGBwfbZsFWehumJiejW3B4dMS3VyGxJMrK6ZFdJ30ZpSf5HQtW19YDJQjZiCQbFuAE1BXvDhJ0vzeH504fGmhlOTg4ZENDQ1AqtcOCPtjY3ILpD1PRLdjfP\u002BD/3RpSK3L7JffLrrJqWWx5ZSVQAr0FjogUHLqbCjAjDj\u002Bk9CEO6C3I7e2x4eFhuCiVZObueI0WrK1vwMzH6egW7OZyzEIL/FI7FJIHyX57W2Z/JMmCxaXlQA2CNyIXKCFJF8XB6QNe9\u002BZbfguy2V02MjICFxftsWBldRVmZ2aiW4CfUXwD0cqroyK5l2TBwtfFQAlCNqIIILk1knvRsgX4Dcfwk7ptFiwtf4O5T7PRLdhO76AFFspb5vKGSfwvkgVf5hdatID/uMIi8uzdEfa8tgA\u002BMgK/6/\u002BbhJbXwObWNj7jLDARaRrunOxYk2vksS/nfP7zXPQ18IAA8Bcyv5bYM78zewAAAABJRU5ErkJggg==",
-              "WhenOpened": "2024-11-20T19:19:37.486Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Figures_2-4.py",
-              "DocumentMoniker": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\Figures_2-4.py",
-              "RelativeDocumentMoniker": "Figures_2-4.py",
-              "ToolTip": "C:\\Users\\robth\\git repos\\qt3-ion-trap\\Figures_2-4.py",
-              "RelativeToolTip": "Figures_2-4.py",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-11-15T21:00:50.138Z"
+              "WhenOpened": "2024-12-06T21:54:58.522Z",
+              "EditorCaption": ""
             }
           ]
         }
