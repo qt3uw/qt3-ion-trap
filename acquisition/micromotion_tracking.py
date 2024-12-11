@@ -4,7 +4,8 @@ import numpy as np
 import math
 from tracking_methods import get_frame, set_up_detector, setup_tracking
 
-class TrackingConfig:
+
+class MicromotionTrackingConfig:
     def __init__(self):
         self.video_file = "acquisition/ExampleMicromotion.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
@@ -25,7 +26,7 @@ class TrackingConfig:
 
 
 def get_default_config():
-    return TrackingConfig()
+    return MicromotionTrackingConfig()
 
 
 def frame_dimensions(cap, frame_num, config = get_default_config()):
@@ -140,7 +141,8 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
                 if tracking_objects[i][1] <= 10:
                     tracking_objects.pop(i)
                 elif last_known != 0 and last_known is not None:
-                    if abs(last_known[0][0] - tracking_objects[i][0][0]) >= 5 or abs(last_known[0][1] - tracking_objects[i][0][1]) >= 5:
+                    if abs(last_known[0][0] - tracking_objects[i][0][0]) >= 5 or \
+                            abs(last_known[0][1] - tracking_objects[i][0][1]) >= 5:
                         tracking_objects.pop(i)
                     else:
                         x_position = int(tracking_objects[i][0][0])
@@ -209,8 +211,8 @@ def _process_contours(contours, tracking_objects):
         x, y, w, h = cv2.boundingRect(i)
         
         for key in tracking_objects.keys():
-            if (x <= tracking_objects[key][0][0] <= x + w and 
-                y <= tracking_objects[key][0][1] <= y + h):
+            if (x <= tracking_objects[key][0][0] <= x + w and
+                    y <= tracking_objects[key][0][1] <= y + h):
                 tracking_objects[key].append(h)
 
 
@@ -278,6 +280,7 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_def
                 print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion: ' + str(round((percentage), 0)) + '%, ' + str(frame_num))
             else: 
                 print('No Particle Detected')
+
 
 def auto_run(cap, config = get_default_config()):
     """
@@ -361,7 +364,7 @@ def main():
     Main entry point
     """
     
-    config = TrackingConfig()
+    config = MicromotionTrackingConfig()
 
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)
@@ -378,6 +381,7 @@ def main():
             auto_run(cap)
         else:
             pass
+
 
 if __name__ == "__main__":
     main()
