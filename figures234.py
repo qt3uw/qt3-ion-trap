@@ -22,6 +22,7 @@ COLORS = {
         'error': (0.170948, 0.694384, 0.493803)  # Green Color
 }
 
+
 class FigureParameterConfig:
     def __init__(self):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
@@ -45,6 +46,7 @@ def get_default_trap():
     trap.charge_to_mass = -1.077E-3
     return trap
 
+
 def y_cuts_panel():
     """
     Plots and saves the potential energy divided by charge of the various relevant scalar fields
@@ -57,6 +59,7 @@ def y_cuts_panel():
     os.makedirs(config.save_path[0], exist_ok =True)
     fig.savefig(config.save_path[0] +"fig2-y-cuts.pdf")
 
+
 def e_field_panel():
     """
     Plots and saves the electric field of the planar trap.
@@ -67,6 +70,7 @@ def e_field_panel():
                                   resolution=(256, 256), figsize=(6, 3.5))
     os.makedirs(config.save_path[0], exist_ok =True)
     figp.savefig(config.save_path[0] +"fig2-efield.pdf")
+
 
 def potential_energy_panel():
     """
@@ -193,6 +197,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     fig.savefig(config.save_path[2]+"fig4-height_fit.pdf")
     return trap
 
+
 def plot_escape(figsize=(3.5, 3)):
     """
     Plots and saves the potential energy divided by charge along the x-axis at different ion heights as a function of
@@ -208,6 +213,7 @@ def plot_escape(figsize=(3.5, 3)):
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
     fig.savefig(config.save_path[2] +"fig4-trap_escape.pdf")
+
 
 def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     '''
@@ -240,6 +246,7 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
         print('Figure saved to "' + str(config.save_path[1]) + 'fig3-height-micro-plot.pdf"')
     plt.show()
 
+
 def plot_c2m_hist(config = get_default_config()):
     '''
     Iterates over a folder to graph a histogram of charge-to-mass values
@@ -258,7 +265,6 @@ def plot_c2m_hist(config = get_default_config()):
     plt.xlabel('Charge-to-Mass Ratio (C/kg)')
     plt.ylabel('Number of Occurrences')
     plt.savefig(str(config.save_path[1]) + 'fig3-histogram.pdf')
-
 
 
 if __name__ == "__main__":

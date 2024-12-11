@@ -18,6 +18,7 @@ def get_frame(cap, got_frame_num):
     cap.set(cv2.CAP_PROP_POS_FRAMES, got_frame_num)
     return cap.read()
 
+
 def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_interest, all_indices_of_interest, frame_num):
     """
     Puts position data from a main loop dictionary into a file
@@ -111,6 +112,7 @@ def save_image(name, time, image_save_times, frame):
     if time in image_save_times:
         # Save the frame as an image file
         cv2.imwrite(name + str(time) + '.tif', frame)
+
 
 def setup_tracking():
     """
