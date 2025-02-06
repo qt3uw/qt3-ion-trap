@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
+from scipy.stats import chisquare
 from scipy.constants import g
 import os
 
@@ -27,7 +28,7 @@ class FigureParameterConfig:
     def __init__(self):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        self.graph_file_name = 'acquisition/ExampleMicromotion_data.txt'        # File to plot height & micromotion vs. voltage graphs for
+        self.graph_file_name = 'data/raw_micromotion/8-18_Trial18_data.txt'     # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
@@ -163,9 +164,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     gradient_at_null_high = ((trap.u_dc(trap.a / 2., y_min + trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc + trap.v_error)) / delta_y_gradient_calc)
     trap.charge_to_mass = g / gradient_at_null
     print("q/m from rf null: " + str(trap.charge_to_mass))
-    model_voltages = np.linspace(np.min(dc_voltages), np.max(dc_voltages), num=100)
-    y0_model = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
-    method_2, = ax.plot(model_voltages, y0_model * 1.E3, color='k', label='Method 2')
+    y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
+    method_2, = ax.plot(dc_voltages, y0_model * 1.E3, color='k', label='Method 2')
     trap.charge_to_mass = g / gradient_at_null_low
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
     trap.charge_to_mass = g / gradient_at_null_high
@@ -179,15 +179,26 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         l2 = np.sum((y0 - y0_model) ** 2)
         return l2
 
-    res = minimize(merit_func, guesses, bounds=bounds)
+    def chi_2(y_exp, y_fit, sigma):
+        return np.sum(np.divide(np.square(y_exp - y_fit), sigma))
 
+    res = minimize(merit_func, guesses, bounds=bounds)
     for i, param in enumerate(parameters):
         print(f'{param}: {res.x[i]}')
         trap.__dict__[param] = res.x[i]
-    y0_meas = trap.get_height_versus_dc_voltages(model_voltages, include_gaps=include_gaps)
+    trap.charge_to_mass = res.x
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
+
+
+    print('chi_2 value (fit): ' + str(chi_2(y0, y0_meas, 0.0164935065**2)))
+    print('chi_2 value (extrapolation): ' + str(chi_2(y0, y0_model, 0.0164935065**2)))
+
+    print(y0)
+    print(y0_meas)
+    print(y0_model)
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
     plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
-    method_1, = ax.plot(model_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1')
+    method_1, = ax.plot(dc_voltages, y0_meas * 1.E3, color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
     ax.grid(True)
