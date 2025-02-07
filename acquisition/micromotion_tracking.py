@@ -7,23 +7,39 @@ from uncertainties import Uncertainties
 
 
 class MicromotionTrackingConfig:
+<<<<<<< HEAD
     def __init__(self, uncert):
         self.U = uncert
         self.video_file = "D:/March 9-10 Experimental Data Collection/03-10-2025_Trial9.avi"
         # self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
         self.start_frame = 10         # Defines starting frame. ONLY FOR DEBUGGING
+=======
+    def __init__(self):
+        self.video_file = "acquisition/Trial18.avi"
+        self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
+        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
+>>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
         self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
+<<<<<<< HEAD
         self.bin_thresh = 5   # Binary threshold for object detection
         self.x_range = (0, 1550)       # x-axis frame of interest limits
         self.y_range = (425, 1200)      # y-axis frame of interest limits
         self.bottom_bar = 80      # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0               # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0              # Erasure rectangle, measured in pixels from the left edge
+=======
+        self.bin_thresh = 26            # Binary threshold for object detection
+        self.x_range = (200, 1200)      # x-axis frame of interest limits
+        self.y_range = (554, 1000)      # y-axis frame of interest limits
+        self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
+        self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
+        self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
+>>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
         self.pixel_to_mm = 1/uncert.pxl_to_mm[1]     # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
 
@@ -226,15 +242,31 @@ def analyze_trial(datapoint):
     :return: Tuple reflecting the average of the tuples in datapoint
     """
     if not datapoint:
+<<<<<<< HEAD
         return np.array([0, 0]), np.array([0, 0]), np.array([0, 0])
         
+=======
+        return 0, 0, 0
+    
+>>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
     x = [point[0] for point in datapoint]
     y = [point[1] for point in datapoint]
     h = [point[2] for point in datapoint]
     
+<<<<<<< HEAD
     return (np.array([np.mean(x), np.std(x)]),
             np.array([np.mean(y), np.std(y)]),
             np.array([np.mean(h), np.std(h)]))
+=======
+    avg_h_val = round(np.mean(h), 2)
+    print(avg_h_val)
+    stdev = np.std(h)
+    print(stdev)
+
+    return (round(np.mean(x), 2),
+            round(np.mean(y), 2),
+            round(np.mean(h), 2))
+>>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
 
 
 def save_data(y, h, frame_num, total_frames, datapoint_num, config):
