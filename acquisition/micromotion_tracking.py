@@ -7,16 +7,16 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class MicromotionTrackingConfig:
     def __init__(self):
-        self.video_file = "acquisition/ExampleMicromotion.avi"
+        self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 1600            # Defines starting frame. ONLY FOR DEBUGGING
+        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
         self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
         self.bin_thresh = 26            # Binary threshold for object detection
-        self.x_range = (200, 900)       # x-axis frame of interest limits
+        self.x_range = (200, 1200)      # x-axis frame of interest limits
         self.y_range = (554, 1000)      # y-axis frame of interest limits
         self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
@@ -224,11 +224,16 @@ def analyze_trial(datapoint):
     """
     if not datapoint:
         return 0, 0, 0
-        
+    
     x = [point[0] for point in datapoint]
     y = [point[1] for point in datapoint]
     h = [point[2] for point in datapoint]
     
+    avg_h_val = round(np.mean(h), 2)
+    print(avg_h_val)
+    stdev = np.std(h)
+    print(stdev)
+
     return (round(np.mean(x), 2),
             round(np.mean(y), 2),
             round(np.mean(h), 2))
