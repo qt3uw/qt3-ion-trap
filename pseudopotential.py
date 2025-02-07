@@ -287,6 +287,7 @@ class PseudopotentialPlanarTrap:
             xs = np.zeros_like(ys) + self.a / 2.
             return -self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
         res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
+        print('Find equilibrium height' + str(res.x))
         return res.x
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):

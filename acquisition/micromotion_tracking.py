@@ -228,11 +228,12 @@ def analyze_trial(datapoint):
     x = [point[0] for point in datapoint]
     y = [point[1] for point in datapoint]
     h = [point[2] for point in datapoint]
-    
+    for i in range(len(h)):
+        print('Height h at point ' + str(i) + ': ' + str(h[i]))
     avg_h_val = round(np.mean(h), 2)
     print(avg_h_val)
-    stdev = np.std(h)
-    print(stdev)
+    var = np.var(h)
+    print(var)
 
     return (round(np.mean(x), 2),
             round(np.mean(y), 2),
