@@ -257,6 +257,7 @@ def plot_c2m_hist(config = get_default_config()):
     for file_name in files:
         c2m = get_data(filename = (str(foldername) + '/' + str(file_name)))
         c2m_values.append(c2m)
+    print(np.std(c2m_values))
     plt.figure()
     plt.hist(c2m_values, edgecolor='black', bins=22, range=(-0.003, 0), color=COLORS['main'])
     plt.axvline(x=-0.0025, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
@@ -269,11 +270,11 @@ def plot_c2m_hist(config = get_default_config()):
 
 if __name__ == "__main__":
     config = FigureParameterConfig()
-    y_cuts_panel()
-    e_field_panel()
-    potential_energy_panel()
-    plot_escape(figsize=(3.5, 3))
-    plot_height_fit(figsize=(2.5, 3), include_gaps=True)
-    plot_height_and_micro()
+    #y_cuts_panel()
+    #e_field_panel()
+    #potential_energy_panel()
+    # plot_escape(figsize=(3.5, 3))
+    # plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    # plot_height_and_micro()
     plot_c2m_hist()
     plt.show()
