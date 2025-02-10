@@ -167,6 +167,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
     trap = get_default_trap()
     trap.v_dc = -(dc_voltages[0] - v_min)
     print(trap.v_dc)
+    print(null_height)
+    print(null_volt)
     delta_y_gradient_calc = 1.E-6
     gradient_at_null = ((trap.u_dc(trap.a / 2, y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
                         delta_y_gradient_calc)
@@ -175,7 +177,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
     gradient_at_null_high = ((trap.u_dc(trap.a / 2., y_min + trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc + trap.v_error)) / delta_y_gradient_calc)
     
     trap.charge_to_mass = g / gradient_at_null
-
+    c2m1 = g / gradient_at_null
     
     
     y0_2 = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
@@ -201,7 +203,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
 
     y0_1 = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
 
-
+    c2m2 = trap.charge_to_mass
     '''
     print(np.size(y0))
     print(y0)
@@ -213,7 +215,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
     chi2_extr = chi2(y0, y0_2, sigma,  dof=(np.size(y0) - len(parameters)))
     print('chi2_fit = ' + str(chi2_fit))
     print('chi2_extr = ' + str(chi2_extr))
-
+    print('Charge-to-mass 1: ' + str(c2m1))
+    print('Charge-to-mass 2: ' + str(c2m2))
     
    
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')

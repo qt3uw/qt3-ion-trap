@@ -145,6 +145,7 @@ def main():
 
     if datatype == "folder":
         for file_name in files:
+            print(file_name)
             full_file_path = os.path.join(config.input, file_name)
             tuples_list = load_data(full_file_path)
 
@@ -176,7 +177,10 @@ def main():
                 file_name = os.path.basename(config.input)
                 cut_file_name = file_name.replace('.txt', '')
                 print('\nThe data has been saved to "' + "data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt" + '".')
-
+    print(len(charge_to_mass))
+    print(charge_to_mass)
+    print(len(rf_height_vals))
+    print(rf_height_vals)
 
 if __name__ == "__main__":
     main()
