@@ -300,6 +300,7 @@ class PseudopotentialPlanarTrap:
         y0 = []
         for v_dc in dc_voltages:
             self.v_dc = v_dc
+            print(v_dc)
             y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
 
         self.v_dc = dc_initial
