@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 import os
 import statistics as sts
 from pseudopotential import PseudopotentialPlanarTrap
+from uncertainties import ufloat
 
 
 class ParameterConfig:
     def __init__(self):
         self.input = "data/raw_micromotion"              # File or directory to be analyzed
         self.file_to_print = "8-18_Trial18_data.txt"     # Specific trial to print data from
-        self.output_data = True                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
-        self.print_stats = True                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
+        self.output_data = False                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
+        self.print_stats = False                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
         self.points_taken = 12                           # Number of points used to fit quadratic for RF null identification (point of least micromotion)
 
 
@@ -63,6 +64,7 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
     :return minvolt_raw: Voltage at which micromotion is minimized (RF null)
     :return c2mval: Calculated charge-to-mass ratio
     '''
+    escape_voltage = ufloat(((2 * voltage[-1] + 5) / 2), (0.0005*voltage[-1]) + 2.5)
     full_indices = sorted(range(len(micromotion)), key=micromotion.__getitem__)
     indices = full_indices[0:config.points_taken]
     smallest_voltage = [voltage[i] for i in indices]
@@ -90,7 +92,7 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
         print(f'Specified Trial Q/m = {c2mval[0]}')
         print(f'Specified Trial RF Height = {RF_height[0]}')
 
-    return RF_height, minvolt_raw, c2mval
+    return RF_height, minvolt_raw, c2mval, escape_voltage
 
 
 def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
@@ -142,7 +144,7 @@ def main():
     except NotADirectoryError:
         datatype = "file"
         pass
-
+    escape_voltage_list = []
     if datatype == "folder":
         for file_name in files:
             full_file_path = os.path.join(config.input, file_name)
@@ -150,7 +152,8 @@ def main():
 
             voltage, height, micromotion = extract_data(tuples_list)
 
-            RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, config.file_to_print)
+            RF_height, minvolt_raw, c2mval, escape_voltage = analyze_data(micromotion, voltage, height, file_name, config.file_to_print)
+            escape_voltage_list.append(escape_voltage)
 
             rf_height_vals.append(RF_height)
             c2mval_float = float(np.asarray(c2mval[0]))
@@ -160,6 +163,12 @@ def main():
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list)
+        uncertainties_list = []
+        for i in range(len(escape_voltage_list)):
+            uncertainties_list.append((escape_voltage_list[i].s)**2)
+        sqrt_arg = sum(uncertainties_list)
+        escape_voltage_uncertainty = np.sqrt((sqrt_arg/len(uncertainties_list)))
+        print("escape voltage uncertainty: " + str(escape_voltage_uncertainty))
     if datatype == "file":
         config.file_to_print = config.input
         with open(config.input, 'r') as file:
