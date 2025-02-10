@@ -187,7 +187,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
         l2 = np.sum((y0 - y0_model) ** 2)
         return l2
     def chi2(y_exp, y_regr, sigma):
-        return np.divide(np.sum(np.square(np.divide((y_exp - y_regr), [sigma_i+.00001 for sigma_i in sigma]))), 14)
+        return np.divide(np.sum(np.square(np.divide((y_exp - y_regr), [sigma_i+.00001 for sigma_i in sigma]))), 1)
     trap.v_dc = 0
     res = minimize(merit_func, guesses, bounds=bounds)
    
@@ -212,9 +212,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), sigma = [1], file_name 
     print('gamma_2 = ' + str())
     print('chi2_extr = ' + str(chi2_extr))
     
-    '''
+    
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
-    '''
     plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
     method_1, = ax.plot(dc_voltages_2[47:], y0_meas * 1.E3, color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
