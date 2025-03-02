@@ -7,22 +7,23 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class MicromotionTrackingConfig:
     def __init__(self):
-        self.video_file = "acquisition/ExampleMicromotion.avi"
+        self.video_file = "acquisition/Trial_2_02-28-2025-02282025015319-0000.avi"
+        # self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 1600            # Defines starting frame. ONLY FOR DEBUGGING
+        self.start_frame = 10         # Defines starting frame. ONLY FOR DEBUGGING
         self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
         self.bin_thresh = 26            # Binary threshold for object detection
-        self.x_range = (200, 900)       # x-axis frame of interest limits
-        self.y_range = (554, 1000)      # y-axis frame of interest limits
-        self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
+        self.x_range = (75, 1350)       # x-axis frame of interest limits
+        self.y_range = (340, 1000)      # y-axis frame of interest limits
+        self.bottom_bar = 60         # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
-        self.pixel_to_mm = 0.01628      # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
+        self.pixel_to_mm = 1 / (56.0630)      # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
 
 
 def get_default_config():
@@ -223,18 +224,18 @@ def analyze_trial(datapoint):
     :return: Tuple reflecting the average of the tuples in datapoint
     """
     if not datapoint:
-        return 0, 0, 0
+        return np.array([0, 0]), np.array([0, 0]), np.array([0, 0])
         
     x = [point[0] for point in datapoint]
     y = [point[1] for point in datapoint]
     h = [point[2] for point in datapoint]
     
-    return (round(np.mean(x), 2),
-            round(np.mean(y), 2),
-            round(np.mean(h), 2))
+    return (np.array([np.mean(x), np.std(x)]),
+            np.array([np.mean(y), np.std(y)]),
+            np.array([np.mean(h), np.std(h)]))
 
 
-def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_default_config()):
+def save_data(y, h, frame_num, total_frames, datapoint_num, config = get_default_config()):
     """
     Puts height and micromotion data (in millimeters, based on pixel_to_mm parameter) into text file
     :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
@@ -258,12 +259,12 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_def
                 conversion = 1
             else:
                 conversion = config.pixel_to_mm
-            yav_mm = yav * conversion
-            hav_mm = hav * conversion
-            if (yav_mm, hav_mm) != (0, 0):
-                f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            y_mm = y * conversion
+            h_mm = h * conversion
+            if (y_mm[0], h_mm[0]) != (0, 0):
+                f.write('[' + str(voltage) + ', ' + '[' + str(round(y_mm[0], 4)) + ', ' + str(round(y_mm[1], 6)) + ']' + ', ' + '[' + str(round(h_mm[0], 4)) + ', '+ str(round(h_mm[1], 6)) + ']]\n' )
                 percentage = (frame_num / total_frames) * 100
-                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion: ' + str(round(percentage, 0)) + '%, ' + str(frame_num))
+                print("Saved: " + '[' + str(voltage) + ', ' + '[' + str(round(y_mm[0], 2)) + ', ' + str(round(y_mm[1], 3)) + ']' + ', ' + '[' + str(round(h_mm[0], 2)) + ', '+ str(round(h_mm[1], 3)) + ']]' + '; Completion: ' + str(round(percentage, 0)) + '%, ' + str(frame_num))
             else:
                 print('No Particle Detected')
     except FileNotFoundError:
@@ -272,12 +273,12 @@ def save_data(yav, hav, frame_num, total_frames, datapoint_num, config = get_def
                 conversion = 1
             else:
                 conversion = config.pixel_to_mm
-            yav_mm = yav * conversion
-            hav_mm = hav * conversion
-            if (yav_mm, hav_mm) != (0, 0):
-                f.write('[' + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + ']\n')
+            y_mm = y * conversion
+            h_mm = h * conversion
+            if (y_mm[0], h_mm[0]) != (0, 0):
+                f.write('[' + str(voltage) + ', ' + '[' + str(round(y_mm[0], 4)) + ', ' + str(round(y_mm[1], 6)) + ']' + ', ' + '[' + str(round(h_mm[0], 4)) + ', '+ str(round(h_mm[1], 6)) + ']]\n' )
                 percentage = (frame_num / total_frames) * 100
-                print("Saved: " + str(voltage) + ', ' + str(round(yav_mm, 2)) + ', ' + str(round(hav_mm, 2)) + '; Completion: ' + str(round((percentage), 0)) + '%, ' + str(frame_num))
+                print("Saved: " + '[' + str(voltage) + ', ' + '[' + str(round(y_mm[0], 2)) + ', ' + str(round(y_mm[1], 3)) + ']' + ', ' + '[' + str(round(h_mm[0], 2)) + ', '+ str(round(h_mm[1], 3)) + ']]' + '; Completion: ' + str(round(percentage, 0)) + '%, ' + str(frame_num))
             else: 
                 print('No Particle Detected')
 
@@ -324,8 +325,8 @@ def auto_run(cap, config = get_default_config()):
             collect_data = True
         if frame_num in end_collection_frames:
             collect_data = False
-            xav, yav, hav = analyze_trial(datapoint)
-            save_data(yav, hav, frame_num, total_frames, datapoint_num)
+            x, y, h = analyze_trial(datapoint)
+            save_data(y, h, frame_num, total_frames, datapoint_num)
             datapoint_num = datapoint_num + 1
             datapoint = []
         if collect_data and x != "NaN":
@@ -368,8 +369,9 @@ def main():
 
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap)
-    
+    print(gen_initial_frame(cap))
     frame_num = config.start_frame
+    print(frame_num)
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
             keypoints_prev_frame = []

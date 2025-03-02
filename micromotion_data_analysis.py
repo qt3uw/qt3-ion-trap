@@ -7,8 +7,8 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 class ParameterConfig:
     def __init__(self):
-        self.input = "data/raw_micromotion"              # File or directory to be analyzed
-        self.file_to_print = "8-18_Trial18_data.txt"     # Specific trial to print data from
+        self.input = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial2_data.txt"              # File or directory to be analyzed
+        self.file_to_print = "Trial_2_02-28-2025-02282025015319-0000_data.txt"     # Specific trial to print data from
         self.output_data = True                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
         self.print_stats = True                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
         self.points_taken = 12                           # Number of points used to fit quadratic for RF null identification (point of least micromotion)
@@ -28,11 +28,12 @@ def load_data(file_path):
     with open(file_path, 'r') as file:
         for line in file:
             tuple_str = line.strip()
-            if tuple_str == "[NaN, NaN, NaN]":
+            if tuple_str == "[NaN, [NaN, NaN], [NaN, NaN], NaN]":
                 tuples_list.append([0, 0, 0])
             else:
-                tuple_data = eval(tuple_str)
-                tuples_list.append(tuple_data)
+                tuple_data= eval(tuple_str)
+                print(tuple_data[0])
+                tuples_list.append([tuple_data[:][0], tuple_data[:][1][0],tuple_data[:][2][0]])
     return tuples_list
 
 
@@ -45,9 +46,9 @@ def extract_data(tuples_list):
     voltage, height, micromotion = [], [], []
 
     for i in range(len(tuples_list)):
-        voltage.append(tuples_list[i][0])
-        height.append(tuples_list[i][1])
-        micromotion.append(tuples_list[i][2] / 2)
+            voltage.append(tuples_list[i][0])
+            height.append(tuples_list[i][1])
+            micromotion.append(tuples_list[i][2] / 2)
     return voltage, height, micromotion
 
 
@@ -149,7 +150,7 @@ def main():
             tuples_list = load_data(full_file_path)
 
             voltage, height, micromotion = extract_data(tuples_list)
-
+            print(micromotion)
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, config.file_to_print)
 
             rf_height_vals.append(RF_height)
@@ -165,6 +166,7 @@ def main():
         with open(config.input, 'r') as file:
             tuples_list = load_data(config.input)
             voltage, height, micromotion = extract_data(tuples_list)
+            print(micromotion)
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, config.input, config.file_to_print)
             c2mval_float = float(np.asarray(c2mval[0]))
             if config.print_stats:
