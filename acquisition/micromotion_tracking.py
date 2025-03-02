@@ -7,7 +7,7 @@ from tracking_methods import get_frame, set_up_detector, setup_tracking
 
 class MicromotionTrackingConfig:
     def __init__(self):
-        self.video_file = "acquisition/Trial_2_02-28-2025-02282025015319-0000.avi"
+        self.video_file = "acquisition/02-28-2025_Trial4.avi"
         # self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
         self.start_frame = 10         # Defines starting frame. ONLY FOR DEBUGGING
@@ -16,10 +16,10 @@ class MicromotionTrackingConfig:
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
-        self.bin_thresh = 26            # Binary threshold for object detection
-        self.x_range = (75, 1350)       # x-axis frame of interest limits
-        self.y_range = (340, 1000)      # y-axis frame of interest limits
-        self.bottom_bar = 60         # Erasure rectangle, measured in pixels from the bottom edge
+        self.bin_thresh = 26           # Binary threshold for object detection
+        self.x_range = (0, 1616)       # x-axis frame of interest limits
+        self.y_range = (340, 750)      # y-axis frame of interest limits
+        self.bottom_bar = 50        # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge

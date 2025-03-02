@@ -7,8 +7,8 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 class ParameterConfig:
     def __init__(self):
-        self.input = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial2_data.txt"              # File or directory to be analyzed
-        self.file_to_print = "Trial_2_02-28-2025-02282025015319-0000_data.txt"     # Specific trial to print data from
+        self.input = "data/raw_micromotion/second_round_data_collection"              # File or directory to be analyzed
+        self.file_to_print = "02-28-2025_Trial4_data.txt"     # Specific trial to print data from
         self.output_data = True                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
         self.print_stats = True                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
         self.points_taken = 12                           # Number of points used to fit quadratic for RF null identification (point of least micromotion)
@@ -32,7 +32,6 @@ def load_data(file_path):
                 tuples_list.append([0, 0, 0])
             else:
                 tuple_data= eval(tuple_str)
-                print(tuple_data[0])
                 tuples_list.append([tuple_data[:][0], tuple_data[:][1][0],tuple_data[:][2][0]])
     return tuples_list
 

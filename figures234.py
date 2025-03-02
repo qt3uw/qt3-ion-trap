@@ -28,7 +28,7 @@ class FigureParameterConfig:
     def __init__(self):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        self.graph_file_name = 'data/raw_micromotion/Trial_2_02-28-2025-02282025015319-0000_data.txt'     # File to plot height & micromotion vs. voltage graphs for
+        self.graph_file_name = 'data/raw_micromotion/second_round_data_collection/02-28-2025_Trial2_data.txt'     # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
@@ -118,11 +118,13 @@ def get_data(filename = None, config = get_default_config()):
             for line in file:
                 line = line.strip().replace('[', '').replace(']', '')
                 data_list.append([float(value) for value in line.split(',')])
-            rawdata = np.array(data_list)
+            rawdata = np.array(data_list)[ : , [0, 1, 3]]
             rawdata = rawdata[:-1]
+            print(rawdata)
             dc_voltages = rawdata[:, 0]
             y_spread = rawdata[:, 2]
             y0 = rawdata[:, 1]
+            print(rawdata[np.argmin(rawdata[:, 2])])
             v_min, y_min, micro_min = rawdata[np.argmin(rawdata[:, 2])]
         with open(analyzedfilename) as file:
             for line in file:
