@@ -29,7 +29,7 @@ class FigureParameterConfig:
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
         self.graph_file_name = 'data/raw_micromotion/second_round_data_collection/02-28-2025_Trial17_data.txt'     # File to plot height & micromotion vs. voltage graphs for
-        self.hist_folder_name = 'second_round_data_collection'                     # Folder to extract charge-to-mass values from and graph the histogram
+        self.hist_folder_name = 'data/analyzed_micromotion/second_round_data_collection'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
 
@@ -164,21 +164,30 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     trap.v_dc = v_min
     print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
-    gradient_at_null = ((trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
+    
+    # Calculate the gradient with clearer sign convention
+    gradient_at_null = ((trap.u_dc(trap.a / 2., y_min + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, y_min)) /
                         delta_y_gradient_calc)
-    gradient_at_null_low = ((trap.u_dc(trap.a / 2., y_min - trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc - trap.v_error)) /
-                        delta_y_gradient_calc)
-    gradient_at_null_high = ((trap.u_dc(trap.a / 2., y_min + trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc + trap.v_error)) / delta_y_gradient_calc)
-    trap.charge_to_mass = g / gradient_at_null
+    
+    # Print debugging information
+    print(f'Gradient at RF null: {gradient_at_null:.3e} V/m')
+    print(f'v_dc at null: {v_min:.1f} V')
+    
+    # Since gravity pulls down, a positive gradient (pushing up for negative charge) balances gravity
+    # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
+    # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
+    trap.charge_to_mass = -g / abs(gradient_at_null) * np.sign(gradient_at_null)
+    
+    print(f"q/m from RF null: {trap.charge_to_mass:.3e}")
     print("q/m from rf null: " + str(trap.charge_to_mass))
 
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
-    print('v_and:' + str(v_ans))
+ 
     y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps))
     method_2, = ax.plot(dc_voltages,(y0_model * 1.E3), color='k', label='Method 2')
-    trap.charge_to_mass = g / gradient_at_null_low
+
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
-    trap.charge_to_mass = g / gradient_at_null_high
+
     print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
     guesses = [trap.__dict__[param] for param in parameters]
 
@@ -197,8 +206,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         print(f'{param}: {res.x[i]}')
         trap.__dict__[param] = res.x[i]
     trap.charge_to_mass = res.x
-    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
-    print(len(y_std) - len(y0))
+    print(trap.charge_to_mass)
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
     delta_y = 0.0164
     sys_err = np.ones_like(y_std) * delta_y + y_std
     chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
@@ -206,11 +215,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     print('chi_2 value (fit): ' + str( chi2_fit))
     print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
-    print(y0)
-    print(y0_meas)
-    print(y0_model)
-    ax.plot(dc_voltages,(y0 * 1.E3), marker='.', linestyle='None', color='indigo')
-    plt.errorbar(dc_voltages,(y0 * 1.E3), yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
+    ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
+    plt.errorbar(dc_voltages,y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
     method_1, = ax.plot(dc_voltages,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
@@ -280,9 +286,10 @@ def plot_c2m_hist(config = get_default_config()):
     foldername = config.hist_folder_name
     for file_name in files:
         c2m = get_data(filename = (str(foldername) + '/' + str(file_name)))
-        c2m_values.append(c2m)
+        c2m_values.append(-c2m)
+        print(c2m)
     plt.figure()
-    plt.hist(c2m_values, edgecolor='black', bins=22, range=(-0.003, 0), color=COLORS['main'])
+    plt.hist(c2m_values, edgecolor='black', bins=18, range=(-0.003, 0), color=COLORS['main'])
     plt.axvline(x=-0.0025, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.axvline(x=-0.0015, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
@@ -293,11 +300,15 @@ def plot_c2m_hist(config = get_default_config()):
 
 if __name__ == "__main__":
     config = FigureParameterConfig()
+    """
     y_cuts_panel()
     e_field_panel()
     potential_energy_panel()
     plot_escape(figsize=(3.5, 3))
+    """
     plot_height_fit(figsize=(2.5, 3), include_gaps=True)
+    """
     plot_height_and_micro()
     plot_c2m_hist()
+    """
     plt.show()
