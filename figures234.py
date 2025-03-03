@@ -28,7 +28,7 @@ class FigureParameterConfig:
     def __init__(self):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        self.graph_file_name = 'data/raw_micromotion/second_round_data_collection/02-28-2025_Trial5_data.txt'     # File to plot height & micromotion vs. voltage graphs for
+        self.graph_file_name = 'data/raw_micromotion/second_round_data_collection/02-28-2025_Trial17_data.txt'     # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
