@@ -16,10 +16,10 @@ class ShuttleTrackingConfig:
         self.x_start = 0
         self.y_start = 650
         self.x_end = 1616
-        self.y_end = 815
+        self.y_end 
 
         # image processing
-        self.bin_thresh = 37
+        self.bin_thresh = 40
         self.cleaning_kernel = np.ones((2, 2), np.uint8)
         self.filling_kernel = np.ones((4, 2), np.uint8)
 

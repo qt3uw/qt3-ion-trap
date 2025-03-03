@@ -506,7 +506,7 @@ class PseudopotentialPlanarTrap:
         plt.colorbar(cax)
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None):
+    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None, mult_range = range(1, 100, 10)):
         """
         A graph of the potential energy (divided by charge) of the AC electrodes in terms of the pseudopotential,
             DC potential energy,  gravitational potential energy and the total sum of these potential energies.
@@ -520,23 +520,39 @@ class PseudopotentialPlanarTrap:
         if x0 is None:
             x0 = self.a / 2
         x = np.zeros_like(y) + x0
-
-
-        u_grav = self.u_gravity(x, y)
-        u_dc = self.u_dc(x, y)
-        u_ac = self.u_ac(x, y, include_gaps=include_gaps)
-        linewidth = 1.5
         fig, ax = plt.subplots(1, 1, figsize=figsize)
-        ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
-        # ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
-        ax.plot(y * 1.E3, -u_dc, label='DC',  color='indianred',linewidth=linewidth)
-        ax.plot(y * 1.E3, -u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
-        ax.plot(y * 1.E3, -(u_ac + u_dc + u_grav), label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
-        ax.set_ylim([-10, -np.min(u_ac + u_dc + u_grav)])
+        
+        fig, ax = plt.subplots(1, 2, figsize=figsize)
+        for i in mult_range:
+            self.charge_to_mass = -10E-3
+            self.v_dc = -i * 100
+            linewidth = 1.5
+            u_grav = self.u_gravity(x, y)
+            u_dc = self.u_dc(x, y)
+            u_ac = self.u_ac(x, y, include_gaps=include_gaps)
+            u_total = self.u_total(x, y)
+            #ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
+            #ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
+            ax[0].plot(y * 1.E3, u_dc, label='DC',  color='indianred',linewidth=linewidth)
+            # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
+            ax[0].plot(y * 1.E3, u_total, label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
+            self.v_dc = -100
+            self.charge_to_mass = -i * 10E-3
+            u_grav = self.u_gravity(x, y)
+            u_dc = self.u_dc(x, y)
+            u_ac = self.u_ac(x, y, include_gaps=include_gaps)
+            u_total = self.u_total(x, y)
+            ax[1].plot(y * 1.E3, u_dc, label='DC',  color='indianred',linewidth=linewidth)
+            # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
+            ax[1].plot(y * 1.E3, u_total, label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
+
+        ax[0].set_ylim([-10, 10*np.max(u_ac + u_dc + u_grav)])
+        ax[1].set_ylim([-10, 10*np.max(u_ac + u_dc + u_grav)])
         fig.legend()
-        ax.set_xlabel('y (mm)')
-        ax.grid(True)
-        ax.set_ylabel('-potential energy / charge (J/C)')
+        ax[0].set_xlabel('y (mm)')
+    
+
+        ax[0].set_ylabel('-potential energy / charge (J/C)')
         return fig, ax
 
 def plot_trap_escape_vary_dc(trap: PseudopotentialPlanarTrap, dc_values=np.linspace(0., 320., num=16),
@@ -586,7 +602,7 @@ def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
 
 if __name__ == "__main__":
     trap = PseudopotentialPlanarTrap()
-    # compare_model_gaps_versus_no_gaps(trap)
+    #compare_model_gaps_versus_no_gaps(trap)
     # plot_trap_escape_vary_dc(trap, include_gaps=True)
     # get_data()
     # trap.v_rf = 1000.

@@ -56,11 +56,16 @@ def y_cuts_panel():
     config = get_default_config()
     trap = get_default_trap()
     trap.v_dc = -80.
-    fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
+    fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(12, 7), mult_range = range(1, 20))
     fig.tight_layout()
     os.makedirs(config.save_path[0], exist_ok =True)
-    fig.savefig(config.save_path[0] +"fig2-y-cuts.pdf")
-
+    """
+    for i in range(1, 40):
+        if i != 0:
+            fig.savefig(config.save_path[0] +"fig2-y-cuts" + str(i) + ".pdf")
+            trap.charge_to_mass = i * (-1.077E-3)
+            trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
+    """
 
 def e_field_panel():
     """
@@ -402,13 +407,13 @@ def plot_c2m_hist(config = get_default_config()):
 
 if __name__ == "__main__":
  
-    """
+    
     y_cuts_panel()
-    e_field_panel()
-    potential_energy_panel()
-    plot_escape(figsize=(3.5, 3))
-    """
-    plot_height_fit()
+    # e_field_panel()
+    # potential_energy_panel()
+    # plot_escape(figsize=(3.5, 3))
+   
+    # plot_height_fit()
     plt.show()
              
 
