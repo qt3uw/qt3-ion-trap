@@ -33,7 +33,7 @@ def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
 class PseudopotentialPlanarTrap:
     central_electrode_width: float = 3.175E-3
     ac_electrode_width: float = 4.15831E-3
-    v_rf: float = 0.5 * 50 * 75
+    v_rf: float = 50 * 20 / np.sqrt(2)
     v_dc: float = -200.
     charge_to_mass: float = 6.8E-4
     freq_rf: float = 60.

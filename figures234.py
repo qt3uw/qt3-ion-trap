@@ -29,7 +29,7 @@ class FigureParameterConfig:
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
         self.graph_file_name = 'data/raw_micromotion/second_round_data_collection/02-28-2025_Trial17_data.txt'     # File to plot height & micromotion vs. voltage graphs for
-        self.hist_folder_name = 'data/analyzed_micromotion'                     # Folder to extract charge-to-mass values from and graph the histogram
+        self.hist_folder_name = 'second_round_data_collection'                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
 
@@ -43,7 +43,7 @@ def get_default_trap():
     :return: A trap object from the PseudopotentialPlanarTrap class
     """
     trap = PseudopotentialPlanarTrap()
-    trap.v_rf = -20 * 50 * .5 * np.sqrt(2)
+    trap.v_rf = -20 * 50 * np.sqrt(2)
     trap.charge_to_mass = -1.077E-3
     return trap
 
@@ -113,27 +113,32 @@ def get_data(filename = None, config = get_default_config()):
     basefilename = os.path.basename(datafile)
     cut_basefilename = basefilename.replace('.txt', '')
     if filename == None:
-        analyzedfilename = 'data/analyzed_micromotion/' + str(cut_basefilename) + '_analyzed.txt'
+        analyzedfilename = 'data/analyzed_micromotion/second_round_data_collection/' + str(cut_basefilename) + '_analyzed.txt'
         with open(datafile, 'r') as file:
             for line in file:
                 line = line.strip().replace('[', '').replace(']', '')
                 data_list.append([float(value) for value in line.split(',')])
             rawdata = np.array(data_list)[ : , [0, 1, 3]]
-            rawdata = rawdata[:-1]
-            print(rawdata)
+            std_data = np.array(data_list)[ : , [2, 4]]
+            rawdata = rawdata[::-1]
+
             dc_voltages = rawdata[:, 0]
             y_spread = rawdata[:, 2]
             y0 = rawdata[:, 1]
-            print(rawdata[np.argmin(rawdata[:, 2])])
+            print("y0: " + str(y0))
             v_min, y_min, micro_min = rawdata[np.argmin(rawdata[:, 2])]
+            y_std = std_data[:, 0]
+            spread_std = std_data[:, 1]
+            print("y_std: " + str(y_std))
+            print("micro_std: " + str(spread_std))
         with open(analyzedfilename) as file:
             for line in file:
                 line = line.strip()
                 analyzed_data = eval(line)
                 c2m, null_volt, null_height = analyzed_data[0], analyzed_data[1], analyzed_data[2]
-        return -dc_voltages, y0 * 1.E-3, y_spread * 1.E-3, v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height
+        return -dc_voltages, y0 * 1.E-3, y_std *  1.E-3, y_spread * 1.E-3, spread_std * 1.E-3, -v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height
     else:
-        analyzedfilename = 'data/analyzed_micromotion/' + str(cut_basefilename) + '.txt'
+        analyzedfilename = 'data/analyzed_micromotion/second_round_data_collection/' + str(cut_basefilename) + '.txt'
     with open(analyzedfilename) as file:
         for line in file:
             line = line.strip()
@@ -154,9 +159,9 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     config = get_default_config()
     parameters = ['charge_to_mass']
     bounds = [(-1.E-2, -1.E-4)]
-    dc_voltages, y0, yspread, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
+    dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    trap.v_dc = -v_min
+    trap.v_dc = v_min
     print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
     gradient_at_null = ((trap.u_dc(trap.a / 2., y_min) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc)) /
@@ -164,16 +169,16 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
     gradient_at_null_low = ((trap.u_dc(trap.a / 2., y_min - trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc - trap.v_error)) /
                         delta_y_gradient_calc)
     gradient_at_null_high = ((trap.u_dc(trap.a / 2., y_min + trap.v_error) - trap.u_dc(trap.a / 2, y_min - delta_y_gradient_calc + trap.v_error)) / delta_y_gradient_calc)
-    trap.charge_to_mass = -g / gradient_at_null
+    trap.charge_to_mass = g / gradient_at_null
     print("q/m from rf null: " + str(trap.charge_to_mass))
-    trap.v_dc = 1
+
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
     print('v_and:' + str(v_ans))
-    y0_model = (trap.get_height_versus_dc_voltages(-dc_voltages[::-1] - 40, include_gaps=include_gaps)) - y_min / 2
-    method_2, = ax.plot(-dc_voltages[::-1] - 190,(y0_model * 1.E3), color='k', label='Method 2')
-    trap.charge_to_mass = -g / gradient_at_null_low
+    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps))
+    method_2, = ax.plot(dc_voltages,(y0_model * 1.E3), color='k', label='Method 2')
+    trap.charge_to_mass = g / gradient_at_null_low
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
-    trap.charge_to_mass = -g / gradient_at_null_high
+    trap.charge_to_mass = g / gradient_at_null_high
     print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
     guesses = [trap.__dict__[param] for param in parameters]
 
@@ -185,25 +190,28 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3)):
         return l2
 
     def chi_2(y_exp, y_fit, sigma):
-        return np.sum(np.divide(np.square(y_exp - y_fit), sigma))
+        return np.sum(np.divide(np.square(y_exp - y_fit), sigma**2))
 
     res = minimize(merit_func, guesses, bounds=bounds)
     for i, param in enumerate(parameters):
         print(f'{param}: {res.x[i]}')
         trap.__dict__[param] = res.x[i]
     trap.charge_to_mass = res.x
-    y0_meas = trap.get_height_versus_dc_voltages(-dc_voltages[::-1] - 40, include_gaps=include_gaps) - y_min / 2
-
-
-    # print('chi_2 value (fit): ' + str(chi_2(y0, y0_meas, 0.0164935065**2)))
-    # print('chi_2 value (extrapolation): ' + str(chi_2(y0, y0_model, 0.0164935065**2)))
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
+    print(len(y_std) - len(y0))
+    delta_y = 0.0164
+    sys_err = np.ones_like(y_std) * delta_y + y_std
+    chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
+    chi2_extr = chi_2(y0, y0_model, y_std + sys_err)
+    print('chi_2 value (fit): ' + str( chi2_fit))
+    print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
     print(y0)
     print(y0_meas)
     print(y0_model)
-    ax.plot(-dc_voltages[::-1] - 190,(y0_model * 1.E3), marker='.', linestyle='None', color='indigo')
-    plt.errorbar(-dc_voltages[::-1] - 190,(y0_model * 1.E3), yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
-    method_1, = ax.plot(-dc_voltages[::-1] - 190,(y0_model * 1.E3), color='k', linestyle='--', label='Method 1')
+    ax.plot(dc_voltages,(y0 * 1.E3), marker='.', linestyle='None', color='indigo')
+    plt.errorbar(dc_voltages,(y0 * 1.E3), yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
+    method_1, = ax.plot(dc_voltages,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
     ax.grid(True)
@@ -235,7 +243,7 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     '''
     Plots and labels the height and micromotion graphs
     '''
-    voltage, height, micromotion, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data()
+    voltage, height, height_std, micromotion, micro_std, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data()
     fig, (ax2, ax1) = plt.subplots(2, 1, sharex=True, figsize=(8, 7), height_ratios=[2, 1])
 
     ax1.errorbar(-voltage, micromotion*1e3, yerr=config.pixel_to_mm, color=COLORS['error'], fmt='', capsize=4, alpha=1,
@@ -245,14 +253,14 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     ax1.set_ylabel('Amplitude (mm)')
     ax1.axvline(minvolt_raw, color='black', alpha=0.6)
     ax1.annotate(f'RF null = {int(minvolt_raw)}',
-                 (int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw - 40, 0.25),
+                 (int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw, 0.25),
                  fontsize=18)
 
     ax2.scatter(-voltage, height*1e3, color=COLORS['main'])
     ax2.errorbar(-voltage, height*1e3, yerr=micromotion*1e3, fmt='', capsize=0, color=COLORS['main'], alpha=0.4, elinewidth=4)
     ax2.set_ylabel('Height (mm)')
     ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)})',
-                 (minvolt_raw, RF_height), (minvolt_raw - 40, RF_height - 0.6), fontsize=18)
+                 (minvolt_raw, RF_height), (minvolt_raw, RF_height), fontsize=18)
     ax2.axhline(RF_height, color='black', alpha=0.6)
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
