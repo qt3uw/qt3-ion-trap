@@ -256,7 +256,7 @@ class PseudopotentialPlanarTrap:
         :param y: y-coordinate
         :return: Total potential energy of the ion at (x, y)
         """
-        return self.u_gravity(x, y) + self.u_dc(x, y, include_gaps=include_gaps) + self.u_ac(x, y, include_gaps=include_gaps)
+        return  self.u_gravity(x, y) +  self.u_dc(x, y, include_gaps=include_gaps) + self.u_ac(x, y, include_gaps=include_gaps)
 
     def plot_potential_at_surface(self, num=256):
         """
