@@ -9,17 +9,17 @@ from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_
 class ShuttleTrackingConfig:
     def __init__(self):
         # video settings
-        self.video_path = 'ShuttleBackForth.avi'
-        self.start_frame_num = 100
+        self.video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi'
+        self.start_frame_num = 10
 
         # regions of interest
         self.x_start = 0
-        self.y_start = 550
-        self.x_end = 1600
-        self.y_end = 700
+        self.y_start = 650
+        self.x_end = 1616
+        self.y_end = 815
 
         # image processing
-        self.bin_thresh = 45
+        self.bin_thresh = 37
         self.cleaning_kernel = np.ones((2, 2), np.uint8)
         self.filling_kernel = np.ones((4, 2), np.uint8)
 
@@ -32,16 +32,16 @@ class ShuttleTrackingConfig:
 
         # tracking settings
         self.store_height_data = False
-        self.contour_det = False
+        self.contour_det = True
         self.collect_position = True
-        self.all_indices_of_interest = []
+        self.all_indices_of_interest = [i for i in range(0, 90)]
 
         # image capture settings
         self.image_save = True
         self.image_save_times = [0, 2, 4, 6]
 
         # data storage
-        self.data_storage = open('shuttle_data.txt', 'a')
+        self.data_storage = open('split_data.txt', 'a')
 
 # --------------------------- Video Processing Functions ---------------------------------------------- #
 

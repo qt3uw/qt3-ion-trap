@@ -178,7 +178,7 @@ ax1 = fig.add_subplot(1, 1, 1)
 # Getting the motion data from the text file
 frameOffset = 100
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
-    'data/shuttling/TruncatedShuttleData.txt', frameOffset, 'zero')
+    'data/shuttling/shuttle_data.txt', frameOffset, 'zero')
 print(maxVel)
 
 # Building the graph
