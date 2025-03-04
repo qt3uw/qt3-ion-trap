@@ -30,6 +30,7 @@ def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
     cs = mpl.colormaps[cmap]
     return [cs(x) for x in xs]
 
+
 @dataclass
 class PseudopotentialPlanarTrap:
     central_electrode_width: float = 3.175E-3
@@ -275,7 +276,7 @@ class PseudopotentialPlanarTrap:
         figv.legend()
         return figv, axv
 
-    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True):
+    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True, dc_0 = 0):
         """
         Determines the ion height above the trapping surface with or without the inclusion of linear interpolation.
         :param ystep: The numerical dy
@@ -286,8 +287,8 @@ class PseudopotentialPlanarTrap:
         def merit_func(y):
             ys = np.linspace(y-ystep, y+ystep, num=3)
             xs = np.zeros_like(ys) + self.a / 2.
-            return -self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1]
-        res = minimize_scalar(merit_func, bounds=(0.5E-3, 20.E-3))
+            return -self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1] + (dc_0 / self.charge_to_mass)
+        res = minimize_scalar(merit_func, bounds=(1E-3, 10.E-3))
         return res.x
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
@@ -298,12 +299,19 @@ class PseudopotentialPlanarTrap:
         :return: Ion height (in meters) above trap surface
         """
         dc_initial = self.v_dc
+        dc_0 = dc_voltages[0]
         y0 = []
-        for v_dc in dc_voltages:
-            self.v_dc = v_dc
-            y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
+        
+        for i in range(len(dc_voltages)):
+            self.v_dc = dc_voltages[i]
+            
+            y0.append(self.find_equilibrium_height(include_gaps=include_gaps, dc_0 = dc_0))
 
         self.v_dc = dc_initial
+        
+        print("Hello")
+        print(y0)
+        print("Goodbye")
         return np.array(y0)
 
     def draw_electrodes(self, ax, include_gaps=True):
@@ -507,7 +515,7 @@ class PseudopotentialPlanarTrap:
         plt.colorbar(cax)
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(-30.E-3, 30.E-3), num=200, x0=None, include_gaps=True, figsize=None, mult_range = range(0, 100, 20)):
+    def plot_y_cuts(self, yrange=(-200.E-3, 200.E-3), num=1000, x0=None, include_gaps=True, figsize=None, mult_range = range(0, 100, 20)):
         """
         A graph of the potential energy (divided by charge) of the AC electrodes in terms of the pseudopotential,
             DC potential energy,  gravitational potential energy and the total sum of these potential energies.
@@ -524,39 +532,49 @@ class PseudopotentialPlanarTrap:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         fig, ax = plt.subplots(1, 2, figsize=figsize)
-        viridis = get_sequential_colormap(num=10)
-        for i in range(1, 10):
-            self.charge_to_mass = -50E-3
-            self.v_dc = -i * 100
+        i_range = range(-150, 150, 10)
+        viridis = get_sequential_colormap(len(i_range)+int(150/5))
+        for i in i_range:
+            print(i)
+            self.charge_to_mass = -1.4E-3
+            self.v_dc = -i
             linewidth = 1.5
             u_grav = self.u_gravity(x, y)
             u_dc = self.u_dc(x, y)
             u_ac = self.u_ac(x, y, include_gaps=include_gaps)
             u_total = self.u_total(x, y)
+   
             #ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
             #ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
-            ax[0].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
-            ax[0].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_dc[math.floor(len(y)/2):-1], label='DC',  color='indianred',linewidth=linewidth)
+            #ax[0].plot(-y[:math.floor(len(y)/2)] * 1.E3, u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
+            # ax[0].plot(y[math.floor(len(y)/2):] * 1.E3, u_dc[math.floor(len(y)/2):], label='DC',  color='indianred',linewidth=linewidth)
             # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
-            ax[0].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_total[:math.floor(len(y)/2)], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
-            ax[0].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_total[math.floor(len(y)/2):-1], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
+            ax[0].plot(y[0:math.ceil(len(y)/2)] * 1.E3, -u_total[math.ceil(len(y)/2):], label='total', color = viridis[int(i/ 10)], linestyle='dashdot',linewidth=linewidth)
+            ax[0].plot(y[math.floor(len(y)/2):] * 1.E3, -u_total[math.floor(len(y)/2):]  , label='total', color = viridis[int((i+ 150)/ 10)], linestyle='dashdot',linewidth=linewidth)
+           
+            
             self.v_dc = -100
-            self.charge_to_mass = -i * 5E-3
+            if i != 0:
+                self.charge_to_mass = -i * 50E-3
+            else:
+                self.charge_to_mass = 1
             u_grav = self.u_gravity(x, y)
             u_dc = self.u_dc(x, y)
             u_ac = self.u_ac(x, y, include_gaps=include_gaps)
             u_total = self.u_total(x, y)
-            ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
-            ax[1].plot(y[:math.floor(len(y)/2):-1] * 1.E3, u_dc[math.floor(len(y)/2):-1], label='DC',  color='indianred',linewidth=linewidth)
+            #ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
+            #ax[1].plot(y[math.floor(len(y)/2):] * 1.E3, u_dc[math.floor(len(y)/2):], label='DC',  color='indianred',linewidth=linewidth)
             # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
             # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
-            ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_total[:math.floor(len(y)/2)], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
-            ax[1].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_total[math.floor(len(y)/2):-1], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
-
-        ax[0].set_ylim([-20*np.max(u_ac + u_dc + u_grav), 20*np.max(u_ac + u_dc + u_grav)])
-        ax[1].set_ylim([-20*np.max(u_ac + u_dc + u_grav), 20*np.max(u_ac + u_dc + u_grav)])
-        ax[0].set_xlim([-20, 20])
-        ax[1].set_xlim([-20, 20])
+            # ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_total[:math.floor(len(y)/2)], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
+            ax[1].plot(y[math.floor(len(y)/2):] * 1.E3, u_total[math.floor(len(y)/2):], label='total', color = viridis[int(-i/5)], linestyle='dashdot',linewidth=linewidth)
+        self.v_dc = 0
+        self.charge_to_mass = -1.4E-3
+        ax[0].plot(y[math.floor(len(y)/2):] * 1.E3, -self.u_total(x[math.floor(len(y)/2):], y[math.floor(len(y)/2):]), label='total', color = "red",linewidth= 1.5 * linewidth)
+        ax[0].set_ylim([-150, 150])
+        ax[1].set_ylim([-150, 150])
+        ax[0].set_xlim([-1, 50])
+        ax[1].set_xlim([-150, 150])
         fig.legend()
         ax[0].set_xlabel('y (mm)')
     

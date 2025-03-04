@@ -127,9 +127,9 @@ def get_data(filename = None, config = get_default_config()):
                 data_list.append([float(value) for value in line.split(',')])
             rawdata = np.array(data_list)[ : , [0, 1, 3]]
             std_data = np.array(data_list)[ : , [2, 4]]
-            rawdata = rawdata[::-1]
-
+            print("Raw data: " + str(rawdata))
             dc_voltages = rawdata[:, 0]
+
             y_spread = rawdata[:, 2]
             y0 = rawdata[:, 1]
             print("y0: " + str(y0))
@@ -168,9 +168,11 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     trap.v_dc = v_min
+    print(dc_voltages)
+    print(y0)
     print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
-    
+
     # Calculate the gradient with clearer sign convention
     gradient_at_null = ((trap.u_dc(trap.a / 2., y_min + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, y_min)) /
                         delta_y_gradient_calc)
@@ -189,8 +191,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
 
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
  
-    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages + 40, include_gaps=include_gaps)) 
-    y0_model =  y0_model - y0_model[-1]
+    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+
     method_2, = ax.plot(dc_voltages,(y0_model * 1.E3), color='k', label='Method 2')
 
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
@@ -214,8 +216,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
         trap.__dict__[param] = res.x[i]
     trap.charge_to_mass = res.x
     print(trap.charge_to_mass)
-    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages + 40, include_gaps=include_gaps) 
-    y0_meas =  y0_meas - y0_meas[-1]
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
     delta_y = 0.0164
     sys_err = np.ones_like(y_std) * delta_y + y_std
     chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
@@ -223,8 +224,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     print('chi_2 value (fit): ' + str( chi2_fit))
     print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
-    ax.plot(dc_voltages, (y0 - y0[-1])* 1.E3, marker='.', linestyle='None', color='indigo')
-    plt.errorbar(dc_voltages,(y0 - y0[-1])* 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
+    ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='indigo')
+    plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
     method_1, = ax.plot(dc_voltages,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
@@ -233,6 +234,8 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
     fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf")
+    fig2, ax2 = plt.subplots(1, 2, figsize=figsize)
+
     return trap
 
 
@@ -414,7 +417,7 @@ if __name__ == "__main__":
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
    
-    # plot_height_fit()
+    plot_height_fit()
     plt.show()
              
 
