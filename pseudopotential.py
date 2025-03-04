@@ -12,7 +12,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyArrowPatch
 from numpy import linalg as LA
-
+from matplotlib import colormaps
+import math as math
 plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['axes.grid'] = True  # Turn on gridlines
@@ -506,7 +507,7 @@ class PseudopotentialPlanarTrap:
         plt.colorbar(cax)
         return fig, ax
 
-    def plot_y_cuts(self, yrange=(1.E-3, 10.E-3), num=200, x0=None, include_gaps=True, figsize=None, mult_range = range(1, 100, 10)):
+    def plot_y_cuts(self, yrange=(-30.E-3, 30.E-3), num=200, x0=None, include_gaps=True, figsize=None, mult_range = range(0, 100, 20)):
         """
         A graph of the potential energy (divided by charge) of the AC electrodes in terms of the pseudopotential,
             DC potential energy,  gravitational potential energy and the total sum of these potential energies.
@@ -523,8 +524,9 @@ class PseudopotentialPlanarTrap:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         fig, ax = plt.subplots(1, 2, figsize=figsize)
-        for i in mult_range:
-            self.charge_to_mass = -10E-3
+        viridis = get_sequential_colormap(num=10)
+        for i in range(1, 10):
+            self.charge_to_mass = -50E-3
             self.v_dc = -i * 100
             linewidth = 1.5
             u_grav = self.u_gravity(x, y)
@@ -533,21 +535,28 @@ class PseudopotentialPlanarTrap:
             u_total = self.u_total(x, y)
             #ax.plot(y * 1.E3, -u_ac, label='pseudo', color = 'indigo',linewidth=linewidth)
             #ax.plot(y * 1.E3, -u_ac * 50, label='pseudo x 50', color = 'indigo', linestyle='--',linewidth=linewidth)
-            ax[0].plot(y * 1.E3, u_dc, label='DC',  color='indianred',linewidth=linewidth)
+            ax[0].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
+            ax[0].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_dc[math.floor(len(y)/2):-1], label='DC',  color='indianred',linewidth=linewidth)
             # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
-            ax[0].plot(y * 1.E3, u_total, label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
+            ax[0].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_total[:math.floor(len(y)/2)], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
+            ax[0].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_total[math.floor(len(y)/2):-1], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
             self.v_dc = -100
-            self.charge_to_mass = -i * 10E-3
+            self.charge_to_mass = -i * 5E-3
             u_grav = self.u_gravity(x, y)
             u_dc = self.u_dc(x, y)
             u_ac = self.u_ac(x, y, include_gaps=include_gaps)
             u_total = self.u_total(x, y)
-            ax[1].plot(y * 1.E3, u_dc, label='DC',  color='indianred',linewidth=linewidth)
+            ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_dc[:math.floor(len(y)/2)], label='DC',  color='indianred',linewidth=linewidth)
+            ax[1].plot(y[:math.floor(len(y)/2):-1] * 1.E3, u_dc[math.floor(len(y)/2):-1], label='DC',  color='indianred',linewidth=linewidth)
             # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
-            ax[1].plot(y * 1.E3, u_total, label='total', color = 'teal', linestyle='dashdot',linewidth=linewidth)
+            # ax.plot(y * 1.E3, u_grav, label='gravity', color='yellowgreen',linewidth=linewidth)
+            ax[1].plot(y[:math.floor(len(y)/2)] * 1.E3, -u_total[:math.floor(len(y)/2)], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
+            ax[1].plot(y[math.floor(len(y)/2):-1] * 1.E3, u_total[math.floor(len(y)/2):-1], label='total', color = viridis[i], linestyle='dashdot',linewidth=linewidth)
 
-        ax[0].set_ylim([-10, 10*np.max(u_ac + u_dc + u_grav)])
-        ax[1].set_ylim([-10, 10*np.max(u_ac + u_dc + u_grav)])
+        ax[0].set_ylim([-20*np.max(u_ac + u_dc + u_grav), 20*np.max(u_ac + u_dc + u_grav)])
+        ax[1].set_ylim([-20*np.max(u_ac + u_dc + u_grav), 20*np.max(u_ac + u_dc + u_grav)])
+        ax[0].set_xlim([-20, 20])
+        ax[1].set_xlim([-20, 20])
         fig.legend()
         ax[0].set_xlabel('y (mm)')
     

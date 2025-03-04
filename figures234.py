@@ -4,9 +4,10 @@ from scipy.optimize import minimize
 from scipy.stats import chisquare
 from scipy.constants import g
 import os
-from math import sqrt
+import math as math
+from matplotlib import colormaps
 
-from pseudopotential import PseudopotentialPlanarTrap, plot_trap_escape_vary_dc
+from pseudopotential import PseudopotentialPlanarTrap, plot_trap_escape_vary_dc, get_sequential_colormap
 
 plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
 plt.rcParams['font.family'] = 'Arial'
