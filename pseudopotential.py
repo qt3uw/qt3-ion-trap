@@ -276,7 +276,7 @@ class PseudopotentialPlanarTrap:
         figv.legend()
         return figv, axv
 
-    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True, dc_0 = 0):
+    def find_equilibrium_height(self, ystep=1.E-6, guess=2.5E-3, include_gaps=True):
         """
         Determines the ion height above the trapping surface with or without the inclusion of linear interpolation.
         :param ystep: The numerical dy
@@ -287,8 +287,8 @@ class PseudopotentialPlanarTrap:
         def merit_func(y):
             ys = np.linspace(y-ystep, y+ystep, num=3)
             xs = np.zeros_like(ys) + self.a / 2.
-            return -self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1] + (dc_0 / self.charge_to_mass)
-        res = minimize_scalar(merit_func, bounds=(1E-3, 10.E-3))
+            return np.abs(self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1])
+        res = minimize_scalar(merit_func, bounds=(.05E-3, 6.35E-3))
         return res.x
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
@@ -305,7 +305,7 @@ class PseudopotentialPlanarTrap:
         for i in range(len(dc_voltages)):
             self.v_dc = dc_voltages[i]
             
-            y0.append(self.find_equilibrium_height(include_gaps=include_gaps, dc_0 = dc_0))
+            y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
 
         self.v_dc = dc_initial
         

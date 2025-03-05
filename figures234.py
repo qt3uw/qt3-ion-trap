@@ -24,7 +24,7 @@ COLORS = {
         'error': (0.170948, 0.694384, 0.493803)  # Green Color
 }
 
-TRIAL = str(5)
+TRIAL = str(11)
 
 class FigureParameterConfig:
     def __init__(self, height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + TRIAL + "_data.txt"):
@@ -35,8 +35,8 @@ class FigureParameterConfig:
         self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
 
 
-def get_default_config():
-    return FigureParameterConfig()
+def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(11) + "_data.txt"):
+    return FigureParameterConfig(height_file_name = height_file_name)
 
   
 def get_default_trap():
@@ -45,7 +45,7 @@ def get_default_trap():
     :return: A trap object from the PseudopotentialPlanarTrap class
     """
     trap = PseudopotentialPlanarTrap()
-    trap.v_rf = -20 * 50 * np.sqrt(2)
+    trap.v_rf = -2726.924/2 + 6/2 
     trap.charge_to_mass = -1.077E-3
     return trap
 
@@ -164,17 +164,17 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     """
     trap = get_default_trap()
     parameters = ['charge_to_mass']
-    bounds = [(-1.E-2, -1.E-4)]
-    dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
+    bounds = [(-1.E-2, -1.E-5)]
+    dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data(config = config)
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    trap.v_dc = v_min
+    trap.v_dc = -null_volt
     print(dc_voltages)
     print(y0)
     print(f'v_dc at null: {v_min:.1f} V')
     delta_y_gradient_calc = 1.E-6
 
     # Calculate the gradient with clearer sign convention
-    gradient_at_null = ((trap.u_dc(trap.a / 2., y_min + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, y_min)) /
+    gradient_at_null = ((trap.u_dc(trap.a / 2., null_height * 10**-3 + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, null_height * 10 ** -3)) /
                         delta_y_gradient_calc)
     
     # Print debugging information
@@ -184,16 +184,17 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     # Since gravity pulls down, a positive gradient (pushing up for negative charge) balances gravity
     # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
     # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
-    trap.charge_to_mass = -g / abs(gradient_at_null) * np.sign(gradient_at_null)
+    trap.charge_to_mass = -g / abs(gradient_at_null) 
     
     print(f"q/m from RF null: {trap.charge_to_mass:.3e}")
     print("q/m from rf null: " + str(trap.charge_to_mass))
 
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
- 
-    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+    dc_voltages_fine = np.linspace(start = dc_voltages[0], stop = dc_voltages[-1], num = 100)
+    print(dc_voltages_fine)
+    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages_fine, include_gaps=include_gaps)) 
 
-    method_2, = ax.plot(dc_voltages,(y0_model * 1.E3), color='k', label='Method 2')
+    method_2, = ax.plot(dc_voltages_fine,(y0_model * 1.E3), color='k', label='Method 2')
 
     print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
 
@@ -216,19 +217,21 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
         trap.__dict__[param] = res.x[i]
     trap.charge_to_mass = res.x
     print(trap.charge_to_mass)
-    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages_fine, include_gaps=include_gaps) 
     delta_y = 0.0164
     sys_err = np.ones_like(y_std) * delta_y + y_std
-    chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
-    chi2_extr = chi_2(y0, y0_model, y_std + sys_err)
-    print('chi_2 value (fit): ' + str( chi2_fit))
-    print('chi_2 value (extrapolation): ' + str(chi2_extr))
+    #chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
+    #chi2_extr = chi_2(y0, y0_model, y_std + sys_err)
+    #print('chi_2 value (fit): ' + str( chi2_fit))
+    #print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
     ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='indigo')
+    ax.plot(-null_volt, null_height, marker = '.', color = "red")
     plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
-    method_1, = ax.plot(dc_voltages,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
+    method_1, = ax.plot(dc_voltages_fine,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
+   
     ax.grid(True)
     ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
@@ -318,6 +321,7 @@ def plot_height_fit2(include_gaps=True, figsize=(3.5, 3)):
     # Plot experimental data with error bars
     ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
     plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
+    
     
     # Plot Method 1 (fit to all points)
     method_1, = ax.plot(dc_voltages, (y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
@@ -412,15 +416,18 @@ def plot_c2m_hist(config = get_default_config()):
 if __name__ == "__main__":
  
     
-    y_cuts_panel()
+    # y_cuts_panel()
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-   
+    """
     plot_height_fit()
     plt.show()
-             
-
+    """        
+    for i in [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19]:
+        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(i) + "_data.txt")
+        plot_height_fit(config = configure)
+        plt.show()
     """
     plot_height_and_micro()
     plot_c2m_hist()
