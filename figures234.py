@@ -45,7 +45,7 @@ def get_default_trap():
     :return: A trap object from the PseudopotentialPlanarTrap class
     """
     trap = PseudopotentialPlanarTrap()
-    trap.v_rf = -2726.924/2 + 6/2 
+    trap.v_rf = 47 * -20 * np.sqrt(2)
     trap.charge_to_mass = -1.077E-3
     return trap
 
@@ -190,7 +190,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     print("q/m from rf null: " + str(trap.charge_to_mass))
 
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
-    dc_voltages_fine = np.linspace(start = dc_voltages[0], stop = dc_voltages[-1], num = 100)
+    dc_voltages_fine = np.linspace(start = dc_voltages[-1], stop = dc_voltages[0], num = 100)
     print(dc_voltages_fine)
     y0_model = (trap.get_height_versus_dc_voltages(dc_voltages_fine, include_gaps=include_gaps)) 
 
