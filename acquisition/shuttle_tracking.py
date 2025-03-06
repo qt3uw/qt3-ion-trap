@@ -16,7 +16,7 @@ class ShuttleTrackingConfig:
         self.x_start = 0
         self.y_start = 650
         self.x_end = 1616
-        self.y_end 
+        self.y_end = 800
 
         # image processing
         self.bin_thresh = 40
