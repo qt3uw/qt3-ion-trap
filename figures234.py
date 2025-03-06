@@ -27,16 +27,16 @@ COLORS = {
 TRIAL = str(11)
 
 class FigureParameterConfig:
-    def __init__(self, height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + TRIAL + "_data.txt"):
+    def __init__(self, height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + TRIAL + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
         self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
         self.graph_file_name = height_file_name     # File to plot height & micromotion vs. voltage graphs for
-        self.hist_folder_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial6_data.txt"                     # Folder to extract charge-to-mass values from and graph the histogram
-        self.save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]                                                # Path for exported figures
+        self.hist_folder_name = "data/analyzed_micromotion/second_round_data_collection/"                     # Folder to extract charge-to-mass values from and graph the histogram
+        self.save_path = save_path                                                # Path for exported figures
 
 
-def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(11) + "_data.txt"):
-    return FigureParameterConfig(height_file_name = height_file_name)
+def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(11) + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
+    return FigureParameterConfig(height_file_name = height_file_name, save_path = save_path)
 
   
 def get_default_trap():
@@ -48,7 +48,6 @@ def get_default_trap():
     trap.v_rf = 47 * -20 * np.sqrt(2)
     trap.charge_to_mass = -1.077E-3
     return trap
-
 
 def y_cuts_panel():
     """
@@ -174,8 +173,9 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     delta_y_gradient_calc = 1.E-6
 
     # Calculate the gradient with clearer sign convention
-    gradient_at_null = ((trap.u_dc(trap.a / 2., null_height * 10**-3 + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, null_height * 10 ** -3)) /
-                        delta_y_gradient_calc)
+    gradient_at_null = -trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())
+    lapl_at_null =  (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3 + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())))/delta_y_gradient_calc
+    #gradient_at_null = ((trap.u_dc(trap.a / 2., null_height * 10**-3 + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, null_height * 10 ** -3)) / delta_y_gradient_calc)
     
     # Print debugging information
     print(f'Gradient at RF null: {gradient_at_null:.3e} V/m')
@@ -184,7 +184,11 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     # Since gravity pulls down, a positive gradient (pushing up for negative charge) balances gravity
     # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
     # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
+    c2m_exp = -g / abs(gradient_at_null) 
+    c2m_err = np.abs(c2m_exp**2 *   lapl_at_null) * np.sqrt((28/64 * 0.005 * 25.4* y0[-1])**2 + (y_std[-1])**2)/3
+    print(c2m_err)
     trap.charge_to_mass = -g / abs(gradient_at_null) 
+
     
     print(f"q/m from RF null: {trap.charge_to_mass:.3e}")
     print("q/m from rf null: " + str(trap.charge_to_mass))
@@ -192,13 +196,18 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
     dc_voltages_fine = np.linspace(start = dc_voltages[-1], stop = dc_voltages[0], num = 100)
     print(dc_voltages_fine)
-    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages_fine, include_gaps=include_gaps)) 
+    print("c2m: " + str(c2m_exp))
+    y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+    print("c2m Upper: " + str(c2m_exp -c2m_err))
+    trap.charge_to_mass = c2m_exp -c2m_err
+    y0_model_upper = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+    trap.charge_to_mass = c2m_exp +c2m_err
+    print("c2m Lower: " + str(c2m_exp +c2m_err))
+    y0_model_lower= (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+    
+    #print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
 
-    method_2, = ax.plot(dc_voltages_fine,(y0_model * 1.E3), color='k', label='Method 2')
-
-    print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
-
-    print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
+    #print("q/m from rf null (HIGH): " + str(trap.charge_to_mass))
     guesses = [trap.__dict__[param] for param in parameters]
 
     def merit_func(args):
@@ -209,165 +218,85 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
         return l2
 
     def chi_2(y_exp, y_fit, sigma):
-        return np.sum(np.divide(np.square(y_exp - y_fit), sigma**2))
+        return np.sum(np.divide(np.square(y_exp - y_fit), np.square(sigma)))
+
+    def fit_error(y_fit, sigma, trap = trap):
+        V_inv = np.asmatrix(np.diag(np.square(sigma))).I
+        F1 = trap.u_gravity(np.ones_like(y_fit) * trap.a / 2, y_fit)
+        F2 = trap.u_ac(np.ones_like(y_fit) * trap.a / 2 * trap.a / 2, y_fit)
+        #F3 = [trap.u_dc(trap.a / 2, y_i) for y_i in y_fit]
+        F = np.asmatrix([F1, F2])
+        U =  (F @ V_inv @ F.T).I
+        return U
 
     res = minimize(merit_func, guesses, bounds=bounds)
     for i, param in enumerate(parameters):
         print(f'{param}: {res.x[i]}')
         trap.__dict__[param] = res.x[i]
     trap.charge_to_mass = res.x
-    print(trap.charge_to_mass)
-    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages_fine, include_gaps=include_gaps) 
+    print("c2m_fit: " + str(trap.charge_to_mass))
+    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
     delta_y = 0.0164
     sys_err = np.ones_like(y_std) * delta_y + y_std
-    #chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
-    #chi2_extr = chi_2(y0, y0_model, y_std + sys_err)
-    #print('chi_2 value (fit): ' + str( chi2_fit))
-    #print('chi_2 value (extrapolation): ' + str(chi2_extr))
+    y_std_chi = np.sqrt(np.square(28/64 * 0.005 * 25.4* y0) + np.square(y_std))/3
+    print(y0)
+    print(y_std_chi)
+    chi2_fit = chi_2(y0, y0_meas, y_std_chi)
+    chi2_extr = chi_2(y0, y0_model, y_std_chi)
+    print('chi_2 value (fit): ' + str( chi2_fit))
+    print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
-    ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='indigo')
-    ax.plot(-null_volt, null_height, marker = '.', color = "red")
-    plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
-    method_1, = ax.plot(dc_voltages_fine,(y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
+    error = fit_error(y0_meas,y_std_chi, trap=trap)
+    trap_c2m_0 = trap.charge_to_mass 
+    chi2_fit_upper =  trap_c2m_0 + 3*np.sqrt(error[1, 1])
+    print(np.sqrt(error[1, 1]))
+    print(chi2_fit_upper)
+
+
+    chi2_fit_lower =  trap_c2m_0 - 3*np.sqrt(error[1, 1])
+    trap.charge_to_mass = chi2_fit_upper
+
+    print(chi2_fit_lower)
+
+    y0_meas_upper = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
+    trap.charge_to_mass = chi2_fit_lower
+    y0_meas_lower = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
+    print(error)
+    print(y0_meas_upper)
+    ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='k')
+    #ax.plot(-null_volt, null_height, marker = '.', color = "red")
+    ax.plot(dc_voltages,(y0_meas * 1.E3), color='darkred', linestyle='--', label='Method 1: ' + r'$\chi^{2}_{1} = $ ' + "{:.3f}".format(chi2_fit))
+    ax.fill_between(dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha = .3, hatch = '///', color = 'red')
+    #ax.plot(dc_voltages,(y0_meas_lower * 1.E3), color='yellow', linestyle='--', label='Method 1 Upper ')
+    #ax.plot(dc_voltages,(y0_meas_upper * 1.E3), color='blue', linestyle='--', label='Method 1 Lower: ')
+    plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=(np.sqrt(((28/64 * 0.005) * 25.4 * 1.E3 * y0)**2 + (y_std * 3 * 1.E3)**2)), fmt='none', ls='none', capsize=2, color='indigo')
+    
+    ax.plot(dc_voltages,(y0_model * 1.E3), color= "green", label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
+    #ax.plot(dc_voltages,(y0_model_upper * 1.E3), color='teal', label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
+    #ax.plot(dc_voltages,(y0_model_lower * 1.E3), color='green', label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
+    ax.fill_between(dc_voltages,y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = .2, color = COLORS["error"])
     ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
     ax.set_ylabel('Ion height (mm)', fontsize=12)
    
     ax.grid(True)
-    ax.legend(handles = [method_1, method_2])
+    #ax.legend(handles = [method_1, method_1u, method_1l, method_2])
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
     fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf")
-    fig2, ax2 = plt.subplots(1, 2, figsize=figsize)
+
 
     return trap
 
-
-def plot_height_fit2(include_gaps=True, figsize=(3.5, 3)):
-    trap = get_default_trap()
-    config = get_default_config()
-    parameters = ['charge_to_mass']
-    bounds = [(-1.E-2, -1.E-4)]
-    dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data()
-    fig, ax = plt.subplots(1, 1, figsize=figsize)
-    
-    # Set trap to RF null voltage
-    trap.v_dc = v_min
-    print(f'v_dc at null: {v_min:.1f} V')
-    
-    # Method 2: Direct calculation from gradient at RF null
-    delta_y = 1.E-6
-    gradient_at_null = ((trap.u_dc(trap.a / 2., y_min + delta_y) - trap.u_dc(trap.a / 2, y_min)) / delta_y)
-    print(f'Gradient at RF null: {gradient_at_null:.3e} V/m')
-    
-    # Set charge-to-mass directly from the force balance at RF null
-    trap.charge_to_mass = -g / gradient_at_null
-    print(f"Initial q/m from RF null: {trap.charge_to_mass:.3e}")
-    
-    # Force calibration: Adjust charge-to-mass to exactly match the RF null point
-    original_c2m = trap.charge_to_mass
-    
-    def calibration_merit(scale_factor):
-        trap.charge_to_mass = original_c2m * scale_factor
-        height = trap.find_equilibrium_height(include_gaps=include_gaps)
-        return (height - y_min)**2
-    
-    from scipy.optimize import minimize_scalar
-    result = minimize_scalar(calibration_merit, bounds=(0.8, 1.2), method='bounded')
-    
-    # Apply the calibration
-    trap.charge_to_mass = original_c2m * result.x
-    print(f"Calibrated q/m: {trap.charge_to_mass:.3e} (scale factor: {result.x:.4f})")
-    
-    # Verify calibration worked
-    calibrated_height = trap.find_equilibrium_height(include_gaps=include_gaps)
-    print(f"Calibrated height at RF null: {calibrated_height*1e3:.4f} mm")
-    print(f"Difference from measured: {(calibrated_height - y_min)*1e3:.4f} mm")
-    
-    # Calculate heights with Method 2 (calibrated extrapolation)
-    y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
-    method_2, = ax.plot(dc_voltages, (y0_model * 1.E3), color='k', label='Method 2')
-    
-    # Continue with Method 1 (fit to all data points)
-    guesses = [trap.__dict__[param] for param in parameters]
-    
-    def merit_func(args):
-        for i, key in enumerate(parameters):
-            trap.__dict__[key] = args[i]
-        y0_model = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)
-        l2 = np.sum((y0 - y0_model) ** 2)
-        return l2
-    
-    # Standard chi-squared function
-    def chi_2(y_exp, y_fit, sigma):
-        return np.sum(np.divide(np.square(y_exp - y_fit), sigma**2))
-    
-    # Fit to all data points (Method 1)
-    res = minimize(merit_func, guesses, bounds=bounds)
-    for i, param in enumerate(parameters):
-        print(f'{param}: {res.x[i]}')
-        trap.__dict__[param] = res.x[i]
-    
-    # Calculate heights with Method 1 (fit)
-    y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
-    
-    # Calculate chi-squared values
-    delta_y = 0.0164
-    sys_err = np.ones_like(y_std) * delta_y + y_std
-    chi2_fit = chi_2(y0, y0_meas, y_std + sys_err)
-    chi2_extr = chi_2(y0, y0_model, y_std + sys_err)
-    print('chi_2 value (fit): ' + str(chi2_fit))
-    print('chi_2 value (extrapolation): ' + str(chi2_extr))
-    
-    # Plot experimental data with error bars
-    ax.plot(dc_voltages, y0 * 1.E3, marker='.', linestyle='None', color='indigo')
-    plt.errorbar(dc_voltages, y0 * 1.E3, yerr=0.0164, fmt='none', ls='none', capsize=2, color='indigo')
-    
-    
-    # Plot Method 1 (fit to all points)
-    method_1, = ax.plot(dc_voltages, (y0_meas * 1.E3), color='k', linestyle='--', label='Method 1')
-    
-    # Mark RF null point
-    ax.scatter([v_min], [y_min * 1.E3], color='red', s=50, zorder=5, label='RF null')
-    
-    # Set labels and formatting
-    ax.set_xlabel('DC electrode voltage (V)', fontsize=12)
-    ax.set_ylabel('Ion height (mm)', fontsize=12)
-    ax.grid(True)
-    ax.legend(handles=[method_1, method_2])
-    fig.tight_layout()
-    
-    # Save the figure
-    os.makedirs(config.save_path[2], exist_ok=True)
-    fig.savefig(config.save_path[2]+"fig4-height_fit.pdf")
-    
-    return trap
-
-
-def plot_escape(figsize=(3.5, 3)):
-    """
-    Plots and saves the potential energy divided by charge along the x-axis at different ion heights as a function of
-    applied DC central electrode voltage.
-    :param figsize: Figure dimensions in inches
-    """
-    trap = get_default_trap()
-    config = get_default_config()
-    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
-    ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
-    ax.set_title(None)
-    plt.gca().invert_yaxis()
-    fig.tight_layout()
-    os.makedirs(config.save_path[2], exist_ok =True)
-    fig.savefig(config.save_path[2] +"fig4-trap_escape.pdf")
 
 
 def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     '''
     Plots and labels the height and micromotion graphs
     '''
-    voltage, height, height_std, micromotion, micro_std, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data()
+    voltage, height, height_std, micromotion, micro_std, v_min, y_min, micro_min, c2m, minvolt_raw, RF_height = get_data(config = config)
     fig, (ax2, ax1) = plt.subplots(2, 1, sharex=True, figsize=(8, 7), height_ratios=[2, 1])
 
-    ax1.errorbar(-voltage, micromotion*1e3, yerr=config.pixel_to_mm, color=COLORS['error'], fmt='', capsize=4, alpha=1,
+    ax1.errorbar(-voltage, micromotion*1e3, yerr=((28/64 * 0.005) * 25.4 * micromotion * 1e3 +  micro_std * 1e3 * 3), color=COLORS['error'], fmt='', capsize=4, alpha=1,
                  ls='none', elinewidth=3)
     ax1.scatter(-voltage, micromotion*1e3, color=COLORS['main'], zorder=3)
     ax1.set_xlabel('Voltage (-V)')
@@ -425,9 +354,11 @@ if __name__ == "__main__":
     plt.show()
     """        
     for i in [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19]:
-        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(i) + "_data.txt")
+        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(i) + "_data.txt",  save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)]) 
         plot_height_fit(config = configure)
-        plt.show()
+        plot_height_and_micro(config = configure)
+    plot_c2m_hist()
+    #plt.show()
     """
     plot_height_and_micro()
     plot_c2m_hist()

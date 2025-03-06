@@ -43,6 +43,7 @@ class PseudopotentialPlanarTrap:
     shuttle_width: float = 16.491E-3
     electrode_height: float = .5E-3
     v_error: float = 0.0164E-3
+    v_off: float = 0
 
     @property
     def a(self):
@@ -299,19 +300,16 @@ class PseudopotentialPlanarTrap:
         :return: Ion height (in meters) above trap surface
         """
         dc_initial = self.v_dc
-        dc_0 = dc_voltages[0]
         y0 = []
         
         for i in range(len(dc_voltages)):
-            self.v_dc = dc_voltages[i] + 20
+            self.v_dc = dc_voltages[i] + self.v_off
             
             y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
 
         self.v_dc = dc_initial
         
-        print("Hello")
-        print(y0)
-        print("Goodbye")
+  
         return np.array(y0)
 
     def draw_electrodes(self, ax, include_gaps=True):
