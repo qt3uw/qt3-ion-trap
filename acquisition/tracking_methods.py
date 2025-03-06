@@ -35,7 +35,7 @@ def collect_pos_data(start_x, storage_file, tracking_objects_dict, index_of_inte
             if i in tracking_objects_dict.keys():
                 index_of_interest = i
         if index_of_interest in tracking_objects_dict.keys():
-            storage_file.write(str(frame_num) + ',' + str(tracking_objects_dict[index_of_interest][0][0] - start_x) + '\n')
+            storage_file.write(str(frame_num) + ',' + str(tracking_objects_dict[index_of_interest][0][0] - start_x) + ', [' + str(index_of_interest) + '] \n')
 
 
 # ------------------------------------Height Tracking------------------------------------

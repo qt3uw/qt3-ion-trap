@@ -7,16 +7,16 @@ from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_
 
 
 class ShuttleTrackingConfig:
-    def __init__(self):
+    def __init__(self, storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800]):
         # video settings
         self.video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi'
         self.start_frame_num = 10
 
         # regions of interest
-        self.x_start = 0
-        self.y_start = 650
-        self.x_end = 1616
-        self.y_end = 800
+        self.x_start = int(x_bounds[0])
+        self.y_start = int(y_bounds[0])
+        self.x_end = int(x_bounds[1])
+        self.y_end = int(y_bounds[1])
 
         # image processing
         self.bin_thresh = 40
@@ -34,14 +34,15 @@ class ShuttleTrackingConfig:
         self.store_height_data = False
         self.contour_det = True
         self.collect_position = True
-        self.all_indices_of_interest = [i for i in range(0, 90)]
+        self.all_indices_of_interest = [i for i in range(0, 300)]
 
         # image capture settings
         self.image_save = True
         self.image_save_times = [0, 2, 4, 6]
 
         # data storage
-        self.data_storage = open('split_data.txt', 'a')
+        self.data_storage = open(storage_path, 'a')
+    
 
 # --------------------------- Video Processing Functions ---------------------------------------------- #
 
@@ -232,6 +233,34 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             
             keypoints_prev_frame = keypoints_cur_frame
             frame_num += 1
+def split_data(config, cap, detector, total_frames, start_frame):
+    config_0 =  config
+    ion_xs = []
+    center_x = 0
+    run_tracking(config, cap, detector, total_frames, start_frame)
+    with open('data/shuttling/02-28-2025_split_data.txt', 'r') as file:
+        for line in file:
+            tuple_str = line.strip()
+            tuple_data = eval(tuple_str)
+            print(tuple_data)
+            ion_xs.append(tuple_data[1])
+        print(ion_xs)
+        center_x = np.abs(np.mean(ion_xs[0:1])) + np.abs(ion_xs[0]) 
+    l_domain = np.ones(2) * config.x_start + np.array([0,  675])
+    r_domain = np.ones(2) * l_domain[1] + np.array([0, 675])
+    print(l_domain)
+    print(r_domain)
+    i = 0
+    l_r = ['data/shuttling/02-28-2025_left_split_data.txt', 'data/shuttling/02-28-2025_right_split_data.txt']
+    config_l = ShuttleTrackingConfig(storage_path = l_r[0], x_bounds = l_domain)
+    initialize_video(config_l)
+    run_tracking(config_l, cap, detector, total_frames, start_frame)
+    config_r = ShuttleTrackingConfig(storage_path = l_r[1], x_bounds = r_domain)
+    initialize_video(config_r)
+    run_tracking(config_r, cap, detector, total_frames, start_frame)
+
+    
+    
 
 
 def main():
@@ -242,8 +271,8 @@ def main():
     cap, total_frames, start_frame = initialize_video(config)
     detector = set_up_detector()
     
-    run_tracking(config, cap, detector, total_frames, start_frame)
-    
+    #run_tracking(config, cap, detector, total_frames, start_frame)
+    split_data(config, cap, detector, total_frames, start_frame)
     # cleanup
     cap.release()
     cv2.destroyAllWindows()
@@ -251,3 +280,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
