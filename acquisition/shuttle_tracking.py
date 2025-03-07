@@ -7,9 +7,9 @@ from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_
 
 
 class ShuttleTrackingConfig:
-    def __init__(self, storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800]):
+    def __init__(self, video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800]):
         # video settings
-        self.video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi'
+        self.video_path = video_path
         self.start_frame_num = 10
 
         # regions of interest
@@ -41,7 +41,7 @@ class ShuttleTrackingConfig:
         self.image_save_times = [0, 2, 4, 6]
 
         # data storage
-        self.data_storage = open(storage_path, 'a')
+        self.data_storage = open(storage_path, 'w')
     
 
 # --------------------------- Video Processing Functions ---------------------------------------------- #
@@ -140,7 +140,7 @@ def draw_tracking_info(image, tracking_objects):
 # --------------------------- Main Processing Loop ---------------------------------------------- #
 
 
-def run_tracking(config, cap, detector, total_frames, start_frame):
+def run_tracking(config, cap, detector, total_frames, start_frame, key0 = None):
     frame_num = config.start_frame_num
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
@@ -151,19 +151,26 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
     
     run = True
     run_body = True
-    
+    key = 0
     while run:
         frames_to_play = 0
-        
-        key = cv2.waitKey()
+        if key0 != None:
+            key = key0
+        else:
+            key = cv2.waitKey()
         if key == 27:  # ESC
             run = False
         elif key == 32:  # Space
             frames_to_play = 20
-        else:
+        elif key == 39:
             frames_to_play = 1
-
+        elif key == 38:
+            frames_to_play = total_frames
         for _ in range(frames_to_play):
+            if total_frames <= frame_num and key == 38:
+                break
+            print(frame_num)
+            print(total_frames)
             ret, frame = get_frame(cap, frame_num)
             
             if not ret and frame_num < total_frames:
@@ -233,12 +240,16 @@ def run_tracking(config, cap, detector, total_frames, start_frame):
             
             keypoints_prev_frame = keypoints_cur_frame
             frame_num += 1
+        if total_frames <= frame_num:
+            break
+
 def split_data(config, cap, detector, total_frames, start_frame):
     config_0 =  config
     ion_xs = []
     center_x = 0
-    run_tracking(config, cap, detector, total_frames, start_frame)
-    with open('data/shuttling/02-28-2025_split_data.txt', 'r') as file:
+    key = cv2.waitKey()
+    run_tracking(config, cap, detector, total_frames, start_frame, key0 = key)
+    with open('data/split/02-28-2025_split_data.txt', 'r') as file:
         for line in file:
             tuple_str = line.strip()
             tuple_data = eval(tuple_str)
@@ -251,13 +262,18 @@ def split_data(config, cap, detector, total_frames, start_frame):
     print(l_domain)
     print(r_domain)
     i = 0
-    l_r = ['data/shuttling/02-28-2025_left_split_data.txt', 'data/shuttling/02-28-2025_right_split_data.txt']
+    l_r = ['data/split/02-28-2025_left_split_data.txt', 'data/split/02-28-2025_right_split_data.txt']
+    if key != 38:
+        key = cv2.waitKey()
     config_l = ShuttleTrackingConfig(storage_path = l_r[0], x_bounds = l_domain)
     initialize_video(config_l)
-    run_tracking(config_l, cap, detector, total_frames, start_frame)
+    run_tracking(config_l, cap, detector, total_frames, start_frame, key0 = key)
+    if key != 38:
+        key = cv2.waitKey()
     config_r = ShuttleTrackingConfig(storage_path = l_r[1], x_bounds = r_domain)
     initialize_video(config_r)
-    run_tracking(config_r, cap, detector, total_frames, start_frame)
+    run_tracking(config_r, cap, detector, total_frames, start_frame, key0 = key)
+
 
     
     
@@ -265,16 +281,24 @@ def split_data(config, cap, detector, total_frames, start_frame):
 
 def main():
     print("Running program...")
+   
+    config_shuttle = ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/split/02-28-2025_split_data.txt')
+  
     
-    config = ShuttleTrackingConfig()
-    
-    cap, total_frames, start_frame = initialize_video(config)
-    detector = set_up_detector()
+    cap, total_frames, start_frame = initialize_video(config_shuttle)
+    detector_shuttle = set_up_detector()
     
     #run_tracking(config, cap, detector, total_frames, start_frame)
-    split_data(config, cap, detector, total_frames, start_frame)
-    # cleanup
-    cap.release()
+    split_data(config_shuttle, cap, detector_shuttle, total_frames, start_frame)
+
+    
+    config_shuttle =  ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_shuttle.avi', storage_path = 'data/shuttling/02-28-2025_shuttle_data.txt')
+ 
+    
+    cap, total_frames, start_frame = initialize_video(config_shuttle)
+    detector_shuttle = set_up_detector()
+    
+    run_tracking(config_shuttle, cap, detector_shuttle, total_frames, start_frame)
     cv2.destroyAllWindows()
 
 

@@ -1,7 +1,8 @@
 # This file contains all the graphing code for figure 5
 
 import matplotlib.pyplot as plt
-
+import os
+import numpy as np
 # Initialize the style of the graph
 plt.style.use('seaborn-v0_8-bright')
 plt.rcParams['font.family'] = 'Arial'
@@ -41,18 +42,18 @@ def build_data(file, frameOffset, firstPosType):
     if firstPosType == 'zero':
         firstPos = 0
     elif firstPosType == 'average':
-        firstPos = 0.07545 * float(lines[0].split(',')[1])
+        firstPos =  1/29.9918  * float(lines[0].split(',')[1])
     maxVelPos = 0
     maxVelTime = 0
     position = []
     time = []
     for line in lines:
         if len(line) > 1:
-            x, y = line.split(',')
-            currentPos = 0.07545 * float(y)
-            currentTime = 0.05 * (float(x) - frameOffset)
+            x, y, _ = line.split(',')
+            currentPos = 1/29.9918 * float(y)
+            currentTime = (1/ 55.25)* (float(x) - frameOffset)
             secondPos = currentPos
-            vel = abs(secondPos - firstPos) / 0.05
+            vel = abs(secondPos - firstPos) / (1/ 55.25)
             if vel > maxVel:
                 maxVel = vel
                 maxVelPos = secondPos
@@ -65,7 +66,7 @@ def build_data(file, frameOffset, firstPosType):
     return position, time, maxVelPos, maxVelTime, maxVel
 
 # COMSOL Shuttle ---------------------------------------------------------------------------------------------------------------------------
-
+"""
 # Setting up the figure object
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
@@ -116,7 +117,7 @@ print(height)
 plt.show()
 
 # COMSOL Split ---------------------------------------------------------------------------------------------------------------------------
-
+l
 # Setting up the figure object
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
@@ -166,7 +167,7 @@ width, height = bbox.width, bbox.height
 print(width)
 print(height)
 plt.show()
-
+"""
 
 # Shuttle ---------------------------------------------------------------------------------------------------------------------------
 
@@ -178,21 +179,24 @@ ax1 = fig.add_subplot(1, 1, 1)
 # Getting the motion data from the text file
 frameOffset = 100
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
-    'data/shuttling/shuttle_data.txt', frameOffset, 'zero')
+    'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero')
 print(maxVel)
 
 # Building the graph
+T_exp = 0.035067 / 2
 ax1.clear()
 ax1.set_title('Shuttling')
 ax1.set_xlabel('Position (mm)', fontsize='x-large')
 ax1.set_ylabel('Time (s)', fontsize='x-large')
 ax1.scatter(position1, time1, s=3, marker='o', label='Ion position data', c=[(31/255, 161/255, 135/255)])
-ax1.set_yticks([0, 1, 2, 3, 4, 5, 6, 7])
-ax1.set_aspect(0.7)
+#plt.errorbar(position1, time1, xerr = np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), yerr = np.abs(T_exp * np.ones_like(time1)))
+ax1.fill_betweenx(time1, x1 = np.array(position1) + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), alpha = .3, color = 'teal')
+ax1.set_yticks([0,  .5, 1,  1.5])
+ax1.set_aspect(3)
 
 # Bounding the graph
 plt.xlim([0, 25])
-plt.ylim([-0.5, 7])
+plt.ylim([-0.5, 1.25])
 
 # Building the graph
 plt.scatter([maxVelPos1], [maxVelTime1], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
@@ -206,7 +210,7 @@ plt.tick_params(axis='y', labelsize='large')
 
 # Place the legend at the bottom right
 plt.legend(loc='lower right', fontsize='small')
-
+os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()
 
@@ -219,8 +223,8 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/shuttling/NewSplitData1.txt', frameOffset, 'average')
-position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/shuttling/NewSplitData2.txt', frameOffset, 'average')
+position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-28-2025_left_split_data.txt', frameOffset, 'average')
+position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average')
 print(maxVel1)
 print(maxVel2)
 
@@ -229,17 +233,18 @@ ax1.clear()
 ax1.set_title('Splitting')
 ax1.set_xlabel('Position (mm)', fontsize='x-large')
 ax1.set_ylabel('Time (s)', fontsize='x-large')
-ax1.scatter(position1, time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
-ax1.set_yticks([0, 1, 2, 3, 4, 5, 6])
-ax1.set_aspect(1.9)
+ax1.scatter([position1[i] - 12.5 for i in range(len(position1))], time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
+ax1.set_yticks([0, 1, 2,  3, 4])
+ax1.set_aspect(7)
 
 # Bounding the graph
-plt.xlim([-30, 30])
-plt.ylim([-0.5, 6])
-
+plt.xlim([-40, 40])
+plt.ylim([-0.5, 2.3])
+ax1.fill_betweenx(time1, x1 = np.array(position1) + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)) - 12.5* np.ones_like(position1), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1))- 12.5* np.ones_like(position1), alpha = .3, color = 'teal')
+ax1.fill_betweenx(time2, x1 = np.array(position2) + np.abs(28/64 * 0.005 * 25.4 * np.array(position2))+ 12.5* np.ones_like(position2), x2 = np.array(position2) - np.abs(28/64 * 0.005 * 25.4 * np.array(position2))+ 12.5* np.ones_like(position2), alpha = .3, color = 'indigo')
 # Building the graph
-ax1.scatter(position2, time2, s=3, marker='o', label='Ion 2 position data', c=[(70/255, 50/255, 126/255)])
-plt.scatter([maxVelPos1, maxVelPos2], [maxVelTime1, maxVelTime2], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
+ax1.scatter([position2[i]+12.5 for i in range(len(position2))], time2, s=3, marker='o', label='Ion 2 position data', c=[(70/255, 50/255, 126/255)])
+plt.scatter([maxVelPos1 - 12.5, maxVelPos2+ 12.5], [maxVelTime1, maxVelTime2], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
 
 # Move the x-axis to the top
 ax1.xaxis.set_label_position('bottom')
@@ -249,7 +254,7 @@ plt.tick_params(axis='x', which='both', top=True, bottom=True, labeltop=True, la
 plt.tick_params(axis='y', labelsize='large')
 
 # Place the legend at the bottom right
-plt.legend(loc='lower right', fontsize='small')
-
+plt.legend(loc='upper center', fontsize='small')
+os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/SplitPlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()
