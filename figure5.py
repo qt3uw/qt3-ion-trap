@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+from acquisition.uncertainties import Uncertainties
 # Initialize the style of the graph
 plt.style.use('seaborn-v0_8-bright')
 plt.rcParams['font.family'] = 'Arial'
@@ -35,14 +36,15 @@ def build_data_comsol(file):
 # pixels per frame to mm per second
 # Returns: a position list, a time list, a max velocity position, a max
 #          velocity time, and a max velocity
-def build_data(file, frameOffset, firstPosType):
+def build_data(file, frameOffset, firstPosType, uncert):
+    U = uncert
     graph_data = open(file, 'r').read()
     lines = graph_data.split('\n')
     maxVel = 0
     if firstPosType == 'zero':
         firstPos = 0
     elif firstPosType == 'average':
-        firstPos =  1/29.9918  * float(lines[0].split(',')[1])
+        firstPos =  U.r_c[1]/U.N_c[1]  * float(lines[0].split(',')[1])
     maxVelPos = 0
     maxVelTime = 0
     position = []
@@ -50,7 +52,7 @@ def build_data(file, frameOffset, firstPosType):
     for line in lines:
         if len(line) > 1:
             x, y, _ = line.split(',')
-            currentPos = 1/29.9918 * float(y)
+            currentPos = U.r_c[1]/U.N_c[1] * float(y)
             currentTime = (1/ 55.25)* (float(x) - frameOffset)
             secondPos = currentPos
             vel = abs(secondPos - firstPos) / (1/ 55.25)
@@ -178,12 +180,13 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
+U = Uncertainties(r_c = [0.417, 53.598], N_c = [12.5, 1607.5], T_exp = 30002.E-6)
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
-    'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero')
+    'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero', uncert = U)
 print(maxVel)
 
 # Building the graph
-T_exp = 0.035067 / 2
+T_exp = U.T_exp
 ax1.clear()
 ax1.set_title('Shuttling')
 ax1.set_xlabel('Position (mm)', fontsize='x-large')
@@ -223,8 +226,9 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-28-2025_left_split_data.txt', frameOffset, 'average')
-position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average')
+U = Uncertainties(r_c = [0.417, 53.598], N_c = [12.5, 1607.5])
+position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-28-2025_left_split_data.txt', frameOffset, 'average', uncert = U)
+position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average', uncert = U)
 print(maxVel1)
 print(maxVel2)
 

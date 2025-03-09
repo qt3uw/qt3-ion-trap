@@ -2,12 +2,12 @@ import cv2
 import numpy as np
 import math
 from tracking_methods import collect_pos_data, set_up_detector, get_frame, post_processing, save_image
-
+from uncertainties import Uncertainties
 # --------------------------- Config ---------------------------------------------- #
 
 
 class ShuttleTrackingConfig:
-    def __init__(self, video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800]):
+    def __init__(self, video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800], rects = [((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0))]):
         # video settings
         self.video_path = video_path
         self.start_frame_num = 10
@@ -24,12 +24,17 @@ class ShuttleTrackingConfig:
         self.filling_kernel = np.ones((4, 2), np.uint8)
 
         # frame erasure rectangles
-        self.top_rect = ((0, 0), (0, 0))
-        self.left_rect = ((0, 0), (0, 0))
-        self.right_rect = ((0, 0), (0, 0))
-        self.bottom_rect = ((0, 0), (0, 0))
-        self.rectangle_color = (0, 0, 0)
-
+   
+        self.top_rect = rects[0]
+        print(self.top_rect)
+        self.left_rect = rects[3]
+        print(self.left_rect)
+        self.right_rect = rects[1]
+        print(self.right_rect)
+        self.bottom_rect = rects[2]
+        print(self.bottom_rect)
+        self.rectangle_color = (0 ,0, 50)
+        self.rects = [self.top_rect, self.right_rect, self.bottom_rect, self.left_rect]
         # tracking settings
         self.store_height_data = False
         self.contour_det = True
@@ -77,7 +82,6 @@ def process_frame(config, frame):
         thresh,
         config.cleaning_kernel,
         config.filling_kernel,
-        config.rectangle_color,
         config.top_rect[0], config.top_rect[1],
         config.left_rect[0], config.left_rect[1],
         config.right_rect[0], config.right_rect[1],
@@ -91,7 +95,7 @@ def process_frame(config, frame):
 def update_tracking(tracking_objects, track_id, keypoints_cur_frame, keypoints_prev_frame, frame_num, contours=None):
     if frame_num <= 2:
         for pt1 in keypoints_cur_frame:
-            for pt2 in keypoints_prev_frame:
+            for pt2 in keypoints_prev_frame: 
                 if math.dist(pt1, pt2) < 10:
                     tracking_objects[track_id] = [pt1]
                     track_id += 1
@@ -140,14 +144,14 @@ def draw_tracking_info(image, tracking_objects):
 # --------------------------- Main Processing Loop ---------------------------------------------- #
 
 
-def run_tracking(config, cap, detector, total_frames, start_frame, key0 = None):
+def run_tracking(config, cap, detector, total_frames, start_frame, origin_part = True, key0 = None):
     frame_num = config.start_frame_num
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
     # Initial tracking variables
     index_of_interest = 0
     first_detect = False
-    start_x = 0
+    start_x = 0     
     
     run = True
     run_body = True
@@ -206,7 +210,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame, key0 = None):
             )
             
             # set starting position
-            if not first_detect and len(tracking_objects.keys()) > index_of_interest:
+            if not first_detect and origin_part and len(tracking_objects.keys()) > index_of_interest:
                 start_x = tracking_objects[index_of_interest][0][0]
                 print("Start x:", start_x)
                 first_detect = True
@@ -225,7 +229,9 @@ def run_tracking(config, cap, detector, total_frames, start_frame, key0 = None):
             # draw information
             draw_tracking_info(image_with_keypoints, tracking_objects)
             time = round((frame_num - 100) * 0.05, 2)
+            
             draw_frame_info(clean_thresh, frame_num, time, total_frames)
+            [cv2.rectangle(image_with_keypoints, rect[0], rect[1], config.rectangle_color, -1) for rect in config.rects]
             draw_frame_info(image_with_keypoints, frame_num, time, total_frames)
             
             # if enabled, save image
@@ -234,7 +240,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame, key0 = None):
                            config.image_save_times, clean_thresh)
             
             # Display frame
-            cv2.rectangle(image_with_keypoints, *config.top_rect, config.rectangle_color, -1)
+           
             cv2.imshow("Frame", image_with_keypoints)
             cv2.waitKey(50)
             
@@ -265,12 +271,15 @@ def split_data(config, cap, detector, total_frames, start_frame):
     l_r = ['data/split/02-28-2025_left_split_data.txt', 'data/split/02-28-2025_right_split_data.txt']
     if key != 38:
         key = cv2.waitKey()
-    config_l = ShuttleTrackingConfig(storage_path = l_r[0], x_bounds = l_domain)
+    #rects_l = [((0, 0), (0, 0)), ((l_domain[1], 0)), (r_domain[1], config_0.y_end - config_0.y_start),  ((0, 0), (0, 0)), ((0, 0), (0, 0))]
+
+    config_l = ShuttleTrackingConfig(storage_path = l_r[0], rects = [((0, 0), (0, 0)), ((int(l_domain[1]), 0), (int(r_domain[1]), int(config_0.y_end - config_0.y_start))),  ((0, 0), (0, 0)), ((0, 0), (0, 0))])
+  
     initialize_video(config_l)
     run_tracking(config_l, cap, detector, total_frames, start_frame, key0 = key)
     if key != 38:
         key = cv2.waitKey()
-    config_r = ShuttleTrackingConfig(storage_path = l_r[1], x_bounds = r_domain)
+    config_r = ShuttleTrackingConfig(storage_path = l_r[1], rects = [((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (int(l_domain[1]), int(config_0.y_end - config_0.y_start)))])
     initialize_video(config_r)
     run_tracking(config_r, cap, detector, total_frames, start_frame, key0 = key)
 

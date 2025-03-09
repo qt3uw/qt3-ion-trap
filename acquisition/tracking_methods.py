@@ -82,7 +82,7 @@ def set_up_detector():
     return detector
 
 
-def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
+def post_processing(thresh, cleaning_kernel, filling_kernel, top_rect_pt1, top_rect_pt2, left_rect_pt1, left_rect_pt2,
                     right_rect_pt1, right_rect_pt2, bottom_rect_pt1, bottom_rect_pt2, clean_iter, dilate_iter, close_iter):
     """
     Runs a post-processing sequence that cleans noise out of a frame
@@ -94,10 +94,10 @@ def post_processing(thresh, cleaning_kernel, filling_kernel, rectangle_color, to
     :param close_iter: Number of erosion iterations for returning to original particle size
     """
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=clean_iter)
-    cv2.rectangle(clean_thresh, top_rect_pt1, top_rect_pt2, rectangle_color, -1)  # Top Erasure
-    cv2.rectangle(clean_thresh, left_rect_pt1, left_rect_pt2, rectangle_color, -1)   # Left Erasure
-    cv2.rectangle(clean_thresh, right_rect_pt1, right_rect_pt2, rectangle_color, -1)  # Right Erasure
-    cv2.rectangle(clean_thresh, bottom_rect_pt1, bottom_rect_pt2, rectangle_color, -1)  # Bottom erasure
+    cv2.rectangle(clean_thresh, top_rect_pt1, top_rect_pt2, color = (0, 0, 0), thickness = -1)  # Top Erasure
+    cv2.rectangle(clean_thresh, left_rect_pt1, left_rect_pt2, color= (0, 0, 0),thickness = -1)   # Left Erasure
+    cv2.rectangle(clean_thresh, right_rect_pt1, right_rect_pt2, color= (0, 0, 0), thickness =-1)  # Right Erasure
+    cv2.rectangle(clean_thresh, bottom_rect_pt1, bottom_rect_pt2, color= (0, 0, 0),thickness =-1)  # Bottom erasure
     dilation = cv2.dilate(clean_thresh, filling_kernel, iterations=dilate_iter)
     closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, filling_kernel, iterations=close_iter)
     return clean_thresh, closing

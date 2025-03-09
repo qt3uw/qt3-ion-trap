@@ -351,18 +351,14 @@ if __name__ == "__main__":
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-    print("hello")
-    plot_height_fit(config = get_default_config())
-    plt.show()
      
     for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
         configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt",  save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)]) 
         plot_height_fit(config = configure)
         plot_height_and_micro(config = configure)
-    plot_c2m_hist()
+    plot_c2m_hist(config = get_default_config())
     plt.show()
 
-    #plot_height_and_micro()
-    plot_c2m_hist(config = get_default_config())
+
 
     
