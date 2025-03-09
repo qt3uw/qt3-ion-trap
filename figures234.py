@@ -191,6 +191,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     c2m_ext = -g / abs(gradient_at_null) 
     r_dev = [[np.nan], y_std]
     uncertain = config.unc
+    uncertain.r = [np.zeros_like(y0), y0]
     print(uncertain.delta_pos_calc(r_sta = r_dev))
     c2m_err = np.sqrt((np.abs(c2m_ext**2 / g *   1/np.abs(lapl_at_null)) * r_dev[1])) 
     print(c2m_err)

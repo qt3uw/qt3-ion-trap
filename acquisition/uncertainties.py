@@ -54,7 +54,7 @@ class Uncertainties:
         self.pxl_to_mm = pxl_to_milli
         return pxl_to_milli
     
-    def delta_pos_calc(self, r_sta = [[-1e-6], [-1e-6]]):
+    def delta_pos_calc(self, r_sta = [[1e-6], [1e-6]]):
         pxl_to_vec = self.pxl_to_r
         def delta_r(est_diff_pairs, r_est):
             sum_i = []
@@ -64,18 +64,17 @@ class Uncertainties:
                 sum_i.append(np.square((np.divide(summand[0], summand[1]))))
             print(sum_i)
             print(r_est)
-            return [np.multiply(r_est[0], np.sqrt(np.sum(sum_i))), np.multiply(r_est[1], np.sqrt(np.sum(sum_i)))]
+            return [np.multiply(r_est, np.sqrt(np.sum(sum_i)))]
 
 
-        est_diff_pairs = [[self.r_c, self.delta_r_c], [self.N_c, self.delta_N_c], [self.diff_N, self.delta_diff_N]]
+        est_diff_pairs = [[self.r_c, self.delta_r_c], [self.N_c, self.delta_N_c]]
         print(delta_r(est_diff_pairs, self.r))
-        print((3*np.array(r_sta))[0].shape)
         self.delta_r = (delta_r(est_diff_pairs, self.r) + (3*np.array(r_sta))).tolist() 
         return (delta_r(est_diff_pairs, self.r) + (3*np.array(r_sta))).tolist() 
 
     
     def diff_N_calc(self):
-        self.diff_N = np.diff(np.array([self.N_i, self.N_f]), axis=0)[0, :].tolist()
+        self.diff_N = np.diff(np.array([self.N_f, self.N_i]), axis=0)[0, :].tolist()
     
     
     def delta_t_calc(self):
