@@ -8,7 +8,7 @@ import math as math
 from matplotlib import colormaps
 
 from pseudopotential import PseudopotentialPlanarTrap, plot_trap_escape_vary_dc, get_sequential_colormap
-
+from acquisition.uncertainties import Uncertainties
 plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['axes.grid'] = True  # Turn on gridlines
@@ -27,16 +27,18 @@ COLORS = {
 TRIAL = str(11)
 
 class FigureParameterConfig:
-    def __init__(self, height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + TRIAL + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
+    def __init__(self, uncert, height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + TRIAL + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
-        self.pixel_to_mm = 0.0164935065                                         # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
+        self.U = uncert
+        self.pixel_to_mm = self.U.r_c[1] / self.U.N_c[1]                                      # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
+        # pixel_to_mm = 0.0164935065 
         self.graph_file_name = height_file_name     # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = "data/analyzed_micromotion/second_round_data_collection/"                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = save_path                                                # Path for exported figures
 
 
-def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(11) + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
-    return FigureParameterConfig(height_file_name = height_file_name, save_path = save_path)
+def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(11) + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
+    return FigureParameterConfig(uncert = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10]), height_file_name = height_file_name, save_path = save_path)
 
   
 def get_default_trap():
@@ -100,7 +102,7 @@ def potential_energy_panel():
     fig.savefig(config.save_path[0]+"fig2-potential_energy.pdf")
 
     
-def get_data(filename = None, config = get_default_config()):
+def get_data(config, filename = None):
     """
     Reads and sorts experimental data from a text file.
     :param filename: File to extract data from. Only necessary for folder iteration in which the file is not graph_file_name
@@ -153,7 +155,7 @@ def get_data(filename = None, config = get_default_config()):
     return c2m
     
 
-def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_config()):
+def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     """
     Plots and saves experimental ion height as a function of applied voltage in addition to the predicted ion height
         as a function of applied voltage using the analytic model in addition to methods 1 and 2 in the paper.
@@ -264,7 +266,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
     print(error)
     print(y0_meas_upper)
     ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='k')
-    #ax.plot(-null_volt, null_height, marker = '.', color = "red")
+    ax.plot(-null_volt, null_height, marker = '.', color = "red")
     ax.plot(dc_voltages,(y0_meas * 1.E3), color='darkred', linestyle='--', label='Method 1: ' + r'$\chi^{2}_{1} = $ ' + "{:.3f}".format(chi2_fit))
     ax.fill_between(dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha = .3, hatch = '///', color = 'red')
     #ax.plot(dc_voltages,(y0_meas_lower * 1.E3), color='yellow', linestyle='--', label='Method 1 Upper ')
@@ -289,7 +291,7 @@ def plot_height_fit(include_gaps=True, figsize=(3.5, 3), config=get_default_conf
 
 
 
-def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
+def plot_height_and_micro(config, figsize=(3.5, 3)):
     '''
     Plots and labels the height and micromotion graphs
     '''
@@ -321,7 +323,7 @@ def plot_height_and_micro(figsize=(3.5, 3), config = get_default_config()):
     plt.show()
 
 
-def plot_c2m_hist(config = get_default_config()):
+def plot_c2m_hist(config):
     '''
     Iterates over a folder to graph a histogram of charge-to-mass values
     '''
@@ -329,7 +331,7 @@ def plot_c2m_hist(config = get_default_config()):
     c2m_values = []
     foldername = config.hist_folder_name
     for file_name in files:
-        c2m = get_data(filename = (str(foldername) + '/' + str(file_name)))
+        c2m = get_data(config = config, filename = (str(foldername) + '/' + str(file_name)))
         c2m_values.append(-c2m)
 
     plt.figure()
@@ -349,18 +351,18 @@ if __name__ == "__main__":
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-    """
-    plot_height_fit()
+    print("hello")
+    plot_height_fit(config = get_default_config())
     plt.show()
-    """        
-    for i in [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19]:
-        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/02-28-2025_Trial" + str(i) + "_data.txt",  save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)]) 
+     
+    for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
+        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt",  save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)]) 
         plot_height_fit(config = configure)
         plot_height_and_micro(config = configure)
     plot_c2m_hist()
-    #plt.show()
-    """
-    plot_height_and_micro()
-    plot_c2m_hist()
-    """
+    plt.show()
+
+    #plot_height_and_micro()
+    plot_c2m_hist(config = get_default_config())
+
     
