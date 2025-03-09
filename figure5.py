@@ -44,7 +44,7 @@ def build_data(file, frameOffset, firstPosType, uncert):
     if firstPosType == 'zero':
         firstPos = 0
     elif firstPosType == 'average':
-        firstPos =  U.r_c[1]/U.N_c[1]  * float(lines[0].split(',')[1])
+        firstPos =  U.r_c[0]/U.N_c[0]  * float(lines[0].split(',')[1])
     maxVelPos = 0
     maxVelTime = 0
     position = []
@@ -52,7 +52,7 @@ def build_data(file, frameOffset, firstPosType, uncert):
     for line in lines:
         if len(line) > 1:
             x, y, _ = line.split(',')
-            currentPos = U.r_c[1]/U.N_c[1] * float(y)
+            currentPos = U.r_c[0]/U.N_c[0] * float(y)
             currentTime = (1/ 55.25)* (float(x) - frameOffset)
             secondPos = currentPos
             vel = abs(secondPos - firstPos) / (1/ 55.25)
@@ -180,9 +180,10 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-U = Uncertainties(r_c = [0.417, 53.598], N_c = [12.5, 1607.5], T_exp = 30002.E-6)
+U = Uncertainties(r_c = [53.598 - 0.417, 0.0], N_c = [1607.5 - 12.5, 0.0], T_exp = 30002.E-6)
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
     'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero', uncert = U)
+position1 = position1 - (np.ones_like(position1)*(695.1126098632812)) / (U.N_c[0] / U.r_c[0])
 print(maxVel)
 
 # Building the graph
@@ -226,29 +227,32 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-U = Uncertainties(r_c = [0.417, 53.598], N_c = [12.5, 1607.5])
+U = Uncertainties(r_c = [53.598 - 0.417, 0.0], N_c = [1607.5 - 12.5, 0.0])
 position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-28-2025_left_split_data.txt', frameOffset, 'average', uncert = U)
 position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average', uncert = U)
+position1 = position1 - (np.ones_like(position1)*(22.5 + 642)) / (U.N_c[0] / U.r_c[0])
+position2 = position2 - (np.ones_like(position2)*(22.5 + 642)) / (U.N_c[0] / U.r_c[0])
 print(maxVel1)
 print(maxVel2)
-
+print(len(position2))
+print(len(time2))
 # Building the graph
 ax1.clear()
 ax1.set_title('Splitting')
 ax1.set_xlabel('Position (mm)', fontsize='x-large')
 ax1.set_ylabel('Time (s)', fontsize='x-large')
-ax1.scatter([position1[i] - 12.5 for i in range(len(position1))], time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
-ax1.set_yticks([0, 1, 2,  3, 4])
+ax1.scatter(position1, time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
+ax1.set_yticks([0,  .5,  1, 1.5, 2])
 ax1.set_aspect(7)
 
 # Bounding the graph
-plt.xlim([-40, 40])
-plt.ylim([-0.5, 2.3])
-ax1.fill_betweenx(time1, x1 = np.array(position1) + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)) - 12.5* np.ones_like(position1), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1))- 12.5* np.ones_like(position1), alpha = .3, color = 'teal')
-ax1.fill_betweenx(time2, x1 = np.array(position2) + np.abs(28/64 * 0.005 * 25.4 * np.array(position2))+ 12.5* np.ones_like(position2), x2 = np.array(position2) - np.abs(28/64 * 0.005 * 25.4 * np.array(position2))+ 12.5* np.ones_like(position2), alpha = .3, color = 'indigo')
+plt.xlim([-25, 25])
+plt.ylim([-0.5, 2])
+ax1.fill_betweenx(time1, x1= position1 + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), alpha = .3, color = 'teal')
+ax1.fill_betweenx(time2, x1 = np.array(position2) + np.abs(28/64 * 0.005 * 25.4 * np.array(position2)), x2 = np.array(position2) - np.abs(28/64 * 0.005 * 25.4 * np.array(position2)), alpha = .3, color = 'indigo')
 # Building the graph
-ax1.scatter([position2[i]+12.5 for i in range(len(position2))], time2, s=3, marker='o', label='Ion 2 position data', c=[(70/255, 50/255, 126/255)])
-plt.scatter([maxVelPos1 - 12.5, maxVelPos2+ 12.5], [maxVelTime1, maxVelTime2], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
+ax1.scatter(position2, time2, s=3, marker='o', label='Ion 2 position data', c=[(70/255, 50/255, 126/255)])
+#plt.scatter([maxVelPos1 - (22.5 / (U.N_c[0] / U.r_c[0])), maxVelPos2 + (22.5 / (U.N_c[0] / U.r_c[0]))], [maxVelTime1, maxVelTime2], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
 
 # Move the x-axis to the top
 ax1.xaxis.set_label_position('bottom')

@@ -58,7 +58,7 @@ def initialize_video(config):
     ret, start_frame = get_frame(cap, config.start_frame_num)
     
     if ret:
-        frame_height, frame_width = start_frame.shape[:2]
+        frame_height, frame_width = start_frame.shape[:         2]
         print(f"Frame height: {frame_height}\nFrame width: {frame_width}")
         
         roi = start_frame[config.y_start:config.y_end, config.x_start:config.x_end]
@@ -144,7 +144,7 @@ def draw_tracking_info(image, tracking_objects):
 # --------------------------- Main Processing Loop ---------------------------------------------- #
 
 
-def run_tracking(config, cap, detector, total_frames, start_frame, origin_part = True, key0 = None):
+def run_tracking(config, cap, detector, total_frames, start_frame, origin_part = False, key0 = None):
     frame_num = config.start_frame_num
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
     
@@ -154,7 +154,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame, origin_part =
     start_x = 0     
     
     run = True
-    run_body = True
+    run_body = True      
     key = 0
     while run:
         frames_to_play = 0
