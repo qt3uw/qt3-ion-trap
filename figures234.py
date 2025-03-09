@@ -7,6 +7,8 @@ import os
 import math as math
 from matplotlib import colormaps
 
+from matplotlib.backends.backend_pdf import PdfPages
+
 from pseudopotential import PseudopotentialPlanarTrap, plot_trap_escape_vary_dc, get_sequential_colormap
 from acquisition.uncertainties import Uncertainties
 plt.style.use('seaborn-v0_8-bright')   # seaborn-v0_8-bright
@@ -29,16 +31,16 @@ TRIAL = str(11)
 class FigureParameterConfig:
     def __init__(self, uncert, height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + TRIAL + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
         self.save_fig = True                                                    # Saves figure to directory specified by self.save_path
-        self.U = uncert
-        self.pixel_to_mm = self.U.r_c[1] / self.U.N_c[1]                                      # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
+        self.unc = uncert
+        self.pixel_to_mm = uncert.pxl_to_mm                                      # Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
         # pixel_to_mm = 0.0164935065 
         self.graph_file_name = height_file_name     # File to plot height & micromotion vs. voltage graphs for
         self.hist_folder_name = "data/analyzed_micromotion/second_round_data_collection/"                     # Folder to extract charge-to-mass values from and graph the histogram
         self.save_path = save_path                                                # Path for exported figures
 
 
-def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(11) + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
-    return FigureParameterConfig(uncert = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10]), height_file_name = height_file_name, save_path = save_path)
+def get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(11) + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)], uncert = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10])):
+    return FigureParameterConfig(uncert = uncert, height_file_name = height_file_name, save_path = save_path)
 
   
 def get_default_trap():
@@ -186,8 +188,11 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     # Since gravity pulls down, a positive gradient (pushing up for negative charge) balances gravity
     # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
     # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
-    c2m_exp = -g / abs(gradient_at_null) 
-    c2m_err = np.abs(c2m_exp**2 *   lapl_at_null) * np.sqrt((28/64 * 0.005 * 25.4* y0[-1])**2 + (y_std[-1])**2)/3
+    c2m_ext = -g / abs(gradient_at_null) 
+    r_dev = [[np.nan], y_std]
+    uncertain = config.unc
+    print(uncertain.delta_pos_calc(r_sta = r_dev))
+    c2m_err = np.sqrt((np.abs(c2m_ext**2 / g *   1/np.abs(lapl_at_null)) * r_dev[1])) 
     print(c2m_err)
     trap.charge_to_mass = -g / abs(gradient_at_null) 
 
@@ -198,13 +203,13 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     v_ans = (-trap.u_total(trap.a / 2, y_min) / trap.u_dc(trap.a/2, y_min) + 1)
     dc_voltages_fine = np.linspace(start = dc_voltages[-1], stop = dc_voltages[0], num = 100)
     print(dc_voltages_fine)
-    print("c2m: " + str(c2m_exp))
+    print("c2m: " + str(c2m_ext))
     y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
-    print("c2m Upper: " + str(c2m_exp -c2m_err))
-    trap.charge_to_mass = c2m_exp -c2m_err
+    print("c2m Upper: " + str(c2m_ext -c2m_err))
+    trap.charge_to_mass = c2m_ext -c2m_err
     y0_model_upper = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
-    trap.charge_to_mass = c2m_exp +c2m_err
-    print("c2m Lower: " + str(c2m_exp +c2m_err))
+    trap.charge_to_mass = c2m_ext +c2m_err
+    print("c2m Lower: " + str(c2m_ext +c2m_err))
     y0_model_lower= (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
     
     #print("q/m from rf null (LOW): " + str(trap.charge_to_mass))
@@ -250,6 +255,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
 
     error = fit_error(y0_meas,y_std_chi, trap=trap)
     trap_c2m_0 = trap.charge_to_mass 
+    c2m_int = trap_c2m_0
     chi2_fit_upper =  trap_c2m_0 + 3*np.sqrt(error[1, 1])
     print(np.sqrt(error[1, 1]))
     print(chi2_fit_upper)
@@ -284,7 +290,9 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     #ax.legend(handles = [method_1, method_1u, method_1l, method_2])
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
-    fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf")
+    metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 / np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(c2m_err), \
+                "chi^2 _fit" : str(chi2_fit), "chi^2_ext)" : str(chi2_extr)}
+    fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf", metadata = metadata)
 
 
     return trap
@@ -311,8 +319,8 @@ def plot_height_and_micro(config, figsize=(3.5, 3)):
     ax2.scatter(-voltage, height*1e3, color=COLORS['main'])
     ax2.errorbar(-voltage, height*1e3, yerr=micromotion*1e3, fmt='', capsize=0, color=COLORS['main'], alpha=0.4, elinewidth=4)
     ax2.set_ylabel('Height (mm)')
-    ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)})',
-                 (minvolt_raw, RF_height), (minvolt_raw, RF_height), fontsize=18)
+    #ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)})',
+                 #(minvolt_raw, RF_height), (minvolt_raw, RF_height), fontsize=18)
     ax2.axhline(RF_height, color='black', alpha=0.6)
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
@@ -351,9 +359,10 @@ if __name__ == "__main__":
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-     
+    U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10], delta_r_c = [np.nan, 1/(2*np.sqrt(12))])
     for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
-        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt",  save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)]) 
+        configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt", \
+           save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)], uncert = U) 
         plot_height_fit(config = configure)
         plot_height_and_micro(config = configure)
     plot_c2m_hist(config = get_default_config())

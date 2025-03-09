@@ -203,7 +203,7 @@ plt.xlim([0, 25])
 plt.ylim([-0.5, 1.25])
 
 # Building the graph
-plt.scatter([maxVelPos1], [maxVelTime1], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
+# plt.scatter([maxVelPos1], [maxVelTime1], color='red', s=60, marker='D', edgecolor='black', label='Max velocity location')
 
 # Move the x-axis to the top
 ax1.xaxis.set_label_position('bottom')
