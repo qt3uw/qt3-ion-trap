@@ -172,7 +172,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     bounds = [(-1.E-2, -1.E-5)]
     dc_voltages, y0, y_std, yspread, spread_std, v_min, y_min, micro_min, c2m, null_volt, null_height = get_data(config = config)
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    trap.v_dc = -null_volt
+    trap.v_dc = v_min
     print(dc_voltages)
     print(y0)
     print(f'v_dc at null: {v_min:.1f} V')
@@ -181,11 +181,11 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     # Calculate the gradient with clearer sign convention
     #gradient_at_null = -trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())
     gradient_y = lambda y_meas: -trap.grad_u_dc(x = trap.a / 2., y = np.array(y_meas), x1 = trap.x1())
-    gradient_at_null = gradient_y(null_height)
+    gradient_at_null = gradient_y(y_min)
     #lapl_at_null =  (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3 + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())))/delta_y_gradient_calc
     #gradient_at_null = ((trap.u_dc(trap.a / 2., null_height * 10**-3 + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, null_height * 10 ** -3)) / delta_y_gradient_calc)
     lapl = lambda y :  (trap.grad_u_dc(x = trap.a / 2., y = y + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = y, x1 = trap.x1())))/delta_y_gradient_calc
-    lapl_at_null = lapl(null_height)
+    lapl_at_null = lapl(y_min)
     # Print debugging information
     print(f'Gradient at RF null: {gradient_at_null:.3e} V/m')
     print(f'v_dc at null: {v_min:.1f} V')
@@ -208,11 +208,11 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     trap.charge_to_mass = -g / abs(gradient_at_null) 
     c2m_func = lambda y : -g / abs(gradient_y(y))
 
-    c2m_ext = c2m_func(null_height) 
+    c2m_ext = c2m_func(y_min) 
    
     
     delta_c2m_ext_func = lambda derv_y, delta_y, deriv_V, delta_V: np.sqrt(np.square(derv_y * delta_y) + np.square(deriv_V * delta_V))
-    derv_y = derivative(c2m_func, x0 = null_height, dx= delta_y_gradient_calc)
+    derv_y = derivative(c2m_func, x0 = y_min, dx= delta_y_gradient_calc)
     print(derv_y)
     delta_y = np.max(delta_pos[1])
     print(delta_pos[1])
@@ -220,15 +220,15 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
         dV = []
         for v in V_dc:
             trap.v_dc = v
-            dV.append(c2m_func(gradient_y(y)))
+            dV.append(c2m_func(y))
         coeff = -1 / np.multiply(V_dc , np.abs(V_dc))
         return np.multiply(np.array(dV), coeff)
     
-    derv_V0 = derv_Vy(y=[null_height - delta_y_gradient_calc, null_height, null_height + delta_y_gradient_calc], V_dc = [null_volt], trap = trap)
+    derv_V0 = derv_Vy(y=[y_min - delta_y_gradient_calc, y_min, y_min + delta_y_gradient_calc], V_dc = [null_volt], trap = trap)
     print(derv_V0)
     delta_V = -1
-    c2m_err = 1/delta_c2m_ext_func(derv_y, delta_y, derv_V0, delta_V)[0][0]
-    print(1/c2m_err)
+    c2m_err = delta_c2m_ext_func(derv_y, delta_y, derv_V0, delta_V)[0][0]
+
 
 
 
@@ -262,7 +262,8 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
         return l2
 
     def chi_2(y_exp, y_fit, sigma):
-        return np.sum(np.divide(np.square(y_exp - y_fit), np.square(sigma)))
+        dof = len(y_exp) - 1 - 1 
+        return np.sum(np.divide(np.square(y_exp - y_fit), np.square(sigma))) / dof
 
     def fit_error(y_fit, sigma, trap = trap):
         V_inv = np.asmatrix(np.diag(np.square(sigma))).I
@@ -280,8 +281,8 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     trap.charge_to_mass = res.x
     print("c2m_fit: " + str(trap.charge_to_mass))
     y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
-    chi2_fit = chi_2(y0, y0_meas, 3*delta_y)
-    chi2_extr = chi_2(y0, y0_model, 3*delta_y)
+    chi2_fit = chi_2(y0, y0_meas, delta_y)  
+    chi2_extr = chi_2(y0, y0_model, delta_y)
     print('chi_2 value (fit): ' + str( chi2_fit))
     print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
@@ -304,12 +305,12 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     print(error)
     print(y0_meas_upper)
     ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='k')
-    ax.plot(-null_volt, null_height* 1.E3, marker = '.', color = "red")
+    ax.plot(v_min, y_min * 1.E3, marker = '.', color = "red")
     ax.plot(dc_voltages,(y0_meas * 1.E3), color='darkred', linestyle='--', label='Method 1: ' + r'$\chi^{2}_{1} = $ ' + "{:.3f}".format(chi2_fit))
     ax.fill_between(dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha = .3, hatch = '///', color = 'red')
     #ax.plot(dc_voltages,(y0_meas_lower * 1.E3), color='yellow', linestyle='--', label='Method 1 Upper ')
     #ax.plot(dc_voltages,(y0_meas_upper * 1.E3), color='blue', linestyle='--', label='Method 1 Lower: ')
-    plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=(np.sqrt(((28/64 * 0.005) * 25.4 * 1.E3 * y0)**2 + (y_std * 3 * 1.E3)**2)), fmt='none', ls='none', capsize=2, color='indigo')
+    plt.errorbar(dc_voltages,(y0)* 1.E3, yerr=np.array(delta_pos[1])*1e3, fmt='none', ls='none', capsize=2, color='indigo')
     
     ax.plot(dc_voltages,(y0_model * 1.E3), color= "green", label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
     #ax.plot(dc_voltages,(y0_model_upper * 1.E3), color='teal', label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
