@@ -189,11 +189,17 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
     # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
     c2m_ext = -g / abs(gradient_at_null) 
-    r_dev = [[np.nan], y_std]
+    r_dev = [np.nan * np.ones_like(y_std), np.array(y_std* 1e-3)]
+    print("-----------------------------")
+    print(r_dev)
+    print("-----------------------------")
     uncertain = config.unc
-    uncertain.r = [np.zeros_like(y0), y0]
-    print(uncertain.delta_pos_calc(r_sta = r_dev))
-    c2m_err = np.sqrt((np.abs(c2m_ext**2 / g *   1/np.abs(lapl_at_null)) * r_dev[1])) 
+    uncertain.r = [np.zeros_like(y0), y0* 1e-3]
+    uncertain.delta_r_c = [np.nan, 28/64 * 0.005 * 25.4 * 1e-3]
+    uncertain.r_c = [0, 28/64 * 25.4*  1e-3]
+    delta_pos = uncertain.delta_pos_calc(r_sta = r_dev)
+    print(delta_pos)
+    c2m_err = (np.abs(g *   1/np.abs(lapl_at_null)**2) * np.max(delta_pos[1]))
     print(c2m_err)
     trap.charge_to_mass = -g / abs(gradient_at_null) 
 
@@ -206,7 +212,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     print(dc_voltages_fine)
     print("c2m: " + str(c2m_ext))
     y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
-    print("c2m Upper: " + str(c2m_ext -c2m_err))
+    print("c2m Upper: " + str(c2m_ext - c2m_err))
     trap.charge_to_mass = c2m_ext -c2m_err
     y0_model_upper = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
     trap.charge_to_mass = c2m_ext +c2m_err
@@ -360,10 +366,10 @@ if __name__ == "__main__":
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-    U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10], delta_r_c = [np.nan, 1/(2*np.sqrt(12))])
+    U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10], delta_r_c = [np.nan, 28/64 * 0.005 * 25.4], delta_N_c = [np.nan, 1/(2*np.sqrt(12))])
     for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
         configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt", \
-           save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)], uncert = U) 
+        save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)], uncert = U) 
         plot_height_fit(config = configure)
         plot_height_and_micro(config = configure)
     plot_c2m_hist(config = get_default_config())

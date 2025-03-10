@@ -57,19 +57,26 @@ class Uncertainties:
     def delta_pos_calc(self, r_sta = [[1e-6], [1e-6]]):
         pxl_to_vec = self.pxl_to_r
         def delta_r(est_diff_pairs, r_est):
-            sum_i = []
+            sum_i = [[], []]
             sum_tot = 0
-            for summand in est_diff_pairs:
-     
-                sum_i.append(np.square((np.divide(summand[0], summand[1]))))
+            for i in range(2):
+                print(est_diff_pairs[1][i])
+                print(est_diff_pairs[0][i])
+                sum_i[i].append(np.square((np.divide(est_diff_pairs[i][1], est_diff_pairs[i][0]))))
             print(sum_i)
             print(r_est)
-            return [np.multiply(r_est, np.sqrt(np.sum(sum_i)))]
+            print(np.sqrt(np.sum(sum_i, axis=0))[0])
+            return [np.multiply(r_est[i], np.sqrt(np.sum(sum_i, axis=0))[0][i]) for i in range(2)]
 
 
         est_diff_pairs = [[self.r_c, self.delta_r_c], [self.N_c, self.delta_N_c]]
+        print(est_diff_pairs)
         print(delta_r(est_diff_pairs, self.r))
+        print("HELLO THERE!!!!!!!!!!!!!")
         self.delta_r = (delta_r(est_diff_pairs, self.r) + (3*np.array(r_sta))).tolist() 
+        print("GENERAL KENOBI")
+        print(self.delta_r)
+        print("IVE BEEN EXPECTING YOU")
         return (delta_r(est_diff_pairs, self.r) + (3*np.array(r_sta))).tolist() 
 
     
