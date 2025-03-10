@@ -52,7 +52,7 @@ def get_default_trap():
     """
     trap = PseudopotentialPlanarTrap()
     trap.v_rf = 47 * -20 * np.sqrt(2)
-    trap.charge_to_mass = -1.077E-3
+    trap.charge_to_mass = -0.002137112414684643
     return trap
 
 def y_cuts_panel():
@@ -62,16 +62,10 @@ def y_cuts_panel():
     config = get_default_config()
     trap = get_default_trap()
     trap.v_dc = -80.
-    fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(12, 7), mult_range = range(1, 20))
+    fig, ax = trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
     fig.tight_layout()
     os.makedirs(config.save_path[0], exist_ok =True)
-    """
-    for i in range(1, 40):
-        if i != 0:
-            fig.savefig(config.save_path[0] +"fig2-y-cuts" + str(i) + ".pdf")
-            trap.charge_to_mass = i * (-1.077E-3)
-            trap.plot_y_cuts(include_gaps=True, figsize=(3.5, 3))
-    """
+    fig.savefig(config.save_path[0] +"fig2-y-cuts.pdf")
 
 def e_field_panel():
     """
@@ -287,12 +281,39 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     #ax.legend(handles = [method_1, method_2])
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
-    metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 / np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(c2m_err), \
+    metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 * np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(1/c2m_err), \
                 "chi^2 _fit" : str(chi2_fit), "chi^2_ext)" : str(chi2_extr)}
+
+    print("Hello")
+    print(str(c2m_int[0]))
+    print(str(3 * np.sqrt(error[1, 1])))
+    print(str(c2m_ext))
+    print("Goodbye")
+    print(str(c2m_err))
+    print(chi2_fit)
+    print(chi2_extr)
+
     fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf", metadata = metadata)
 
 
     return trap
+
+def plot_escape(figsize=(3.5, 3)):
+    """
+    Plots and saves the potential energy divided by charge along the x-axis at different ion heights as a function of
+    applied DC central electrode voltage.
+    :param figsize: Figure dimensions in inches
+    """
+    trap = get_default_trap()
+    config = get_default_config()
+    fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
+    ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
+    ax.set_title(None)
+    plt.gca().invert_yaxis()
+    fig.tight_layout()
+    os.makedirs(config.save_path[2], exist_ok =True)
+    fig.savefig(config.save_path[2] +"fig4-trap_escape.pdf")
+
 
 
 
@@ -352,12 +373,15 @@ if __name__ == "__main__":
  
     PLACEHOLDER_V_DC = -1
     U = Uncertainties(r_c = [np.nan, (16.053-0.178)*1e-3], N_c = [np.nan, 900-10], delta_r_c = [np.nan, (16.053-0.178) * 0.005 * 1e-3], delta_N_c = [np.nan, 1/(2*np.sqrt(12))], delta_cent = PLACEHOLDER_V_DC)
-    for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
+    for i in [19]:
+        # 2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 
         configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt", \
         save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)], uncert = U) 
         plot_height_fit(config = configure)
         plot_height_and_micro(config = configure)
+    plot_escape()
     plot_c2m_hist(config = get_default_config())
+
     plt.show()
 
 

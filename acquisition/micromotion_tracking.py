@@ -9,7 +9,7 @@ from uncertainties import Uncertainties
 class MicromotionTrackingConfig:
     def __init__(self, uncert):
         self.U = uncert
-        self.video_file = "E:/Feb 27-28 Experimental Data Collection/Micromotion Experimental Data 02-27-2025/Clean Data/02-28-2025_Trial3.avi"
+        self.video_file = "D:/March 9-10 Experimental Data Collection/03-10-2025_Trial9.avi"
         # self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
         self.start_frame = 10         # Defines starting frame. ONLY FOR DEBUGGING
@@ -18,14 +18,14 @@ class MicromotionTrackingConfig:
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
-        self.bin_thresh = 20   # Binary threshold for object detection
-        self.x_range = (350, 1550)       # x-axis frame of interest limits
-        self.y_range = (340, 750)      # y-axis frame of interest limits
-        self.bottom_bar = 50        # Erasure rectangle, measured in pixels from the bottom edge
+        self.bin_thresh = 5   # Binary threshold for object detection
+        self.x_range = (0, 1550)       # x-axis frame of interest limits
+        self.y_range = (425, 1200)      # y-axis frame of interest limits
+        self.bottom_bar = 80      # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0               # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0              # Erasure rectangle, measured in pixels from the left edge
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
-        self.pixel_to_mm = self.U.r_c[1] / self.U.N_c[1]      # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
+        self.pixel_to_mm = 1/uncert.pxl_to_mm[1]     # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
 
 
 def get_default_config():
@@ -366,8 +366,8 @@ def main():
     """
     Main entry point
     """
-    U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10])
-  
+    U = Uncertainties(r_c = [np.nan, 23.437-0.419], N_c = [np.nan, 814-14.5])
+    U.pxl_to_r()
 
     config = MicromotionTrackingConfig(uncert = U)
 
