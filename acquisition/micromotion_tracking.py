@@ -25,12 +25,8 @@ class MicromotionTrackingConfig:
         self.top_bar = 0               # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0              # Erasure rectangle, measured in pixels from the left edge
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
-        print("hello")
-        print(self.U.r_c)
-        print(self.U.N_c)
-       
         self.pixel_to_mm = self.U.r_c[1] / self.U.N_c[1]      # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
-        print(1/self.pixel_to_mm)
+
 
 def get_default_config():
     return MicromotionTrackingConfig(uncert = Uncertainties())
@@ -371,16 +367,14 @@ def main():
     Main entry point
     """
     U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10])
-    print(U.r_c)
-    print(U.N_c)
+  
 
-    print(1/ ( U.r_c[1] / U.N_c[1] ))
     config = MicromotionTrackingConfig(uncert = U)
-    print(config.y_range)
+
     cap = cv2.VideoCapture(config.video_file)
     _, _, _, _ = gen_initial_frame(cap, config)
     frame_num = config.start_frame
-    print(frame_num)
+ 
     for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
         if i == 0:
             keypoints_prev_frame = []
