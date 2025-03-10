@@ -44,7 +44,7 @@ def build_data(file, frameOffset, firstPosType, uncert):
     if firstPosType == 'zero':
         firstPos = 0
     elif firstPosType == 'average':
-        firstPos =  U.r_c[0]/U.N_c[0]  * float(lines[0].split(',')[1])
+        firstPos =  1/U.pxl_to_mm[0]  * float(lines[0].split(',')[1])
     maxVelPos = 0
     maxVelTime = 0
     position = []
@@ -52,7 +52,7 @@ def build_data(file, frameOffset, firstPosType, uncert):
     for line in lines:
         if len(line) > 1:
             x, y, _ = line.split(',')
-            currentPos = U.r_c[0]/U.N_c[0] * float(y)
+            currentPos = 1/U.pxl_to_mm[0] * float(y)
             currentTime = (1/ 55.25)* (float(x) - frameOffset)
             secondPos = currentPos
             vel = abs(secondPos - firstPos) / (1/ 55.25)
@@ -180,10 +180,11 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-U = Uncertainties(r_c = [53.598 - 0.417, 0.0], N_c = [1607.5 - 12.5, 0.0], T_exp = 30002.E-6)
+U = Uncertainties(r_c = [53.598 - 0.417, np.nan], N_c = [1607.5 - 12.5, np.nan], T_exp = 30002.E-6)
+U.pxl_to_r()
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
     'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero', uncert = U)
-position1 = position1 - (np.ones_like(position1)*(695.1126098632812)) / (U.N_c[0] / U.r_c[0])
+position1 = position1 - (np.ones_like(position1)*(695.1126098632812)) / U.pxl_to_mm[0]
 print(maxVel)
 
 # Building the graph
@@ -227,11 +228,10 @@ ax1 = fig.add_subplot(1, 1, 1)
 
 # Getting the motion data from the text file
 frameOffset = 100
-U = Uncertainties(r_c = [53.598 - 0.417, 0.0], N_c = [1607.5 - 12.5, 0.0])
 position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-28-2025_left_split_data.txt', frameOffset, 'average', uncert = U)
 position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average', uncert = U)
-position1 = position1 - (np.ones_like(position1)*(22.5 + 642)) / (U.N_c[0] / U.r_c[0])
-position2 = position2 - (np.ones_like(position2)*(22.5 + 642)) / (U.N_c[0] / U.r_c[0])
+position1 = position1 - (np.ones_like(position1)*(22.5 + 642)) / (U.pxl_to_mm[0])
+position2 = position2 - (np.ones_like(position2)*(22.5 + 642)) / (U.pxl_to_mm[0])
 print(maxVel1)
 print(maxVel2)
 print(len(position2))
