@@ -43,7 +43,7 @@ class PseudopotentialPlanarTrap:
     shuttle_width: float = 16.491E-3
     electrode_height: float = .5E-3
     v_error: float = 0.0164E-3
-    v_off: float = 0
+
 
     @property
     def a(self):
@@ -289,7 +289,7 @@ class PseudopotentialPlanarTrap:
             ys = np.linspace(y-ystep, y+ystep, num=3)
             xs = np.zeros_like(ys) + self.a / 2.
             return np.abs(self.u_total(xs, ys, include_gaps=include_gaps).flatten()[1])
-        res = minimize_scalar(merit_func, bounds=(.05E-3, 6.35E-3))
+        res = minimize_scalar(merit_func, bounds=(.05E-3, 8E-3))
         return res.x
 
     def get_height_versus_dc_voltages(self, dc_voltages, include_gaps=True):
@@ -303,7 +303,7 @@ class PseudopotentialPlanarTrap:
         y0 = []
         
         for i in range(len(dc_voltages)):
-            self.v_dc = dc_voltages[i] + self.v_off
+            self.v_dc = dc_voltages[i]
             
             y0.append(self.find_equilibrium_height(include_gaps=include_gaps))
 

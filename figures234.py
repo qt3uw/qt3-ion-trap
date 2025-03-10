@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sci
 from scipy.optimize import minimize
 from scipy.stats import chisquare
 from scipy.constants import g
+from scipy.misc import derivative
 import os
 import math as math
 from matplotlib import colormaps
@@ -146,7 +148,7 @@ def get_data(config, filename = None):
                 line = line.strip()
                 analyzed_data = eval(line)
                 c2m, null_volt, null_height = analyzed_data[0], analyzed_data[1], analyzed_data[2]
-        return -dc_voltages, y0 * 1.E-3, y_std *  1.E-3, y_spread * 1.E-3, spread_std * 1.E-3, -v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height
+        return -dc_voltages, y0 * 1.E-3, y_std *  1.E-3, y_spread * 1.E-3, spread_std * 1.E-3, -v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height* 1.E-3
     else:
         analyzedfilename = 'data/analyzed_micromotion/second_round_data_collection/' + str(cut_basefilename) + '.txt'
     with open(analyzedfilename) as file:
@@ -177,10 +179,13 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     delta_y_gradient_calc = 1.E-6
 
     # Calculate the gradient with clearer sign convention
-    gradient_at_null = -trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())
-    lapl_at_null =  (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3 + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())))/delta_y_gradient_calc
+    #gradient_at_null = -trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())
+    gradient_y = lambda y_meas: -trap.grad_u_dc(x = trap.a / 2., y = np.array(y_meas), x1 = trap.x1())
+    gradient_at_null = gradient_y(null_height)
+    #lapl_at_null =  (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3 + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = null_height* 10**-3, x1 = trap.x1())))/delta_y_gradient_calc
     #gradient_at_null = ((trap.u_dc(trap.a / 2., null_height * 10**-3 + delta_y_gradient_calc) - trap.u_dc(trap.a / 2, null_height * 10 ** -3)) / delta_y_gradient_calc)
-    
+    lapl = lambda y :  (trap.grad_u_dc(x = trap.a / 2., y = y + delta_y_gradient_calc, x1 = trap.x1()) - (trap.grad_u_dc(x = trap.a / 2., y = y, x1 = trap.x1())))/delta_y_gradient_calc
+    lapl_at_null = lapl(null_height)
     # Print debugging information
     print(f'Gradient at RF null: {gradient_at_null:.3e} V/m')
     print(f'v_dc at null: {v_min:.1f} V')
@@ -188,22 +193,47 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     # Since gravity pulls down, a positive gradient (pushing up for negative charge) balances gravity
     # For a negative charge-to-mass ratio, the gradient should be positive for stable equilibrium
     # The formula should be: q/m = g / grad_E (for positive grad_E and negative q/m)
-    c2m_ext = -g / abs(gradient_at_null) 
-    r_dev = [np.nan * np.ones_like(y_std), np.array(y_std* 1e-3)]
+    
+    r_dev = [np.nan * np.ones_like(y_std), np.array(y_std)]
     print("-----------------------------")
     print(r_dev)
     print("-----------------------------")
     uncertain = config.unc
-    uncertain.r = [np.zeros_like(y0), y0* 1e-3]
-    uncertain.delta_r_c = [np.nan, 28/64 * 0.005 * 25.4 * 1e-3]
-    uncertain.r_c = [0, 28/64 * 25.4*  1e-3]
+    uncertain.r = [np.zeros_like(y0), y0]
     delta_pos = uncertain.delta_pos_calc(r_sta = r_dev)
     print(delta_pos)
-    c2m_err = (np.abs(g *   1/np.abs(lapl_at_null)**2) * np.max(delta_pos[1]))
-    print(c2m_err)
+   
+    #c2m_err = (np.abs(g *   1/np.abs(lapl_at_null)**2) * np.max(delta_pos[1]))
+    #print(c2m_err)
     trap.charge_to_mass = -g / abs(gradient_at_null) 
+    c2m_func = lambda y : -g / abs(gradient_y(y))
 
+    c2m_ext = c2m_func(null_height) 
+   
     
+    delta_c2m_ext_func = lambda derv_y, delta_y, deriv_V, delta_V: np.sqrt(np.square(derv_y * delta_y) + np.square(deriv_V * delta_V))
+    derv_y = derivative(c2m_func, x0 = null_height, dx= delta_y_gradient_calc)
+    print(derv_y)
+    delta_y = np.max(delta_pos[1])
+    print(delta_pos[1])
+    def derv_Vy(y, V_dc, trap):
+        dV = []
+        for v in V_dc:
+            trap.v_dc = v
+            dV.append(c2m_func(gradient_y(y)))
+        coeff = -1 / np.multiply(V_dc , np.abs(V_dc))
+        return np.multiply(np.array(dV), coeff)
+    
+    derv_V0 = derv_Vy(y=[null_height - delta_y_gradient_calc, null_height, null_height + delta_y_gradient_calc], V_dc = [null_volt], trap = trap)
+    print(derv_V0)
+    delta_V = -1
+    c2m_err = 1/delta_c2m_ext_func(derv_y, delta_y, derv_V0, delta_V)[0][0]
+    print(1/c2m_err)
+
+
+
+
+
     print(f"q/m from RF null: {trap.charge_to_mass:.3e}")
     print("q/m from rf null: " + str(trap.charge_to_mass))
 
@@ -237,7 +267,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     def fit_error(y_fit, sigma, trap = trap):
         V_inv = np.asmatrix(np.diag(np.square(sigma))).I
         F1 = trap.u_gravity(np.ones_like(y_fit) * trap.a / 2, y_fit)
-        F2 = trap.u_ac(np.ones_like(y_fit) * trap.a / 2 * trap.a / 2, y_fit)
+        F2 = trap.u_ac(np.ones_like(y_fit) * trap.a / 2, y_fit)
         #F3 = [trap.u_dc(trap.a / 2, y_i) for y_i in y_fit]
         F = np.asmatrix([F1, F2])
         U =  (F @ V_inv @ F.T).I
@@ -250,17 +280,12 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     trap.charge_to_mass = res.x
     print("c2m_fit: " + str(trap.charge_to_mass))
     y0_meas = trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps) 
-    delta_y = 0.0164
-    sys_err = np.ones_like(y_std) * delta_y + y_std
-    y_std_chi = np.sqrt(np.square(28/64 * 0.005 * 25.4* y0) + np.square(y_std))/3
-    print(y0)
-    print(y_std_chi)
-    chi2_fit = chi_2(y0, y0_meas, y_std_chi)
-    chi2_extr = chi_2(y0, y0_model, y_std_chi)
+    chi2_fit = chi_2(y0, y0_meas, 3*delta_y)
+    chi2_extr = chi_2(y0, y0_model, 3*delta_y)
     print('chi_2 value (fit): ' + str( chi2_fit))
     print('chi_2 value (extrapolation): ' + str(chi2_extr))
 
-    error = fit_error(y0_meas,y_std_chi, trap=trap)
+    error = fit_error(y0_meas, delta_pos[1], trap=trap)
     trap_c2m_0 = trap.charge_to_mass 
     c2m_int = trap_c2m_0
     chi2_fit_upper =  trap_c2m_0 + 3*np.sqrt(error[1, 1])
@@ -279,7 +304,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     print(error)
     print(y0_meas_upper)
     ax.plot(dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='k')
-    ax.plot(-null_volt, null_height, marker = '.', color = "red")
+    ax.plot(-null_volt, null_height* 1.E3, marker = '.', color = "red")
     ax.plot(dc_voltages,(y0_meas * 1.E3), color='darkred', linestyle='--', label='Method 1: ' + r'$\chi^{2}_{1} = $ ' + "{:.3f}".format(chi2_fit))
     ax.fill_between(dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha = .3, hatch = '///', color = 'red')
     #ax.plot(dc_voltages,(y0_meas_lower * 1.E3), color='yellow', linestyle='--', label='Method 1 Upper ')
@@ -328,7 +353,7 @@ def plot_height_and_micro(config, figsize=(3.5, 3)):
     ax2.set_ylabel('Height (mm)')
     #ax2.annotate(f'RF null = ({int(minvolt_raw)}, {np.round(RF_height, 2)})',
                  #(minvolt_raw, RF_height), (minvolt_raw, RF_height), fontsize=18)
-    ax2.axhline(RF_height, color='black', alpha=0.6)
+    ax2.axhline(RF_height *1e3, color='black', alpha=0.6)
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
     ax2.axvline(minvolt_raw, color='black', alpha=0.6)
     if config.save_fig == True:
@@ -366,7 +391,8 @@ if __name__ == "__main__":
     # e_field_panel()
     # potential_energy_panel()
     # plot_escape(figsize=(3.5, 3))
-    U = Uncertainties(r_c = [np.nan, 16.053-0.178], N_c = [np.nan, 900-10], delta_r_c = [np.nan, 28/64 * 0.005 * 25.4], delta_N_c = [np.nan, 1/(2*np.sqrt(12))])
+    PLACEHOLDER_V_DC = 1
+    U = Uncertainties(r_c = [np.nan, (16.053-0.178)*1e-3], N_c = [np.nan, 900-10], delta_r_c = [np.nan, (16.053-0.178) * 0.005 * 1e-3], delta_N_c = [np.nan, 1/(2*np.sqrt(12))], delta_cent = PLACEHOLDER_V_DC)
     for i in [2, 5, 6, 7,  11, 12, 13, 14, 16, 17, 19]:
         configure = get_default_config(height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + str(i) + "_data.txt", \
         save_path = ["figures/figure_" + str(j) + "/02-28-2025/Trial" + str(i) + "/numeric_grad_u_dc/"  for j in range(2, 5)], uncert = U) 

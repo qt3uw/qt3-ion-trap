@@ -10,6 +10,7 @@ class Uncertainties:
     # Measured
     delta_endcap: float = 0.0
     delta_AC: float = 0.0
+    delta_cent: float = 0.0
     delta_freq: float = 0.0
     delta_ruler: float = 0.05 * 25.4
     T_exp: float = 1
@@ -97,7 +98,7 @@ class Uncertainties:
     def fit_error(self, y_fit, sigma, trap):
         V_inv = np.asmatrix(np.diag(np.square(sigma))).I
         F1 = trap.u_gravity(np.ones_like(y_fit) * trap.a / 2, y_fit)
-        F2 = trap.u_ac(np.ones_like(y_fit) * trap.a / 2 * trap.a / 2, y_fit)
+        F2 = trap.u_ac(np.ones_like(y_fit) * trap.a / 2, y_fit)
         #F3 = [trap.u_dc(trap.a / 2, y_i) for y_i in y_fit]
         F = np.asmatrix([F1, F2])
         U =  (F @ V_inv @ F.T).I
