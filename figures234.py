@@ -274,8 +274,8 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     ax.plot(-dc_voltages,(y0_model * 1.E3), color= "green", label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
 
     ax.fill_between(-dc_voltages,y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = .2, color = COLORS["error"])
-    ax.set_xlabel('DC electrode voltage (-V)', fontsize=12)
-    ax.set_ylabel('Ion height (mm)', fontsize=12)
+    ax.set_xlabel('DC electrode voltage (-V)', fontsize=15)
+    ax.set_ylabel('Ion height (mm)', fontsize=15)
    
     ax.grid(True)
     #ax.legend(handles = [method_1, method_2])
@@ -283,7 +283,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     os.makedirs(config.save_path[2], exist_ok =True)
     metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 * np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(1/c2m_err), \
                 "chi^2 _fit" : str(chi2_fit), "chi^2_ext)" : str(chi2_extr)}
-
+    plt.tick_params(axis='both', labelsize=15)
     print("Hello")
     print(str(c2m_int[0]))
     print(str(3 * np.sqrt(error[1, 1])))
@@ -307,8 +307,9 @@ def plot_escape(figsize=(3.5, 3)):
     trap = get_default_trap()
     config = get_default_config()
     fig, ax = plot_trap_escape_vary_dc(trap, dc_values=np.linspace(0., -300., num=11), include_gaps=True, figsize=figsize)
-    ax.set_ylabel('Potential energy / charge (J/C)', fontsize=12)
+    ax.set_ylabel('Potential energy / charge (J/C)', fontsize=15)
     ax.set_title(None)
+    ax.tick_params(axis='both', labelsize=15)
     plt.gca().invert_yaxis()
     fig.tight_layout()
     os.makedirs(config.save_path[2], exist_ok =True)
@@ -327,8 +328,8 @@ def plot_height_and_micro(config, figsize=(3.5, 3)):
     ax1.errorbar(-voltage, micromotion*1e3, yerr=((28/64 * 0.005) * 25.4 * micromotion * 1e3 +  micro_std * 1e3 * 3), color=COLORS['error'], fmt='', capsize=4, alpha=1,
                  ls='none', elinewidth=3)
     ax1.scatter(-voltage, micromotion*1e3, color=COLORS['main'], zorder=3)
-    ax1.set_xlabel('Voltage (-V)')
-    ax1.set_ylabel('Amplitude (mm)')
+    ax1.set_xlabel('Voltage (-V)', fontsize = 17)
+    ax1.set_ylabel('Amplitude (mm)', fontsize=17)
     ax1.axvline(-v_min, color='black', alpha=0.6)
     #ax1.annotate(f'RF null = {int(minvolt_raw)}',
                  #(int(minvolt_raw), micromotion[np.abs(voltage - minvolt_raw).argmin()]), (minvolt_raw, 0.25),
@@ -336,7 +337,9 @@ def plot_height_and_micro(config, figsize=(3.5, 3)):
 
     ax2.scatter(-voltage, height*1e3, color=COLORS['main'])
     ax2.errorbar(-voltage, height*1e3, yerr=micromotion*1e3, fmt='', capsize=0, color=COLORS['main'], alpha=0.4, elinewidth=4)
-    ax2.set_ylabel('Height (mm)')
+    ax2.set_ylabel('Height (mm)', fontsize=17)
+    ax1.tick_params(axis='both', labelsize=15)
+    ax2.tick_params(axis='both', labelsize=15)
 
     ax2.axhline(y_min *1e3, color='black', alpha=0.6)
     ax2.legend(['Height', 'RF Null', 'Micromotion'], fontsize=18, loc='upper left')
@@ -364,8 +367,9 @@ def plot_c2m_hist(config):
     plt.axvline(x=-0.0025, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.axvline(x=-0.0015, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
     plt.axvline(x=-0.0005, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
-    plt.xlabel('Charge-to-Mass Ratio (C/kg)')
-    plt.ylabel('Number of Occurrences')
+    plt.xlabel('Charge-to-Mass Ratio (C/kg)', fontsize = 15)
+    plt.ylabel('Number of Occurrences', fontsize=15)
+    plt.tick_params(axis='both', labelsize=15)
     plt.savefig(str(config.save_path[1]) + 'fig3-histogram.pdf')
 
 

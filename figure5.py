@@ -68,14 +68,14 @@ def build_data(file, frameOffset, firstPosType, uncert):
     return position, time, maxVelPos, maxVelTime, maxVel
 
 # COMSOL Shuttle ---------------------------------------------------------------------------------------------------------------------------
-"""
+
 # Setting up the figure object
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 # Getting data from our COMSOL text files
-arc_length1, potential1, v_min1 = build_data_comsol('data/shuttling/COMSOLShuttle1.txt')
-arc_length2, potential2, v_min2 = build_data_comsol('data/shuttling/COMSOLShuttle2.txt')
+arc_length1, potential1, v_min1 = build_data_comsol('data/shuttling/03-10-2025_COMSOL_shuttle1.txt')
+arc_length2, potential2, v_min2 = build_data_comsol('data/shuttling/03-10-2025_COMSOL_shuttle2.txt')
 
 # Establishing the bottom of the graph
 v_min_final = min(v_min1, v_min2)
@@ -119,14 +119,13 @@ print(height)
 plt.show()
 
 # COMSOL Split ---------------------------------------------------------------------------------------------------------------------------
-l
 # Setting up the figure object
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 # Getting data from our COMSOL text files
-arc_length1, potential1, v_min1 = build_data_comsol('data/shuttling/COMSOLSplit1.txt')
-arc_length2, potential2, v_min2 = build_data_comsol('data/shuttling/COMSOLSplit2.txt')
+arc_length1, potential1, v_min1 = build_data_comsol('data/split/03-10-2025_COMSOL_split_1.txt')
+arc_length2, potential2, v_min2 = build_data_comsol('data/split/03-10-2025_COMSOL_split_2.txt')
 
 # Establishing the bottom of the graph
 v_min_final = min(v_min1, v_min2)
@@ -146,7 +145,7 @@ ax.plot(arc_length2, potential2, marker='o', label='Final', linewidth=1.5, marke
 # Setting the y-axis ticks and bounding the graph
 ax.set_yticks([0, 10, 20, 30, 40, 50])
 ax.set_aspect(0.4)
-plt.xlim([-30, 30])
+plt.xlim([-25, 25])
 plt.ylim([-5, 50])
 
 # Move the x-axis to the top
@@ -169,7 +168,7 @@ width, height = bbox.width, bbox.height
 print(width)
 print(height)
 plt.show()
-"""
+
 
 # Shuttle ---------------------------------------------------------------------------------------------------------------------------
 
@@ -190,15 +189,15 @@ print(maxVel)
 # Building the graph
 T_exp = U.T_exp
 ax1.clear()
-ax1.set_title('Shuttling')
-ax1.set_xlabel('Position (mm)', fontsize='x-large')
-ax1.set_ylabel('Time (s)', fontsize='x-large')
+ax1.set_title('Shuttling', fontsize=17)
+ax1.set_xlabel('Position (mm)', fontsize=15)
+ax1.set_ylabel('Time (s)', fontsize=15)
 ax1.scatter(position1, time1, s=3, marker='o', label='Ion position data', c=[(31/255, 161/255, 135/255)])
 #plt.errorbar(position1, time1, xerr = np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), yerr = np.abs(T_exp * np.ones_like(time1)))
 ax1.fill_betweenx(time1, x1 = np.array(position1) + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), alpha = .3, color = 'teal')
 ax1.set_yticks([0,  .5, 1,  1.5])
 ax1.set_aspect(3)
-
+ax1.legend(fontsize=15)
 # Bounding the graph
 plt.xlim([0, 25])
 plt.ylim([-0.5, 1.25])
@@ -210,11 +209,11 @@ plt.ylim([-0.5, 1.25])
 ax1.xaxis.set_label_position('bottom')
 
 # Set ticks on both the top and bottom of the plot
-plt.tick_params(axis='x', which='both', top=True, bottom=True, labeltop=True, labelbottom=True, labelsize='large')
-plt.tick_params(axis='y', labelsize='large')
+plt.tick_params(axis='x', which='both', top=True, bottom=True, labeltop=True, labelbottom=True, labelsize= 15)
+plt.tick_params(axis='y', labelsize=15)
 
 # Place the legend at the bottom right
-plt.legend(loc='lower right', fontsize='small')
+plt.legend(loc='lower right', fontsize=13)
 os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()
@@ -238,7 +237,7 @@ print(len(position2))
 print(len(time2))
 # Building the graph
 ax1.clear()
-ax1.set_title('Splitting')
+ax1.set_title('Splitting', fontsize=17)
 ax1.set_xlabel('Position (mm)', fontsize='x-large')
 ax1.set_ylabel('Time (s)', fontsize='x-large')
 ax1.scatter(position1, time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
@@ -258,11 +257,11 @@ ax1.scatter(position2, time2, s=3, marker='o', label='Ion 2 position data', c=[(
 ax1.xaxis.set_label_position('bottom')
 
 # Set ticks on both the top and bottom of the plot
-plt.tick_params(axis='x', which='both', top=True, bottom=True, labeltop=True, labelbottom=True, labelsize='large')
-plt.tick_params(axis='y', labelsize='large')
+plt.tick_params(axis='x', which='both', top=True, bottom=True, labeltop=True, labelbottom=True, labelsize=15)
+plt.tick_params(axis='y', labelsize=15)
 
 # Place the legend at the bottom right
-plt.legend(loc='upper center', fontsize='small')
+plt.legend(loc='upper center', fontsize=14)
 os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/SplitPlot.pdf', format='pdf', bbox_inches='tight')
 plt.show()
