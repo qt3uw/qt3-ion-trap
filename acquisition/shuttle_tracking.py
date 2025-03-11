@@ -19,7 +19,7 @@ class ShuttleTrackingConfig:
         self.y_end = int(y_bounds[1])
 
         # image processing
-        self.bin_thresh = 40
+        self.bin_thresh = 10
         self.cleaning_kernel = np.ones((2, 2), np.uint8)
         self.filling_kernel = np.ones((4, 2), np.uint8)
 
@@ -43,7 +43,7 @@ class ShuttleTrackingConfig:
 
         # image capture settings
         self.image_save = True
-        self.image_save_times = [0, 2, 4, 6]
+        self.image_save_times = [0, .25, .5, .75, 1, 1.25]
 
         # data storage
         self.data_storage = open(storage_path, 'w')
@@ -58,7 +58,7 @@ def initialize_video(config):
     ret, start_frame = get_frame(cap, config.start_frame_num)
     
     if ret:
-        frame_height, frame_width = start_frame.shape[:         2]
+        frame_height, frame_width = start_frame.shape[:2]
         print(f"Frame height: {frame_height}\nFrame width: {frame_width}")
         
         roi = start_frame[config.y_start:config.y_end, config.x_start:config.x_end]
@@ -290,7 +290,7 @@ def split_data(config, cap, detector, total_frames, start_frame):
 
 def main():
     print("Running program...")
-   
+    """
     config_shuttle = ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/split/02-28-2025_split_data.txt')
   
     
@@ -300,7 +300,7 @@ def main():
     #run_tracking(config, cap, detector, total_frames, start_frame)
     split_data(config_shuttle, cap, detector_shuttle, total_frames, start_frame)
 
-    
+    """
     config_shuttle =  ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_shuttle.avi', storage_path = 'data/shuttling/02-28-2025_shuttle_data.txt')
  
     
