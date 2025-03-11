@@ -184,7 +184,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     c2m_func = lambda y : -g / abs(gradient_y(y))
 
     c2m_ext = c2m_func(y_min) 
-   
+
     delta_c2m_ext_func = lambda derv_y, delta_y, deriv_V, delta_V: np.sqrt(np.square(derv_y * delta_y) + np.square(deriv_V * delta_V))
     derv_y = derivative(c2m_func, x0 = y_min, dx= delta_y_gradient_calc)
 
@@ -263,13 +263,14 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     ax.plot(-dc_voltages, (y0)* 1.E3, marker='.', linestyle='None', color='k')
     ax.plot(-v_min, y_min * 1.E3, marker = '.', color = "red")
     ax.plot(-dc_voltages,(y0_meas * 1.E3), color='darkred', linestyle='--', label='Method 1: ' + r'$\chi^{2}_{1} = $ ' + "{:.3f}".format(chi2_fit))
-    ax.fill_between(-dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha = .3, hatch = '///', color = 'red')
+    ax.fill_between(-dc_voltages,y0_meas_upper * 1.E3, y0_meas_lower*1.E3, alpha =0.3, hatch = '///', color = 'red')
 
     plt.errorbar(-dc_voltages,(y0)* 1.E3, yerr=np.array(delta_pos[1])*1e3, fmt='none', ls='none', capsize=2, color='indigo')
     
     ax.plot(-dc_voltages,(y0_model * 1.E3), color= "green", label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
 
-    ax.fill_between(-dc_voltages, y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = .2, color = COLORS["error"])
+    ax.fill_between(-dc_voltages, y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = 0.3, color = COLORS["error"],
+                    hatch='oo')
     ax.set_xlabel('DC electrode voltage (-V)', fontsize=15)
     ax.set_ylabel('Ion height (mm)', fontsize=15)
    
@@ -280,9 +281,10 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 * np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(1/c2m_err), \
                 "chi^2 _fit" : str(chi2_fit), "chi^2_ext)" : str(chi2_extr)}
     plt.tick_params(axis='both', labelsize=15)
-    print("Hello")
+    print(f'c2m from fit:{c2m_int[0]} +/- {np.sqrt(error[1, 1])}')
+    print(f'c2m from micromotion: {c2m_ext} +/- {c2m_err}')
     print(str(c2m_int[0]))
-    print(str(3 * np.sqrt(error[1, 1])))
+    print(str(np.sqrt(error[1, 1])))
     print(str(c2m_ext))
     print("Goodbye")
     print(str(c2m_err))
@@ -290,6 +292,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     print(chi2_extr)
 
     fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf", metadata = metadata)
+    print(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf")
 
 
     return trap
