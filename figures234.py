@@ -104,12 +104,7 @@ def get_data(config, filename = None):
     """
     Reads and sorts experimental data from a text file.
     :param filename: File to extract data from. Only necessary for folder iteration in which the file is not graph_file_name
-    :return: If filename is specificed, returns the data points, where each point has the following form-
-             (DC voltage, centroid, micromotion amplitude,
-             voltage when micromotion is minimized,
-             centroid when micromotion is minimized,
-             minimum micromotion amolitude)
-             Otherwise, returns only the charge-to-mass value
+    :return:
     """
     data_list = []
     if filename == None:
@@ -133,7 +128,7 @@ def get_data(config, filename = None):
             y0 = rawdata[:, 1]
             print("y0: " + str(y0))
             v_min, y_min, micro_min = rawdata[np.argmin(rawdata[:, 2])]
-            y_std = std_data[:, 0]
+            y_std = np.abs(y_spread) / np.sqrt(12)  # When we calculate center we sample from a uniform distribution
             spread_std = std_data[:, 1]
             print("y_std: " + str(y_std))
             print("micro_std: " + str(spread_std))
@@ -142,7 +137,9 @@ def get_data(config, filename = None):
                 line = line.strip()
                 analyzed_data = eval(line)
                 c2m, null_volt, null_height = analyzed_data[0], analyzed_data[1], analyzed_data[2]
-        return -dc_voltages, y0 * 1.E-3, y_std *  1.E-3, y_spread * 1.E-3, spread_std * 1.E-3, -v_min, y_min * 1.E-3, micro_min * 1.E-3, c2m, null_volt, null_height* 1.E-3
+        return -dc_voltages, y0 * 1.E-3, y_std * 1.E-3, y_spread * 1.E-3, spread_std * 1.E-3, -v_min, y_min * 1.E-3, \
+            micro_min * 1.E-3, c2m, null_volt, null_height* 1.E-3
+
     else:
         analyzedfilename = 'data/analyzed_micromotion/second_round_data_collection/' + str(cut_basefilename) + '.txt'
     with open(analyzedfilename) as file:
@@ -188,7 +185,6 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
 
     c2m_ext = c2m_func(y_min) 
    
-    
     delta_c2m_ext_func = lambda derv_y, delta_y, deriv_V, delta_V: np.sqrt(np.square(derv_y * delta_y) + np.square(deriv_V * delta_V))
     derv_y = derivative(c2m_func, x0 = y_min, dx= delta_y_gradient_calc)
 
@@ -216,11 +212,11 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
    
     y0_model = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
   
-    trap.charge_to_mass = c2m_ext -c2m_err
+    trap.charge_to_mass = c2m_ext - c2m_err
     y0_model_upper = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
-    trap.charge_to_mass = c2m_ext +c2m_err
+    trap.charge_to_mass = c2m_ext + c2m_err
  
-    y0_model_lower= (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps)) 
+    y0_model_lower = (trap.get_height_versus_dc_voltages(dc_voltages, include_gaps=include_gaps))
     
     guesses = [trap.__dict__[param] for param in parameters]
 
@@ -232,7 +228,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
         return l2
 
     def chi_2(y_exp, y_fit, sigma):
-        dof = len(y_exp) - 1 - 1 
+        dof = len(y_exp) - 1 - 1
         return np.sum(np.divide(np.square(y_exp - y_fit), np.square(sigma))) / dof
 
 
@@ -250,11 +246,11 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     error = fit_error(y0_meas, delta_pos[1], trap=trap)
     trap_c2m_0 = trap.charge_to_mass 
     c2m_int = trap_c2m_0
-    chi2_fit_upper =  trap_c2m_0 + 3*np.sqrt(error[1, 1])
+    chi2_fit_upper =  trap_c2m_0 + np.sqrt(error[1, 1])
 
 
 
-    chi2_fit_lower =  trap_c2m_0 - 3*np.sqrt(error[1, 1])
+    chi2_fit_lower =  trap_c2m_0 - np.sqrt(error[1, 1])
     trap.charge_to_mass = chi2_fit_upper
 
 
@@ -273,7 +269,7 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     
     ax.plot(-dc_voltages,(y0_model * 1.E3), color= "green", label='Method 2: ' + r'$\chi^{2}_{2} = $ ' + "{:.3f}".format(chi2_extr))
 
-    ax.fill_between(-dc_voltages,y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = .2, color = COLORS["error"])
+    ax.fill_between(-dc_voltages, y0_model_upper * 1.E3, y0_model_lower*1.E3, alpha = .2, color = COLORS["error"])
     ax.set_xlabel('DC electrode voltage (-V)', fontsize=15)
     ax.set_ylabel('Ion height (mm)', fontsize=15)
    

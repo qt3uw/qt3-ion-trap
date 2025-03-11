@@ -40,16 +40,15 @@ class Uncertainties:
     
     
     def get_unc_values(self):
+        """
+        Returns copy of uncertainties dictionary
+        """
         return self.__dict__.copy()
-
-
     
     def set_values(self, **kwargs):
         for key, value in kwargs.iteritems():
              self.__dict__[key] = value
 
-  
-   
     def pxl_to_r(self):
         pxl_to_milli = np.array([(self.N_c[i]/ self.r_c[i]) for i in range(0, 2)]).tolist()
         self.pxl_to_mm = pxl_to_milli
