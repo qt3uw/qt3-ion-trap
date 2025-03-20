@@ -111,7 +111,7 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
         f.write("[" + str(c2mval) + ", " + str(minvolt_raw) + ", " + str(RF_height[0]) + "]\n")
 
 
-def print_statistics(charge_to_mass, rf_height_list, config = get_default_config()):
+def print_statistics(charge_to_mass, rf_height_list, escape_voltage, escape_h, rf_volts, config = get_default_config()):
     '''
     Prints statistics for charge-to-mass and RF null heights. For FOLDER_EXTRACT function.
     :param charge_to_mass: List object of calculated charge-to-mass ratio. Based on RF null voltage and RF null height
@@ -124,6 +124,15 @@ def print_statistics(charge_to_mass, rf_height_list, config = get_default_config
         print('Mean RF Height =', sts.mean(rf_height_list))
         print('Med. RF Height =', sts.median(rf_height_list))
         print('StDev. Height =', sts.stdev(rf_height_list))
+        print('StDev. Height =', sts.stdev(rf_height_list))
+        print('Escape DC Voltage Mean=', sts.mean(escape_voltage))
+        print('StDev. Escape DC Voltage =', sts.stdev(escape_voltage))
+        print('Escape Height = ' + str(escape_h))
+        print('Null Volts =' + str(rf_volts))
+        print('Mean Null Volts =' + str(sts.mean(rf_volts)))
+        print('StDev. Null Volts =', sts.stdev(rf_volts))
+
+
 
 
 # -------------------------------------- Main Logic ----------------------------------------- #
@@ -132,7 +141,10 @@ def main():
     config = ParameterConfig()
 
     rf_height_vals = []
+    rf_volts = []
     charge_to_mass = []
+    escape_volts = []
+    escape_h = []
 
     try:
         files = os.listdir(config.input)
@@ -149,6 +161,9 @@ def main():
             tuples_list = load_data(full_file_path)
 
             voltage, height, micromotion = extract_data(tuples_list)
+            rf_volts.append(voltage[int(np.argmin(micromotion))])
+            escape_volts.append(voltage[-1])
+            escape_h.append(height[-1])
             RF_height, minvolt_raw, c2mval = analyze_data(micromotion, voltage, height, file_name, config.file_to_print)
 
             rf_height_vals.append(RF_height)
@@ -158,7 +173,7 @@ def main():
                 output_analyzed(c2mval_float, minvolt_raw, RF_height, file_name)
 
         rf_height_list = [float(val[0]) for val in rf_height_vals]
-        print_statistics(charge_to_mass, rf_height_list)
+        print_statistics(charge_to_mass, rf_height_list, escape_volts, escape_h, rf_volts)
     if datatype == "file":
         config.file_to_print = config.input
         with open(config.input, 'r') as file:

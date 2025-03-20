@@ -173,7 +173,7 @@ plt.show()
 # Shuttle ---------------------------------------------------------------------------------------------------------------------------
 
 # Setting up the graph object
-fig = plt.figure()
+fig = plt.figure(figsize=(4.96, 1.1833))
 ax1 = fig.add_subplot(1, 1, 1)
 
 
@@ -196,7 +196,6 @@ ax1.scatter(position1, time1, s=3, marker='o', label='Ion position data', c=[(31
 #plt.errorbar(position1, time1, xerr = np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), yerr = np.abs(T_exp * np.ones_like(time1)))
 ax1.fill_betweenx(time1, x1 = np.array(position1) + np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), x2 = np.array(position1) - np.abs(28/64 * 0.005 * 25.4 * np.array(position1)), alpha = .3, color = 'teal')
 ax1.set_yticks([0,  .5, 1,  1.5])
-ax1.set_aspect(3)
 ax1.legend(fontsize=15)
 # Bounding the graph
 plt.xlim([0, 25])
@@ -216,6 +215,9 @@ plt.tick_params(axis='y', labelsize=15)
 plt.legend(loc='lower right', fontsize=13)
 os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
+width, height = bbox.width, bbox.height
+print(width)
+print(height)
 plt.show()
 
 
@@ -242,7 +244,7 @@ ax1.set_xlabel('Position (mm)', fontsize='x-large')
 ax1.set_ylabel('Time (s)', fontsize='x-large')
 ax1.scatter(position1, time1, s=3, marker='o', label='Ion 1 position data', c=[(33/255, 145/255, 140/255)])
 ax1.set_yticks([0,  .5,  1, 1.5, 2])
-ax1.set_aspect(7)
+#ax1.set_aspect(7)
 
 # Bounding the graph
 plt.xlim([-25, 25])
