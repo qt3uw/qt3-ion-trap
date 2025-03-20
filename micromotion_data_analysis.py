@@ -6,23 +6,42 @@ from pseudopotential import PseudopotentialPlanarTrap
 
 
 class ParameterConfig:
+    """
+    ParameterConfig establishes where/how data will ne handled from the micromotion trials
+        :input: (str) File or directory to be analyzed
+        :file_to_print: (str) Specific trial to print data from
+        :output_data: (bool) Toggles the ability to 
+                       generates a text file containing analyzed data in the form 
+                       '[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]'
+        :print_stats: (bool) Toggles the ability to prints statistics for a specific trial 
+                             and global charge-to-mass statistics if given folder input
+        :points_taken: (int) Number of points used to fit quadratic for RF null 
+                              identification (point of least micromotion)
+
+
+
+
+    """
     def __init__(self):
-        self.input = "data/raw_micromotion/second_round_data_collection/Clean Data"              # File or directory to be analyzed
-        self.file_to_print = "03-10-2025_Trial1_data.txt"     # Specific trial to print data from
-        self.output_data = True                          # Generates a text file containing analyzed data in the form "[charge-to-mass (C/kg), RF null voltage (V), RF null height (mm)]"
-        self.print_stats = True                          # Prints statistics for specific trial and charge-to-mass statistics if given folder input
-        self.points_taken = 12                           # Number of points used to fit quadratic for RF null identification (point of least micromotion)
+        self.input = "data/raw_micromotion/second_round_data_collection/Clean Data"              
+        self.file_to_print = "03-10-2025_Trial1_data.txt"     
+        self.output_data = True                          
+        self.print_stats = True                          
+        self.points_taken = 12                           
 
 
 def get_default_config():
+    """
+    :returns: ParameterConfig() object with default attributes
+    """
     return ParameterConfig()
 
 
 def load_data(file_path):
     '''
     This function loads the data from the given file path.
-    :param file_path: File location for data input
-    :return tuples_list: List object containing tuples of voltage, height, and micromotion
+        :param file_path: File location for data input
+        :return tuples_list: List object containing tuples of voltage, height, and micromotion
     '''
     tuples_list = []
     with open(file_path, 'r') as file:
@@ -39,8 +58,8 @@ def load_data(file_path):
 def extract_data(tuples_list):
     '''
     This function extracts the data from the given tuples
-    :param tuples_list: List object containing tuples of voltage, height, and micromotion
-    :return: Individual voltage, height, and micromotion lists 
+        :param tuples_list: List object containing tuples of voltage, height, and micromotion
+        :return: Individual voltage, height, and micromotion lists 
     '''
     voltage, height, micromotion = [], [], []
 
@@ -54,14 +73,14 @@ def extract_data(tuples_list):
 def analyze_data(micromotion, voltage, height, file_name, testfile, config = get_default_config()):
     '''
     Executes the data analysis and returns values for the RF null height, the RF null voltage, and the charge-to-mass
-    :param micromotion: Individual micromotion list
-    :param voltage: Individual voltage list
-    :param height: Individual height list
-    :param file_name: Current file being analyzed
-    :param testfile: Specified file name to output results from
-    :return RF_height: Vertical position of micromotion-minimized point (RF null)
-    :return minvolt_raw: Voltage at which micromotion is minimized (RF null)
-    :return c2mval: Calculated charge-to-mass ratio
+        :param micromotion: Individual micromotion list
+        :param voltage: Individual voltage list
+        :param height: Individual height list
+        :param file_name: Current file being analyzed
+        :param testfile: Specified file name to output results from
+        :return RF_height: Vertical position of micromotion-minimized point (RF null)
+        :return minvolt_raw: Voltage at which micromotion is minimized (RF null)
+        :return c2mval: Calculated charge-to-mass ratio
     '''
     full_indices = sorted(range(len(micromotion)), key=micromotion.__getitem__)
     indices = full_indices[0:config.points_taken]
@@ -96,10 +115,10 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
 def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
     '''
     This function takes analyzed data values and places them, as a list object, into a file in the analyzed_micromotion directory
-    :param c2mval: Calculated charge-to-mass ratio
-    :param minvolt_raw: Voltage at which micromotion is minimized (RF null)
-    :param RF_height: Vertical position of micromotion-minimized point (RF null)
-    :param file_name: File name of analyzed file
+        :param c2mval: Calculated charge-to-mass ratio
+        :param minvolt_raw: Voltage at which micromotion is minimized (RF null)
+        :param RF_height: Vertical position of micromotion-minimized point (RF null)
+        :param file_name: File name of analyzed file
     '''
     file_name = os.path.basename(file_name)
     cut_file_name = file_name.replace('.txt', '')
@@ -114,8 +133,8 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
 def print_statistics(charge_to_mass, rf_height_list, escape_voltage, escape_h, rf_volts, config = get_default_config()):
     '''
     Prints statistics for charge-to-mass and RF null heights. For FOLDER_EXTRACT function.
-    :param charge_to_mass: List object of calculated charge-to-mass ratio. Based on RF null voltage and RF null height
-    :param rf_height_list: List object of RF null height values
+        :param charge_to_mass: List object of calculated charge-to-mass ratio. Based on RF null voltage and RF null height
+        :param rf_height_list: List object of RF null height values
     '''
     if config.print_stats:
         print('Mean Q/m =', sts.mean(charge_to_mass))
@@ -138,6 +157,9 @@ def print_statistics(charge_to_mass, rf_height_list, escape_voltage, escape_h, r
 # -------------------------------------- Main Logic ----------------------------------------- #
 
 def main():
+    """
+    Analyzes and then saves the analysis of raw micromotion data
+    """
     config = ParameterConfig()
 
     rf_height_vals = []

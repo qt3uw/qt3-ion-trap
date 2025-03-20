@@ -373,7 +373,7 @@ def plot_c2m_hist(config):
 
 
 if __name__ == "__main__":
-    """
+    
     PLACEHOLDER_V_DC = -1
     U = Uncertainties(r_c = [np.nan, (16.053-0.178)*1e-3], N_c = [np.nan, 900-10], delta_r_c = [np.nan, (16.053-0.178) * 0.005 * 1e-3], delta_N_c = [np.nan, 1/(2*np.sqrt(12))], delta_cent = PLACEHOLDER_V_DC)
     for i in [19]:
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     plot_c2m_hist(config = get_default_config())
 
     
-    """
+    
     e_field_panel()
     plt.show()
 
