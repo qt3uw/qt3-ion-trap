@@ -7,7 +7,8 @@ from uncertainties import Uncertainties
 
 
 class ShuttleTrackingConfig:
-    def __init__(self, video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/shuttling/02-28-2025_split_data.txt', x_bounds = [0,1350], y_bounds = [650, 800], rects = [((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0))]):
+    def __init__(self, video_path = 'E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/shuttling/02-28-2025_split_data.txt', \
+                 x_bounds = [0,1350], y_bounds = [650, 800], rects = [((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0)), ((0, 0), (0, 0))], split = False):
         # video settings
         self.video_path = video_path
         self.start_frame_num = 10
@@ -47,6 +48,7 @@ class ShuttleTrackingConfig:
 
         # data storage
         self.data_storage = open(storage_path, 'w')
+        self.split = split
     
 
 # --------------------------- Video Processing Functions ---------------------------------------------- #
@@ -236,8 +238,12 @@ def run_tracking(config, cap, detector, total_frames, start_frame, origin_part =
             
             # if enabled, save image
             if config.image_save:
-                save_image('figures/figure_5/shuttle_images/NewShuttleParticleAtTime', time,
-                           config.image_save_times, clean_thresh)
+                if config.split:
+                    save_image('figures/figure_5/shuttle_images/NewShuttleParticleAtTime', time,
+                                config.image_save_times, clean_thresh)
+                else:
+                    save_image('figures/figure_5/split_images/NewParticleAtTime', time,
+                                config.image_save_times, clean_thresh)
             
             # Display frame
            
