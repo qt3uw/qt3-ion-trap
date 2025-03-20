@@ -1,6 +1,5 @@
 import copy
 from dataclasses import dataclass
-
 import scipy.optimize
 from scipy.constants import g
 from scipy.optimize import minimize_scalar, minimize
@@ -33,6 +32,32 @@ def get_sequential_colormap(num, cmap='viridis', cmin=0.0, cmax=1.0):
 
 @dataclass
 class PseudopotentialPlanarTrap:
+    """
+    Summary: PseudopotentialPlanarTrap class contains the properties and methods for
+             the 5-rail planar trap described in "Analytic model for electrostatic 
+             fields in surface-electrode ion traps" by M.G. House. These properties 
+             include the geoemtric dimensions of the central and AC electrodes,
+             the voltages applied to the center and AC electrodes, and properties of
+             the free-space voltage and electric fields produced by the trap.
+    Attributes:
+        - central_electrode_width: (float) Central electrode width in meters
+        - ac_electrode_width: (float) AC electrode widths in meters
+        - electrode_height: (float) Height of central and AC electrodes in meters
+        - gap_width: (float) Dielectric gap distance between center
+                   and AC electrodes. 
+        - shuttle_width: (float) Shuttle electrode widths in meters
+        
+        - v_dc: (float)
+        - v_rf: (float) 
+        - freq_rf: (float) The frequency of v_rf in [Hz]
+        - charge_to_mass: (float) The charge-to-mass ratio of an ion in the 
+                           trap in units of [Coulombs]/[kilogram]
+        - v_error: (float) Uncertainty in voltage on electrodes
+
+
+
+
+    """
     central_electrode_width: float = 3.175E-3
     ac_electrode_width: float = 4.15831E-3
     v_rf: float = 50 * 20 / np.sqrt(2)
@@ -47,30 +72,51 @@ class PseudopotentialPlanarTrap:
 
     @property
     def a(self):
+        """
+        returns: 'a' value described in House's paper (listed in class summary)
+        """
         return self.central_electrode_width + self.gap_width
 
     @property
     def b(self):
+        """
+        returns: 'b' value desribed in House's paper (listed in class summary)
+        """
         return self.ac_electrode_width + self.gap_width
 
     @property
     def c(self):
+        """
+        returns: 'c' value described in House's paper (listed in class summary)
+        """
         return self.b
 
     @property
     def omega(self):
+        """
+        returns: Returns the angular frequency [rads]/[sec] from the class-specified ac frequency [Hz]
+        """
         return 2 * np.pi * self.freq_rf
 
     @property
     def height_no_gap(self):
+        """
+        returns: Height of RF null when dielectric gaps are not taken into account
+        """
         return np.sqrt(2 * self.a * self.b + self.a ** 2) / 2
 
    
     def height_with_gap(self):
+        """
+        returns: Height of RF null when dielectric gapa are taken into account
+        """
         return np.sqrt(2 * self.a * self.b + self.a ** 2 - self.gap_width ** 2) / 2
 
     @property
     def y_escape(self):
+        """
+        returns: NotImplementedError
+        """
         raise NotImplementedError
 
     @staticmethod
@@ -592,8 +638,8 @@ def compare_model_gaps_versus_no_gaps(trap: PseudopotentialPlanarTrap):
 
 
 if __name__ == "__main__":
-    trap = PseudopotentialPlanarTrap()
-    print(trap.height_with_gap())
+    # trap = PseudopotentialPlanarTrap()
+    # print(trap.height_with_gap())
     #compare_model_gaps_versus_no_gaps(trap)
     # plot_trap_escape_vary_dc(trap, include_gaps=True)
     # get_data()
@@ -602,4 +648,4 @@ if __name__ == "__main__":
     # trap.v_rf = -1000.
     # trap.plot_E_field(include_gaps=True)
     # trap.plot_potential_contours()
-    plt.show()
+    # plt.show()
