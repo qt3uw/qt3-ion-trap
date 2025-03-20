@@ -18,9 +18,6 @@ class ParameterConfig:
         :points_taken: (int) Number of points used to fit quadratic for RF null 
                               identification (point of least micromotion)
 
-
-
-
     """
     def __init__(self):
         self.input = "data/raw_micromotion/second_round_data_collection/Clean Data"              
@@ -62,7 +59,6 @@ def extract_data(tuples_list):
         :return: Individual voltage, height, and micromotion lists 
     '''
     voltage, height, micromotion = [], [], []
-
     for i in range(len(tuples_list)):
             voltage.append(tuples_list[i][0])
             height.append(tuples_list[i][1])
@@ -86,29 +82,23 @@ def analyze_data(micromotion, voltage, height, file_name, testfile, config = get
     indices = full_indices[0:config.points_taken]
     smallest_voltage = [voltage[i] for i in indices]
     smallest_micromotion = [micromotion[i] for i in indices]
-
     coefficients = np.polyfit(smallest_voltage, smallest_micromotion, 2)
     poly = np.poly1d(coefficients)
     x_fit = np.linspace(min(smallest_voltage), max(smallest_voltage), 100)
     y_fit = poly(x_fit)
     minvolt_raw = np.average(x_fit[np.where(y_fit == min(y_fit))])
     minvolt_int = int(minvolt_raw)
-
     coefficients_height = np.polyfit(voltage, height, 2)
     poly_height = np.poly1d(coefficients_height)
     y_fit_height = poly_height(np.linspace(40, 240, 201))
-
     index = (np.where(np.linspace(40, 240, 201) == minvolt_int))
     RF_height = y_fit_height[index]
-
     trap = PseudopotentialPlanarTrap()
     trap.v_dc = minvolt_raw
     c2mval = -9.80665 / trap.grad_u_dc(trap.a / 2, RF_height / 1000, trap.x1())
-
     if file_name == testfile and config.print_stats:
         print(f'Specified Trial Q/m = {c2mval[0]}')
         print(f'Specified Trial RF Height = {RF_height[0]}')
-
     return RF_height, minvolt_raw, c2mval
 
 
@@ -161,13 +151,11 @@ def main():
     Analyzes and then saves the analysis of raw micromotion data
     """
     config = ParameterConfig()
-
     rf_height_vals = []
     rf_volts = []
     charge_to_mass = []
     escape_volts = []
     escape_h = []
-
     try:
         files = os.listdir(config.input)
         datatype = "folder"
@@ -176,7 +164,6 @@ def main():
     except NotADirectoryError:
         datatype = "file"
         pass
-
     if datatype == "folder":
         for file_name in files:
             full_file_path = os.path.join(config.input, file_name)
@@ -193,7 +180,6 @@ def main():
             charge_to_mass.append(c2mval_float)
             if config.output_data == True:
                 output_analyzed(c2mval_float, minvolt_raw, RF_height, file_name)
-
         rf_height_list = [float(val[0]) for val in rf_height_vals]
         print_statistics(charge_to_mass, rf_height_list, escape_volts, escape_h, rf_volts)
     if datatype == "file":
@@ -206,7 +192,6 @@ def main():
             if config.print_stats:
                 print(f'Trial Q/m = {c2mval[0]}')
                 print(f'Trial RF Height = {RF_height[0]}')
-
             if config.output_data == True:
                 output_analyzed(c2mval_float, minvolt_raw, RF_height, config.input)
                 file_name = os.path.basename(config.input)

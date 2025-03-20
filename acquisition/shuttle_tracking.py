@@ -19,7 +19,7 @@ class ShuttleTrackingConfig:
         self.y_end = int(y_bounds[1])
 
         # image processing
-        self.bin_thresh = 10
+        self.bin_thresh = 45
         self.cleaning_kernel = np.ones((2, 2), np.uint8)
         self.filling_kernel = np.ones((4, 2), np.uint8)
 
@@ -236,7 +236,7 @@ def run_tracking(config, cap, detector, total_frames, start_frame, origin_part =
             
             # if enabled, save image
             if config.image_save:
-                save_image('NewShuttleParticleAtTime', time,
+                save_image('figures/figure_5/shuttle_images/NewShuttleParticleAtTime', time,
                            config.image_save_times, clean_thresh)
             
             # Display frame
@@ -290,7 +290,7 @@ def split_data(config, cap, detector, total_frames, start_frame):
 
 def main():
     print("Running program...")
-    """
+  
     config_shuttle = ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_split.avi', storage_path = 'data/split/02-28-2025_split_data.txt')
   
     
@@ -300,7 +300,7 @@ def main():
     #run_tracking(config, cap, detector, total_frames, start_frame)
     split_data(config_shuttle, cap, detector_shuttle, total_frames, start_frame)
 
-    """
+   
     config_shuttle =  ShuttleTrackingConfig(video_path ='E:/Feb 27-28 Experimental Data Collection/02-28-2025 Shuttle-Split/Clean Data/02-28-2025_Trial_shuttle.avi', storage_path = 'data/shuttling/02-28-2025_shuttle_data.txt')
  
     

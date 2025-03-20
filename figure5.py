@@ -12,10 +12,16 @@ plt.rcParams['grid.color'] = 'gray'  # Set the color of the gridlines
 plt.rcParams['grid.linestyle'] = '--'  # Set the style of the gridlines (e.g., dashed)
 plt.rcParams['grid.linewidth'] = 0.5  # Set the width of the gridlines
 
-# Putting data from a .txt file of COMSOL simulation points into lists
-# This function returns a list of positions and potentials as well as
-# the minimum voltage
 def build_data_comsol(file):
+    """
+    Putting data from a .txt file of COMSOL simulation points into lists
+    This function returns a list of positions and potentials as well as
+    the minimum voltage
+        :param file: (str) .txt file path and name fo COMSOL simulation points
+        :return: List[float], List[float], float 
+                 returns a list of x-positions, a list of potentials, and the 
+                 minimum voltage from the list of potentials.
+    """
     graph_data = open(file, 'r').read()
     lines = graph_data.split('\n')
     v_min = float(lines[0].split()[1])
@@ -28,7 +34,6 @@ def build_data_comsol(file):
                 v_min = float(y)
             arc_length.append(1000*((float(x) - 0.06)))
             potential.append(float(y))
-
     return arc_length, potential, v_min
 
 
@@ -37,6 +42,21 @@ def build_data_comsol(file):
 # Returns: a position list, a time list, a max velocity position, a max
 #          velocity time, and a max velocity
 def build_data(file, frameOffset, firstPosType, uncert):
+    """
+    Puts data from a txt file into lists after converting from
+    pixels per frame to mm per second
+        :param file: (str) file name of experimental data with which
+                     the user wants to analyze
+        :param frameOffset: (int) Defining where our t=0 is by shifting
+                            by the frameOffset.
+        :param firstPostype: (str) Defines how one defines the first position of the particle
+                             between defining it as zero with 'zero' 
+                             ro defining it was the average with 'average'
+        :param uncert: Uncertainties which contains uncertainty values for the data which are 
+                        accounted for in the graphs/analysis
+        :returns: a position list, a time list, a max velocity position, a max
+#                 velocity time, and a max velocity
+    """
     U = uncert
     graph_data = open(file, 'r').read()
     lines = graph_data.split('\n')
@@ -61,10 +81,8 @@ def build_data(file, frameOffset, firstPosType, uncert):
                 maxVelPos = secondPos
                 maxVelTime = currentTime
             firstPos = secondPos
-
             position.append(currentPos)
             time.append(currentTime)
-
     return position, time, maxVelPos, maxVelTime, maxVel
 
 # COMSOL Shuttle ---------------------------------------------------------------------------------------------------------------------------
