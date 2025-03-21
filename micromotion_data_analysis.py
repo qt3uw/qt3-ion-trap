@@ -134,11 +134,11 @@ def print_statistics(charge_to_mass, rf_height_list, escape_voltage, escape_h, r
         print('Med. RF Height =', sts.median(rf_height_list))
         print('StDev. Height =', sts.stdev(rf_height_list))
         print('StDev. Height =', sts.stdev(rf_height_list))
-        print('Escape DC Voltage Mean=', sts.mean(escape_voltage))
-        print('StDev. Escape DC Voltage =', sts.stdev(escape_voltage))
+        print('Escape DC Voltage Mean = ', sts.mean(escape_voltage))
+        print('StDev. Escape DC Voltage = ', sts.stdev(escape_voltage))
         print('Escape Height = ' + str(escape_h))
-        print('Null Volts =' + str(rf_volts))
-        print('Mean Null Volts =' + str(sts.mean(rf_volts)))
+        print('Null Volts = ' + str(rf_volts))
+        print('Mean Null Volts = ' + str(sts.mean(rf_volts)))
         print('StDev. Null Volts =', sts.stdev(rf_volts))
 
 

@@ -132,8 +132,6 @@ bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
 
 # Get the width and height of the plot (axes) in inches
 width, height = bbox.width, bbox.height
-print(width)
-print(height)
 plt.show()
 
 # COMSOL Split ---------------------------------------------------------------------------------------------------------------------------
@@ -183,8 +181,6 @@ bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
 
 # Get the width and height of the plot (axes) in inches
 width, height = bbox.width, bbox.height
-print(width)
-print(height)
 plt.show()
 
 
@@ -202,7 +198,7 @@ U.pxl_to_r()
 position1, time1, maxVelPos1, maxVelTime1, maxVel = build_data(
     'data/shuttling/02-28-2025_shuttle_data.txt', frameOffset, 'zero', uncert = U)
 position1 = position1 - (np.ones_like(position1)*(695.1126098632812)) / U.pxl_to_mm[0]
-print(maxVel)
+
 
 # Building the graph
 T_exp = U.T_exp
@@ -234,8 +230,7 @@ plt.legend(loc='lower right', fontsize=13)
 os.makedirs('figures/figure_5', exist_ok =True)
 plt.savefig('figures/figure_5/ShuttlePlot.pdf', format='pdf', bbox_inches='tight')
 width, height = bbox.width, bbox.height
-print(width)
-print(height)
+
 plt.show()
 
 
@@ -251,10 +246,7 @@ position1, time1, maxVelPos1, maxVelTime1, maxVel1 = build_data('data/split/02-2
 position2, time2, maxVelPos2, maxVelTime2, maxVel2 = build_data('data/split/02-28-2025_right_split_data.txt', frameOffset, 'average', uncert = U)
 position1 = position1 - (np.ones_like(position1)*(22.5 + 642)) / (U.pxl_to_mm[0])
 position2 = position2 - (np.ones_like(position2)*(22.5 + 642)) / (U.pxl_to_mm[0])
-print(maxVel1)
-print(maxVel2)
-print(len(position2))
-print(len(time2))
+
 # Building the graph
 ax1.clear()
 ax1.set_title('Splitting', fontsize=17)
