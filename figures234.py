@@ -339,6 +339,7 @@ def plot_c2m_hist(config):
     for file_name in files:
         c2m = get_data(config = config, filename = (str(foldername) + '/' + str(file_name)))
         c2m_values.append(-c2m)
+    print(c2m_values)
     plt.figure()
     plt.hist(c2m_values, edgecolor='black', bins=18, range=(-0.003, 0), color=COLORS['main'])
     plt.axvline(x=-0.0025, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
