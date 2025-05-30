@@ -112,8 +112,8 @@ def output_analyzed(c2mval, minvolt_raw, RF_height, file_name):
     '''
     file_name = os.path.basename(file_name)
     cut_file_name = file_name.replace('.txt', '')
-    with open("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
-        if os.stat("data/analyzed_micromotion/" + str(cut_file_name) + "_analyzed.txt").st_size != 0:
+    with open("data/analyzed_micromotion/second_round_data_collection/" + str(cut_file_name) + "_analyzed.txt", 'w') as f:
+        if os.stat("data/analyzed_micromotion/second_round_data_collection/" + str(cut_file_name) + "_analyzed.txt").st_size != 0:
             acknowledgement = ""
             while acknowledgement != "continue":
                 acknowledgement = input('\nThe save file already contains data. Type "continue" to overwrite, otherwise use Ctrl + C to exit. ')
