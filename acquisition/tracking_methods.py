@@ -92,6 +92,7 @@ def post_processing(thresh, cleaning_kernel, filling_kernel, top_rect_pt1, top_r
         :param clean_iter: Number of erosion iterations for cleaning
         :param dilate_iter: Number of dilation iterations for filling holes
         :param close_iter: Number of erosion iterations for returning to original particle size
+        :returns: (cv2.morphologyEx(), cv2.morphologyEx())
     """
     clean_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, cleaning_kernel, iterations=clean_iter)
     cv2.rectangle(clean_thresh, top_rect_pt1, top_rect_pt2, color = (0, 0, 0), thickness = -1)  # Top Erasure
@@ -117,5 +118,6 @@ def save_image(name, time, image_save_times, frame):
 def setup_tracking():
     """
     Initializing tracking variables
+        :returns: Empty dictionary, zero int, and empty list.
     """
     return {}, 0, []
