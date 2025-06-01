@@ -7,53 +7,63 @@ from uncertainties import Uncertainties
 
 
 class MicromotionTrackingConfig:
-<<<<<<< HEAD
+    '''
+    Saves relevant parameters of the tracking software as accessible fields.  
+        :field U: (Uncertainties()) A dataclass containing information about a given experimental setup with corresponding uncertainties. These 
+                   are used to read and/or write uncertainty values for error propagation. 
+        :field video_file: (str) Filepath, as a string, to the specific micromotion experimental video footage in the .avi file format to extract positional data
+        :field: view_type: (str) Setting for OpenCV to block out white binary noise. Choose "binary" to block out black binary noise. 
+        :field start_frame: (int) Defines the starting frame for automatic data collection process. 
+        :field fps: (float) The frames-per-second of the camera being used to record the .avi file. This is relevant for uncertainty propagation of variables in
+                    the time domain, such as particle velocity. 
+        :field start_voltage: (float) The absolute value of the initial voltage value applied to the central electrode of the trap for the micromotion experiment. 
+        :field voltage_increment: (float) The absolute value of the voltage step value between applied central electrode voltages on the trao during the micromotion experiement. 
+        :field change_interval: (float) The time between voltage_increment jumps i.e. the measurement time between datapoints.  
+        :field sample_frames: (int) Number of frame with which positional data is logged and later analyzed. 
+        :field bin_thresh: (int) The binary threshold for OpenCV's blob detection. User is encouraged to experiment with differnt values to obtain adequate object-tracking accuracy (1 < bin_thresh < 30 works well). 
+        :field x_range: ((int, int)) A tuple of pixel x-coordinate values, ordered as (min_pxl, max_pxl), which define the x range within our .avi file to measure, ignoring all other pixel values not within this range. 
+        :field y_range: ((int, int)) A tuple of pixel y-coordinate values, ordered as (min_pxl, max_pxl), which define the y range within our .avi file to measure, ignoring all other pixel values not within this range. 
+        :field bottom_bar: (int) Indicates the distance, in pixels, of the bottom of the post-cropped (x_range and y_range values allied to video) video which the user wants OpenCV to ignore further. 
+                           A good use case is keeping the reflective surface of the trap within the cropping region, but having OpenCV ignore this region while logging trapped-particle positional data. 
+        :field top_bar: (int) Indicates the distance, in pixels, of the top of the post-cropped (x_range and y_range values allied to video) video which the user wants OpenCV to ignore further.  
+        :field left_bar: (int) Indicates the distance, in pixels, of the left of the post-cropped (x_range and y_range values allied to video) video which the user wants OpenCV to ignore further.  
+        :field right_bar: (int) Indicates the distance, in pixels, of the left of the post-cropped (x_range and y_range values allied to video) video which the user wants OpenCV to ignore further.  
+        :field pixel_to_mm: (float) The pixel to millimeter conversion from calibration images before the data collection. This is essential to determining the particle's position in units of millimeters rather than pixels. 
+    '''
     def __init__(self, uncert):
         self.U = uncert
         self.video_file = "D:/March 9-10 Experimental Data Collection/03-10-2025_Trial9.avi"
-        # self.video_file = "acquisition/Trial18.avi"
         self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 10         # Defines starting frame. ONLY FOR DEBUGGING
-=======
-    def __init__(self):
-        self.video_file = "acquisition/Trial18.avi"
-        self.view_type = "image"        # "image" to block out white binary noise, "binary" to block out black binary noise
-        self.start_frame = 0            # Defines starting frame. ONLY FOR DEBUGGING
->>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
+        self.start_frame = 10           # Defines starting frame. ONLY FOR DEBUGGING
         self.fps = 20                   # fps of the camera
         self.start_voltage = 40         # Initial voltage value 
         self.voltage_increment = 5      # Voltage step between datapoints
         self.change_interval = 5        # Time between data points in the real-time trial (seconds)
         self.sample_frames = 15         # Number of frames averaged over per data point
-<<<<<<< HEAD
-        self.bin_thresh = 5   # Binary threshold for object detection
-        self.x_range = (0, 1550)       # x-axis frame of interest limits
+        self.bin_thresh = 5             # Binary threshold for object detection
+        self.x_range = (0, 1550)        # x-axis frame of interest limits
         self.y_range = (425, 1200)      # y-axis frame of interest limits
-        self.bottom_bar = 80      # Erasure rectangle, measured in pixels from the bottom edge
-        self.top_bar = 0               # Erasure rectangle, measured in pixels from the top edge
-        self.left_bar = 0              # Erasure rectangle, measured in pixels from the left edge
-=======
-        self.bin_thresh = 26            # Binary threshold for object detection
-        self.x_range = (200, 1200)      # x-axis frame of interest limits
-        self.y_range = (554, 1000)      # y-axis frame of interest limits
-        self.bottom_bar = 100           # Erasure rectangle, measured in pixels from the bottom edge
+        self.bottom_bar = 80            # Erasure rectangle, measured in pixels from the bottom edge
         self.top_bar = 0                # Erasure rectangle, measured in pixels from the top edge
         self.left_bar = 0               # Erasure rectangle, measured in pixels from the left edge
->>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
         self.right_bar = 0              # Erasure rectangle, measured in pixels from the right edge
         self.pixel_to_mm = 1/uncert.pxl_to_mm[1]     # Pixel-to-millimeter conversion, gathered from calibration image. "None" will output raw pixel data
 
 
 def get_default_config():
+    '''
+    Static method that returns a default MicroMotionTrackingConfig() object.
+        :returns: (MicromotionTrackingConfig()) 
+    '''
     return MicromotionTrackingConfig(uncert = Uncertainties())
 
 
 def frame_dimensions(cap, frame_num, config):
     """
     Calculate frame dimensions and ranges
-    :param cap: Video capture object from the OpenCV package
-    :param frame_num: Frame number of interest
-    :return x_start, x_end,...: Define the rectangular region of interest
+        :param cap: Video capture object from the OpenCV package
+        :param frame_num: Frame number of interest
+        :return x_start, x_end,...: Define the rectangular region of interest
     """
     ret, initial_frame = get_frame(cap, frame_num)
     initial_frame_dim = initial_frame.shape
@@ -66,8 +76,8 @@ def frame_dimensions(cap, frame_num, config):
 def gen_initial_frame(cap, config):
     """
     Generate and display initial frame
-    :param cap: Video capture object from the OpenCV package
-    :return x_start, x_end,...: Define the rectangular region of interest
+        :param cap: Video capture object from the OpenCV package
+        :return x_start, x_end,...: Define the rectangular region of interest
     """
     frame_num = config.start_frame
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num, config = config)
@@ -79,9 +89,9 @@ def gen_initial_frame(cap, config):
 def define_blockers(cap, frame_num, config):
     """
     Define blocking rectangles for frame processing
-    :param cap: Video capture object from the OpenCV package
-    :param frame_num: Frame number of interest
-    :return: Tuple object containing tuple elements that define the locations of rectangles for omission
+        :param cap: Video capture object from the OpenCV package
+        :param frame_num: Frame number of interest
+        :return: Tuple object containing tuple elements that define the locations of rectangles for omission
     """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num, config=config)
     ylength = y_end - y_start
@@ -98,13 +108,13 @@ def define_blockers(cap, frame_num, config):
 def post_processing(cap, frame, frame_num, config):
     """
     Process frame and apply filters
-    :param cap: Video capture object from the OpenCV package
-    :param frame: Image of the frame returned by cap.read()
-    :param frame_num: Frame number of interest
-    :return roi_frame: Image of the frame, cropped to the region of interest
-    :return closing: Binary image of the frame after erasing small imperfections, cropped to the region of interest
-    :return clean_thresh: "Cleaned" image of the frame with small binary imperfections erased
-    :return closing_raw: Binary image of the frame post-erasure without the binary blocker
+        :param cap: Video capture object from the OpenCV package
+        :param frame: Image of the frame returned by cap.read()
+        :param frame_num: Frame number of interest
+        :return roi_frame: Image of the frame, cropped to the region of interest
+        :return closing: Binary image of the frame after erasing small imperfections, cropped to the region of interest
+        :return clean_thresh: "Cleaned" image of the frame with small binary imperfections erased
+        :return closing_raw: Binary image of the frame post-erasure without the binary blocker
     """
     x_start, x_end, y_start, y_end = frame_dimensions(cap, frame_num, config=config)
     blockers = define_blockers(cap, frame_num, config=config)
@@ -126,18 +136,18 @@ def post_processing(cap, frame, frame_num, config):
 def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracking_objects, track_id, y_end, y_start, config, last_known = None):
     """
     Locate and track particles in frame
-    :param roi_frame: Image of the frame, cropped to the region of interest
-    :param closing: Binary image of the frame after erasing imperfections, cropped to the region of interest
-    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
-    :param frame_num: Frame number of interest
-    :param tracking_objects: Dictionary object containing particles' locations
-    :param track_id: Index of particle in tracking_objects dictionary
-    :param y_end, y_start: Define the y frame of interest
-    :return x_position: X position of the particle's centroid, indicated in pixels from the left of the frame of interest
-    :return y_position_adj: Y position of the particle's centroid, indicated in pixels from the bottom of the frame of interest
-    :return height: Height of detected object in pixels
-    :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
-    :return keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+        :param roi_frame: Image of the frame, cropped to the region of interest
+        :param closing: Binary image of the frame after erasing imperfections, cropped to the region of interest
+        :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+        :param frame_num: Frame number of interest
+        :param tracking_objects: Dictionary object containing particles' locations
+        :param track_id: Index of particle in tracking_objects dictionary
+        :param y_end, y_start: Define the y frame of interest
+        :return x_position: X position of the particle's centroid, indicated in pixels from the left of the frame of interest
+        :return y_position_adj: Y position of the particle's centroid, indicated in pixels from the bottom of the frame of interest
+        :return height: Height of detected object in pixels
+        :return image_with_keypoints: Image of the frame of interest, red circles drawn at the centroid of detected objects
+        :return keypoints_cur_frame: List object containing tuples of particle locations in the current frame
     """
     detector = set_up_detector()
     keypoints = detector.detect(closing)
@@ -177,11 +187,11 @@ def locate_particles(roi_frame, closing, keypoints_prev_frame, frame_num, tracki
 def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_objects, track_id):
     """
     Initialize tracking for new particles
-    :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
-    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
-    :param tracking_objects: Dictionary object containing particles' locations
-    :param track_id: Index of particle in tracking_objects dictionary
-    :return track_id: Index of next particle in tracking_objects dictionary
+        :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+        :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+        :param tracking_objects: Dictionary object containing particles' locations
+        :param track_id: Index of particle in tracking_objects dictionary
+        :return track_id: Index of next particle in tracking_objects dictionary
     """
     for pt1 in keypoints_cur_frame:
         for pt2 in keypoints_prev_frame:
@@ -194,9 +204,9 @@ def _initialize_tracking(keypoints_cur_frame, keypoints_prev_frame, tracking_obj
 def _update_tracking(keypoints_cur_frame, tracking_objects):
     """
     Update tracking for existing particles in tracking_objects
-    :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
-    :param tracking_objects: Dictionary object containing particles' locations
-    :return: Updated tracking_objects dictionary for the current frame
+        :param keypoints_cur_frame: List object containing tuples of particle locations in the current frame
+        :param tracking_objects: Dictionary object containing particles' locations
+        :return: Updated tracking_objects dictionary for the current frame
     """
     tracking_objects_copy = tracking_objects.copy()
     keypoints_cur_frame_copy = keypoints_cur_frame.copy()
@@ -223,8 +233,8 @@ def _update_tracking(keypoints_cur_frame, tracking_objects):
 def _process_contours(contours, tracking_objects):
     """
     Process contours to get particle dimensions
-    :param contours: List object containing contours stored as arrays of points outlining shapes of interest
-    :param tracking_objects: Dictionary object containing particles' locations
+        :param contours: List object containing contours stored as arrays of points outlining shapes of interest
+        :param tracking_objects: Dictionary object containing particles' locations
     """
     for i in contours:
         x, y, w, h = cv2.boundingRect(i)
@@ -238,46 +248,29 @@ def _process_contours(contours, tracking_objects):
 def analyze_trial(datapoint):
     """
     Analyze trial data and compute averages
-    :param datapoint: List object containing tuples (x,y,h) for particles location and height from each of the previous frames
-    :return: Tuple reflecting the average of the tuples in datapoint
+        :param datapoint: List object containing tuples (x,y,h) for particles location and height from each of the previous frames
+        :return: Tuple reflecting the average of the tuples in datapoint
     """
     if not datapoint:
-<<<<<<< HEAD
         return np.array([0, 0]), np.array([0, 0]), np.array([0, 0])
-        
-=======
-        return 0, 0, 0
-    
->>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
     x = [point[0] for point in datapoint]
     y = [point[1] for point in datapoint]
     h = [point[2] for point in datapoint]
-    
-<<<<<<< HEAD
     return (np.array([np.mean(x), np.std(x)]),
             np.array([np.mean(y), np.std(y)]),
             np.array([np.mean(h), np.std(h)]))
-=======
-    avg_h_val = round(np.mean(h), 2)
-    print(avg_h_val)
-    stdev = np.std(h)
-    print(stdev)
 
-    return (round(np.mean(x), 2),
-            round(np.mean(y), 2),
-            round(np.mean(h), 2))
->>>>>>> 7a159d4 (Configured micromotion tracking file to play trial 18 and print individual data point standard deviations (the numbers between 0 and 2))
 
 
 def save_data(y, h, frame_num, total_frames, datapoint_num, config):
     """
     Puts height and micromotion data (in millimeters, based on pixel_to_mm parameter) into text file
-    :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
-    :param hav: Average height of the particle over the sample frames
-    :param frame_num: Frame number of interest
-    :param total_frames: Total frames contained in the video object
-    :param datapoint_num: Datapoint number, starting at 0
-    :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
+        :param yav: Average y-position of the particle over the sample frames, measured from the bottom of the region of interest
+        :param hav: Average height of the particle over the sample frames
+        :param frame_num: Frame number of interest
+        :param total_frames: Total frames contained in the video object
+        :param datapoint_num: Datapoint number, starting at 0
+        :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, yav, hav]" on each line
     """
     voltage = config.start_voltage + (datapoint_num * config.voltage_increment)
     cut_file_name = config.video_file.replace('.avi', '')
@@ -320,8 +313,8 @@ def save_data(y, h, frame_num, total_frames, datapoint_num, config):
 def auto_run(cap, config):
     """
     Automatic processing of video frames, outputs datapoints as described below in a text data file
-    :param cap: Video capture object from the OpenCV package
-    :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, y-position, height]" on each line
+        :param cap: Video capture object from the OpenCV package
+        :return: Generates or amends the text file in the local directory, places list objects formatted as "[voltage, y-position, height]" on each line
     """
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     tracking_objects, track_id, keypoints_prev_frame = setup_tracking()
@@ -373,11 +366,11 @@ def auto_run(cap, config):
 def run_frame(cap, frame_num, keypoints_prev_frame, config):
     """
     Manually processes and displays each frame. Press a letter or arrow key to progress
-    :param cap: Video capture object from the OpenCV package
-    :param frame_num: Frame number of interest
-    :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
-    :return frame_num: Frame number of the next frame to analyze
-    :return keypoints_cur_frame: List object containing detected objects of current frame
+        :param cap: Video capture object from the OpenCV package
+        :param frame_num: Frame number of interest
+        :param keypoints_prev_frame: List object containing tuples of particle locations in the previous frame
+        :return frame_num: Frame number of the next frame to analyze
+        :return keypoints_cur_frame: List object containing detected objects of current frame
     """
     tracking_objects, track_id, _ = setup_tracking()
     ret, frame = get_frame(cap, frame_num)

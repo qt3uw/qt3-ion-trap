@@ -32,12 +32,12 @@ class FigureParameterConfig:
     """
     FigureParameterConfig establishes where/how the micromotion data will be plotted from the micromotion trials
         :field save_fig: (bool) Saves figure to directory specified by self.save_path
-        :param unc: (Uncertainties) An Uncertainties object containing measurement uncertainties for our trials to be
+        :field unc: (Uncertainties) An Uncertainties object containing measurement uncertainties for our trials to be
               used in our figures. 
         :field pixel_to_mm: (float) Pixel to mm conversion from calibration. Only for plotting error bars, okay to set to zero if trials vary
-        :param graph_file_name: (str) File to plot height & micromotion vs. voltage graphs
+        :field graph_file_name: (str) File to plot height & micromotion vs. voltage graphs
         :field hist_folder_name:(str) Folder to extract charge-to-mass values from and graph the histogram
-        :param save_path: (str) Path for exported figures
+        :field save_path: (str) Path for exported figures
     """
     def __init__(self, uncert, height_file_name = "data/raw_micromotion/second_round_data_collection/Clean Data/02-28-2025_Trial" + TRIAL + "_data.txt", save_path = ["figures/figure_" + str(i) + "/" for i in range(2, 5)]):
         self.save_fig = True                                                   
@@ -63,7 +63,7 @@ def get_default_config(height_file_name = "data/raw_micromotion/second_round_dat
 def get_default_trap():
     """
     Creates a and returns a trap object
-    :return: A trap object from the PseudopotentialPlanarTrap class
+        :return: A trap object from the PseudopotentialPlanarTrap class
     """
     trap = PseudopotentialPlanarTrap()
     trap.v_rf = 47 * -20 * np.sqrt(2)
@@ -262,17 +262,6 @@ def plot_height_fit(config, include_gaps=True, figsize=(3.5, 3)):
     metadata = {"data Source": config.graph_file_name, "charge-to-mass_interpolated" : str(c2m_int[0]), "c2m_int_err" : str(3 * np.sqrt(error[1, 1])), "charge-to-mass_extrapolated" : str(c2m_ext), "c2m_ext_err" : str(1/c2m_err), \
                 "chi^2 _fit" : str(chi2_fit), "chi^2_ext)" : str(chi2_extr)}
     plt.tick_params(axis='both', labelsize=15)
-    """
-    print(f'c2m from fit:{c2m_int[0]} +/- {np.sqrt(error[1, 1])}')
-    print(f'c2m from micromotion: {c2m_ext} +/- {c2m_err}')
-    print(str(c2m_int[0]))
-    print(str(np.sqrt(error[1, 1])))
-    print(str(c2m_ext))
-    print("Goodbye")
-    print(str(c2m_err))
-    print(chi2_fit)
-    print(chi2_extr)
-    """
     fig.savefig(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf", metadata = metadata)
     print(config.save_path[2]+"fig4-height_fit_Trial" + TRIAL + ".pdf")
     return trap
