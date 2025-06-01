@@ -132,7 +132,6 @@ class Uncertainties:
         Calculates the uncertainty in time of an event in the video
             :returns: NotImplementedError
         """
-        #self.delta_t = self.T_exp / 2
         raise NotImplementedError
 
     
@@ -141,9 +140,6 @@ class Uncertainties:
         Calculates the uncertainty in velocity of the particle
             :returns: NotImplementedError
         """
-        # self.pxl_to_r()
-        # self.delta_pos_calc()
-        # self.delta_v = np.abs(v) * np.sqrt((self.delta_r[0]/self.r[0])**2 + (self.delta_t / self.t)**2)
         raise NotImplementedError
 
     
@@ -163,12 +159,3 @@ def fit_error(y_fit, sigma, trap):
     U =  (F @ V_inv @ F.T).I
     return U
 
-"""
-if __name__ == "__main__":
-    U = Uncertainties()
-    print(U.diff_N_calc)
-    print(U.delta_r)
-    print(U.N_f)
-    print(U.N_i)
-    print(U.diff_N)
-"""
